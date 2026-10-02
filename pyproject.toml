@@ -1,17 +1,27 @@
 [project]
-name = "my-wisper"
+name = "whisperflow"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local offline speech transcription"
 readme = "README.md"
 authors = [
     { name = "Faraz Ali", email = "farazali9028@gmail.com" }
 ]
-requires-python = ">=3.14"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "psutil",
+    "pyyaml",
+]
 
 [project.scripts]
-my-wisper = "my_wisper:main"
+whisperflow = "whisperflow.cli:main"
+
+[dependency-groups]
+dev = ["pytest"]
 
 [build-system]
 requires = ["uv_build>=0.12.22,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

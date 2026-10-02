@@ -1,0 +1,33 @@
+# Stage 1 settings. LLM, hotkey, and text injection are intentionally absent.
+
+audio:
+  sample_rate: 16000
+  channels: 1
+  # auto picks the built-in digital microphone. "default" follows PipeWire's
+  # session default, which is a silent Bluetooth loopback on this machine.
+  device: auto
+  frame_ms: 30
+
+asr:
+  backend: whisper_cpp
+  model: tiny.en
+  model_path: models/ggml-tiny.en.bin
+  device: auto
+  quantization: fp16
+  threads: 4
+  language: en
+  gpu_device: 0
+
+streaming:
+  # A new whisper call every second, looking at the last five seconds.
+  # The extra audio is the overlap the transcript merger de-duplicates.
+  chunk_ms: 1000
+  overlap_ms: 250
+  length_ms: 5000
+
+vad:
+  rms_threshold: 0.015
+  noise_multiplier: 4.0
+  hangover_ms: 700
+  preroll_ms: 300
+  highpass_hz: 100

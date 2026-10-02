@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# whisper.cpp build and downloaded weights
+third_party/whisper.cpp/build-sycl/
+native/build/
+models/*.bin
