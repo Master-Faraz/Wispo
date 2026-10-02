@@ -97,7 +97,8 @@ class WhisperCppEngine:
         if not self.model_path.is_file():
             raise FileNotFoundError(
                 f"model not found: {self.model_path}\n"
-                "The Stage 1 model is models/ggml-tiny.en.bin."
+                f"Please ensure the model file is downloaded into models/.\n"
+                f"You can download it with: bash scripts/download_model.sh"
             )
         if not self.lib_path.is_file():
             raise FileNotFoundError(

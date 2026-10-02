@@ -10,8 +10,8 @@ audio:
 
 asr:
   backend: whisper_cpp
-  model: tiny.en
-  model_path: models/ggml-tiny.en.bin
+  model: base.en
+  model_path: models/ggml-base.en.bin
   device: auto
   quantization: fp16
   threads: 4
