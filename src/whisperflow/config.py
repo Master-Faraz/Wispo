@@ -124,6 +124,34 @@ def load_config(path: Path | None = None) -> Config:
     )
 
 
+def save_user_settings(
+    path: Path,
+    model: str,
+    entries: tuple[DictionaryEntry, ...] | list[DictionaryEntry],
+) -> None:
+    """Update the model and dictionary in the YAML file.
+
+    Other sections stay as they are. Comments in the file are not kept,
+    because PyYAML rewrites the mapping. The running transcription process
+    reads this file only at startup.
+    """
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise TypeError(f"{path} must contain a mapping")
+    asr = data.get("asr") or {}
+    if not isinstance(asr, dict):
+        raise TypeError("asr must be a mapping")
+    asr["model"] = model
+    asr["model_path"] = f"models/ggml-{model}.bin"
+    data["asr"] = asr
+    data["dictionary"] = [
+        {"phrase": entry.phrase, "replacement": entry.replacement, "enabled": entry.enabled}
+        for entry in entries
+        if entry.phrase.strip()
+    ]
+    path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+
 def _dictionary(data: dict) -> tuple[DictionaryEntry, ...]:
     raw = data.get("dictionary") or []
     if not isinstance(raw, list):
