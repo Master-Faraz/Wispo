@@ -80,12 +80,19 @@ class DictionaryEntry:
 
 
 @dataclass(frozen=True)
+class HotkeyConfig:
+    # Each name must be held at once. Left and right Ctrl both count as ctrl.
+    keys: tuple[str, ...] = ("ctrl", "super")
+
+
+@dataclass(frozen=True)
 class Config:
     audio: AudioConfig = AudioConfig()
     asr: AsrConfig = AsrConfig()
     streaming: StreamingConfig = StreamingConfig()
     vad: VadConfig = VadConfig()
     dictionary: tuple[DictionaryEntry, ...] = ()
+    hotkey: HotkeyConfig = HotkeyConfig()
 
     def resolve(self, path: str) -> Path:
         candidate = Path(path)
@@ -121,6 +128,7 @@ def load_config(path: Path | None = None) -> Config:
         streaming=_section(data, "streaming", StreamingConfig),
         vad=_section(data, "vad", VadConfig),
         dictionary=_dictionary(data),
+        hotkey=_hotkey(data),
     )
 
 
@@ -128,6 +136,7 @@ def save_user_settings(
     path: Path,
     model: str,
     entries: tuple[DictionaryEntry, ...] | list[DictionaryEntry],
+    hotkey: tuple[str, ...] | list[str] | None = None,
 ) -> None:
     """Update the model and dictionary in the YAML file.
 
@@ -149,7 +158,31 @@ def save_user_settings(
         for entry in entries
         if entry.phrase.strip()
     ]
+    if hotkey is not None:
+        data["hotkey"] = {"keys": [str(key) for key in hotkey]}
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+
+def _hotkey(data: dict) -> HotkeyConfig:
+    raw = data.get("hotkey") or {}
+    if not raw:
+        return HotkeyConfig()
+    if not isinstance(raw, dict):
+        raise TypeError("hotkey must be a mapping")
+    unknown = set(raw) - {"keys"}
+    if unknown:
+        raise ValueError(f"unknown hotkey settings: {', '.join(sorted(unknown))}")
+    keys = raw.get("keys") or ["ctrl", "super"]
+    if isinstance(keys, str):
+        keys = [part.strip() for part in keys.replace("+", " ").split() if part.strip()]
+    if not isinstance(keys, list) or not keys:
+        raise TypeError("hotkey.keys must be a list of key names")
+    names = tuple(str(key).lower() for key in keys)
+    from whisperflow.hotkey.linux import codes_for
+
+    for name in names:
+        codes_for(name)
+    return HotkeyConfig(names)
 
 
 def _dictionary(data: dict) -> tuple[DictionaryEntry, ...]:

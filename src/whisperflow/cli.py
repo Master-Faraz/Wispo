@@ -77,12 +77,13 @@ def transcribe_main(argv: list[str] | None = None) -> int:
             return 1
         print("Input session ready. The finished sentence is typed into the focused window.")
         print()
-        overview = OverviewKey()
-        try:
-            overview.start()
-        except (OSError, subprocess.CalledProcessError) as exc:
-            print(f"Could not move the overview key aside: {exc}", file=sys.stderr)
-            overview = None
+        if "super" in config.hotkey.keys:
+            overview = OverviewKey()
+            try:
+                overview.start()
+            except (OSError, subprocess.CalledProcessError) as exc:
+                print(f"Could not move the overview key aside: {exc}", file=sys.stderr)
+                overview = None
     hold = None
     recording = False
     try:
@@ -93,10 +94,10 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         print(app.engine.system_info().strip())
         print()
         if args.inject:
-            hold = HoldChord()
+            hold = HoldChord(config.hotkey.keys)
             hold.start()
-            print("Hold Ctrl and the Windows key together, then speak.")
-            print("Release either key to type the finished sentence.")
+            print(f"Hold {hold.description}, then speak.")
+            print("Release to type the finished sentence.")
             print("The sentence is not printed here. Press Ctrl+C to quit.")
         else:
             hold = HoldKey(args.key)

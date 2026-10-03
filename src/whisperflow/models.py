@@ -1,0 +1,85 @@
+"""Whisper model files the settings window can download.
+
+The default stays base.en. A name is only usable after its ggml file is in
+models/. Downloads come from the whisper.cpp Hugging Face repo.
+"""
+
+from __future__ import annotations
+
+import urllib.request
+from pathlib import Path
+
+from whisperflow.config import project_root
+
+# Approximate sizes from the whisper.cpp model list, shown before download.
+CATALOG: tuple[tuple[str, str], ...] = (
+    ("tiny.en", "75 MB"),
+    ("base.en", "148 MB"),
+    ("small.en", "488 MB"),
+    ("medium.en", "1.5 GB"),
+    ("large-v3-turbo-q5_0", "547 MB"),
+    ("large-v3-turbo", "1.5 GB"),
+)
+
+DEFAULT_MODEL = "base.en"
+_HF = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
+
+
+def model_names() -> tuple[str, ...]:
+    return tuple(name for name, _size in CATALOG)
+
+
+def catalog_size(name: str) -> str:
+    for model, size in CATALOG:
+        if model == name:
+            return size
+    raise ValueError(f"unknown model {name!r}")
+
+
+def model_path(name: str, root: Path | None = None) -> Path:
+    if name not in model_names():
+        raise ValueError(f"unknown model {name!r}")
+    return (root or project_root()) / "models" / f"ggml-{name}.bin"
+
+
+def installed_models(root: Path | None = None) -> list[tuple[str, int]]:
+    """Catalog models that already have a file, with the size in bytes."""
+    root = root or project_root()
+    found: list[tuple[str, int]] = []
+    for name in model_names():
+        path = model_path(name, root)
+        if path.is_file():
+            found.append((name, path.stat().st_size))
+    return found
+
+
+def download_model(name: str, root: Path | None = None, progress=None) -> Path:
+    """Download one ggml file. progress(written, total) may be called often."""
+    dest = model_path(name, root)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.is_file() and dest.stat().st_size > 0:
+        return dest
+    tmp = dest.with_name(dest.name + ".partial")
+    request = urllib.request.Request(
+        f"{_HF}/{dest.name}",
+        headers={"User-Agent": "whisperflow"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response, tmp.open("wb") as out:
+            total = int(response.headers.get("Content-Length") or 0)
+            written = 0
+            while True:
+                chunk = response.read(256 * 1024)
+                if not chunk:
+                    break
+                out.write(chunk)
+                written += len(chunk)
+                if progress is not None:
+                    progress(written, total)
+        if written == 0:
+            raise RuntimeError(f"download of {name} was empty")
+        tmp.replace(dest)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+    return dest

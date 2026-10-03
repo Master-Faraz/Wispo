@@ -34,6 +34,71 @@ KEY_CODES = {
 # and never fired.
 CTRL_CODES = {KEY_CODES["leftctrl"], KEY_CODES["rightctrl"]}
 META_CODES = {KEY_CODES["leftmeta"], KEY_CODES["rightmeta"]}
+SHIFT_CODES = {42, 54}
+ALT_CODES = {KEY_CODES["leftalt"], KEY_CODES["rightalt"]}
+
+# One shortcut slot can be satisfied by either physical key.
+_MODIFIER_GROUPS = {
+    "shift": SHIFT_CODES,
+    "ctrl": CTRL_CODES,
+    "alt": ALT_CODES,
+    "super": META_CODES,
+}
+_SINGLE_KEYS = {
+    "esc": 1,
+    "1": 2,
+    "2": 3,
+    "3": 4,
+    "4": 5,
+    "5": 6,
+    "6": 7,
+    "7": 8,
+    "8": 9,
+    "9": 10,
+    "0": 11,
+    "backspace": 14,
+    "tab": 15,
+    "q": 16,
+    "w": 17,
+    "e": 18,
+    "r": 19,
+    "t": 20,
+    "y": 21,
+    "u": 22,
+    "i": 23,
+    "o": 24,
+    "p": 25,
+    "enter": 28,
+    "a": 30,
+    "s": 31,
+    "d": 32,
+    "f": 33,
+    "g": 34,
+    "h": 35,
+    "j": 36,
+    "k": 37,
+    "l": 38,
+    "z": 44,
+    "x": 45,
+    "c": 46,
+    "v": 47,
+    "b": 48,
+    "n": 49,
+    "m": 50,
+    "space": 57,
+}
+_MODIFIER_ORDER = ("shift", "ctrl", "alt", "super")
+_LABELS = {
+    "shift": "Shift",
+    "ctrl": "Ctrl",
+    "alt": "Alt",
+    "super": "Super",
+    "space": "Space",
+    "enter": "Enter",
+    "tab": "Tab",
+    "esc": "Esc",
+    "backspace": "Backspace",
+}
 
 _EVENT = struct.Struct("llHHi")
 _EV_KEY = 0x01
@@ -89,10 +154,14 @@ class HoldKey:
 
 
 class HoldChord:
-    """Hold is true only while one Ctrl key and one Super key are both down."""
+    """Hold is true only while every configured key is down."""
 
-    def __init__(self) -> None:
-        self.description = "Ctrl+Super"
+    def __init__(self, keys: tuple[str, ...] | list[str] = ("ctrl", "super")) -> None:
+        self.keys = tuple(key.lower() for key in keys)
+        if not self.keys:
+            raise ValueError("shortcut needs at least one key")
+        self.groups = tuple(codes_for(name) for name in self.keys)
+        self.description = format_chord(self.keys)
         self.held = threading.Event()
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="whisperflow-chord", daemon=True)
@@ -100,7 +169,9 @@ class HoldChord:
         self._down: set[int] = set()
 
     def start(self) -> None:
-        codes = CTRL_CODES | META_CODES
+        codes: set[int] = set()
+        for group in self.groups:
+            codes.update(group)
         self._fds = _open_keyboards(codes)
         if not self._fds:
             raise RuntimeError(
@@ -119,7 +190,9 @@ class HoldChord:
         self._fds = []
 
     def _loop(self) -> None:
-        watched = CTRL_CODES | META_CODES
+        watched: set[int] = set()
+        for group in self.groups:
+            watched.update(group)
         while not self._stop.is_set():
             readable, _, _ = select.select(self._fds, [], [], 0.05)
             for fd in readable:
@@ -135,7 +208,7 @@ class HoldChord:
                         self._down.add(code)
                     elif value == 0:
                         self._down.discard(code)
-                    if chord_satisfied(self._down, (CTRL_CODES, META_CODES)):
+                    if chord_satisfied(self._down, self.groups):
                         self.held.set()
                     else:
                         self.held.clear()
@@ -174,6 +247,88 @@ class OverviewKey:
 
 def chord_satisfied(down: set[int], groups: tuple[set[int], ...]) -> bool:
     return all(down & group for group in groups)
+
+
+def codes_for(name: str) -> set[int]:
+    key = name.lower()
+    if key in _MODIFIER_GROUPS:
+        return set(_MODIFIER_GROUPS[key])
+    if key in _SINGLE_KEYS:
+        return {_SINGLE_KEYS[key]}
+    if key.startswith("key") and key[3:].isdigit():
+        return {int(key[3:])}
+    raise ValueError(f"unknown shortcut key {name!r}")
+
+
+def format_chord(keys: tuple[str, ...] | list[str]) -> str:
+    present = {key.lower() for key in keys}
+    ordered = [key for key in _MODIFIER_ORDER if key in present]
+    ordered.extend(key.lower() for key in keys if key.lower() not in _MODIFIER_ORDER)
+    return "+".join(_LABELS.get(key, key.upper() if len(key) == 1 else key) for key in ordered)
+
+
+def chord_from_codes(codes: set[int]) -> tuple[str, ...]:
+    """Turn the keys that were held together into shortcut names."""
+    names: list[str] = []
+    seen: set[str] = set()
+    for code in sorted(codes):
+        if code <= 0 or code >= 256:
+            continue
+        name = _logical_name(code)
+        if name in seen:
+            continue
+        seen.add(name)
+        names.append(name)
+    ordered = [key for key in _MODIFIER_ORDER if key in seen]
+    ordered.extend(name for name in names if name not in _MODIFIER_ORDER)
+    return tuple(ordered)
+
+
+def capture_chord(stop: threading.Event, timeout: float = 8.0) -> tuple[str, ...]:
+    """Read the next press-and-release from the keyboard. Empty on timeout."""
+    import time
+
+    fds = _open_keyboards(CTRL_CODES | META_CODES | {KEY_CODES["space"]})
+    if not fds:
+        raise RuntimeError(
+            "no keyboard was readable. The account needs to be in the input group."
+        )
+    down: set[int] = set()
+    seen: set[int] = set()
+    deadline = time.monotonic() + timeout
+    try:
+        while not stop.is_set() and time.monotonic() < deadline:
+            readable, _, _ = select.select(fds, [], [], 0.05)
+            for fd in readable:
+                try:
+                    data = os.read(fd, _EVENT.size * 64)
+                except OSError:
+                    continue
+                for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
+                    _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
+                    if event_type != _EV_KEY or value == 2 or code <= 0 or code >= 256:
+                        continue
+                    if value == 1:
+                        down.add(code)
+                        seen.add(code)
+                    elif value == 0:
+                        down.discard(code)
+                        if seen and not down:
+                            return chord_from_codes(seen)
+        return ()
+    finally:
+        for fd in fds:
+            os.close(fd)
+
+
+def _logical_name(code: int) -> str:
+    for name, group in _MODIFIER_GROUPS.items():
+        if code in group:
+            return name
+    for name, single in _SINGLE_KEYS.items():
+        if code == single:
+            return name
+    return f"key{code}"
 
 
 def _gsettings_get(schema: str, key: str) -> str:

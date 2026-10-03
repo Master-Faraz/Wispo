@@ -140,10 +140,13 @@ def _listen(stop_event: threading.Event, status) -> None:
     try:
         logging.info("opening the input session")
         keyboard.open()
-        try:
-            overview.start()
-        except (OSError, subprocess.CalledProcessError):
-            logging.exception("could not move the overview key aside")
+        if "super" in config.hotkey.keys:
+            try:
+                overview.start()
+            except (OSError, subprocess.CalledProcessError):
+                logging.exception("could not move the overview key aside")
+                overview = None
+        else:
             overview = None
         if status is not None:
             status.set_state("processing")
@@ -155,7 +158,7 @@ def _listen(stop_event: threading.Event, status) -> None:
             app.device.name,
             app.device.label,
         )
-        hold = HoldChord()
+        hold = HoldChord(config.hotkey.keys)
         hold.start()
         if status is not None:
             status.set_state("idle")
