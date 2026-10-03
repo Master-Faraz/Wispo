@@ -30,6 +30,51 @@ These override earlier suggestions in this brief where they differ.
 5. **Recording feedback.** A subtle visual state for recording and processing, tied to the app's dock or tray presence. Research the mechanism GNOME on Ubuntu 26.04 actually supports before picking a toolkit API.
 6. **No clipboard for normal transcription.** The injection mechanism is still a research decision. Prefer a direct insert. Do not use the clipboard as the normal path.
 
+## Stage 2 progress (user-verified 2026-10-03)
+
+The vertical slice is working on this machine. The user has confirmed: portal text injection, Ctrl+Super hold-to-talk with GPU `base.en`, dictionary replacements, GTK settings window, background launch from Show Apps, dock icon, and close-window-without-quit behavior.
+
+### Completed
+
+| Area | What was built | Key files |
+| ---- | -------------- | --------- |
+| Text injection | XDG RemoteDesktop portal `NotifyKeyboardKeycode` via jeepney. US evdev keymap. Session persisted with restore token. No clipboard. | `injection/portal.py`, `injection/keymap.py`, `inject.py` |
+| Push-to-talk | `HoldChord`: any Ctrl + any Super from `/dev/input/event*`. GNOME overview suppressed via `org.gnome.mutter overlay-key` while the service runs. Streaming hold-to-talk preserved (partials internal; only final sentence injected). | `hotkey/linux.py`, `cli.py`, `service.py` |
+| Dictionary | Longest phrase wins, case-insensitive, punctuation-tolerant, whole-word boundaries. Applied once on the finished sentence, inject path only. | `processing/dictionary.py` |
+| Settings UI | GTK 4 via system PyGObject (`python3-gi`). Model selection, dictionary add/delete, save to `whisperflow.yaml`. Restart required for model/dictionary changes. | `settings.py` |
+| Background service | `uv run python -m whisperflow.service`. Single instance on D-Bus (`org.whisperflow.Service`). Worker thread for ASR/hotkey/inject; GTK on main thread. | `service.py` |
+| Desktop integration | `com.whisperflow.WhisperFlow.desktop` with `StartupWMClass`. Dock icon via embedded GTK window. Close minimizes; Quit button stops the service. StatusNotifierItem + LauncherEntry for recording/processing state. | `desktop.py`, `status.py` |
+
+### Technology choices (research outcomes)
+
+| Component | Chosen | Rejected / deferred | Reason |
+| --------- | ------ | ------------------- | ------ |
+| Text injection | XDG RemoteDesktop portal keyboard | libei (headers not installed), wtype (Mutter lacks `zwp_virtual_keyboard_v1`), ydotool, clipboard | Portal works on Ubuntu 26.04 GNOME Wayland; first run shows a permission dialog; restore token avoids repeat prompts |
+| Push-to-talk | Direct `/dev/input/event*` (`HoldChord`) | GlobalShortcuts portal (modifier-only binding stored as `0x00`, never fires), python-evdev | User is in `input` group; chord swallowed without grabbing the whole keyboard |
+| Dictionary | Tokenize + longest-phrase replacement | — | Negligible vs ASR; 33 unit tests pass |
+| UI | GTK 4 / PyGObject (system package) | PySide6 (heavier; not evaluated live) | Lightweight; `gi` not in uv venv so `/usr/lib/python3/dist-packages` is appended on ImportError |
+| Recording feedback | LauncherEntry `urgent` badge + StatusNotifierItem icon states | Ayatana AppIndicator3 GIR (not available) | On this machine `hidetopbar` hides the top bar, so the tray icon is invisible; the dock icon is the visible control |
+| Packaging | Deferred | AppImage | Stage 2.7 not started |
+
+### Not done yet
+
+* Shortcut configuration UI (chord is hardcoded to Ctrl+Super).
+* AppImage and clean-environment packaging tests.
+* Live model/dictionary reload without restarting the service.
+* LLM post-processing (explicitly deferred).
+* Full acceptance-test matrix across every listed editor/browser (injection verified in focused apps; not every item in section 30 re-tested formally).
+
+### How to run
+
+```bash
+uv run python -m whisperflow.service          # start (or open settings if already running)
+uv run python -m whisperflow.service --quit     # stop
+uv run python -m whisperflow.settings         # settings only (standalone)
+uv run python -m whisperflow.inject "text"    # injection smoke test
+```
+
+Log file: `~/.local/state/whisperflow/service.log` (includes `model base.en on Intel(R) Arc(TM) Graphics (Intel SYCL)` after load).
+
 ---
 
 # 1. Current Project State
@@ -116,19 +161,20 @@ The project roadmap is now:
 ```text
 [x] Stage 1 — Local Transcription Engine
 
-[ ] Stage 2 — Desktop Application & System Integration
-      ├── Desktop UI
-      ├── Global push-to-talk
-      ├── Wayland text injection
-      ├── Dictionary
-      ├── Settings
-      └── Background operation
+[~] Stage 2 — Desktop Application & System Integration
+      [x] Wayland text injection (XDG RemoteDesktop portal)
+      [x] Global push-to-talk (Ctrl+Super; not yet configurable in UI)
+      [x] Dictionary
+      [x] Settings window (model + dictionary; no shortcut UI yet)
+      [x] Background operation + dock icon
+      [ ] Shortcut configuration UI
+      [ ] AppImage
 
 [ ] Stage 3 — Linux Distribution
-      ├── AppImage
-      ├── .desktop entry
-      ├── application icon
-      └── optional startup integration
+      [x] .desktop entry (com.whisperflow.WhisperFlow.desktop)
+      [x] application icon (dock + launcher)
+      [ ] AppImage
+      [ ] optional startup integration
 
 [ ] Stage 4 — Hardware & Model Optimization
       ├── SYCL optimization
@@ -1139,7 +1185,9 @@ Do not build the complete UI first.
 
 Build a vertical slice first.
 
-## Milestone 2.1 — Text Injection Proof of Concept
+## Milestone 2.1 — Text Injection Proof of Concept ✅
+
+**Done (2026-10-03).** XDG RemoteDesktop portal `NotifyKeyboardKeycode`. User-verified in focused applications. Clipboard untouched.
 
 Implement:
 
@@ -1167,7 +1215,9 @@ The implementation must not touch the clipboard.
 
 ---
 
-## Milestone 2.2 — Push-to-Talk
+## Milestone 2.2 — Push-to-Talk ✅
+
+**Done (2026-10-03).** `HoldChord` (Ctrl+Super) + `OverviewKey` suppression. User-verified. Shortcut not yet editable from settings.
 
 Connect:
 
@@ -1199,7 +1249,9 @@ Verify:
 
 ---
 
-## Milestone 2.3 — Dictionary
+## Milestone 2.3 — Dictionary ✅
+
+**Done (2026-10-03).** `DictionaryProcessor` with unit tests. User-verified (`github` → `GitHub`, etc.).
 
 Add:
 
@@ -1227,19 +1279,19 @@ The benchmark should demonstrate that dictionary processing is negligible relati
 
 ---
 
-## Milestone 2.4 — Desktop UI
+## Milestone 2.4 — Desktop UI (partial)
 
-Implement:
+**Done:** model selection, dictionary management (GTK 4 settings window).
 
-* model selection;
-* shortcut configuration;
-* dictionary management.
+**Remaining:** shortcut configuration / capture UI.
 
 The UI should control configuration but not handle global shortcut events.
 
 ---
 
-## Milestone 2.5 — Background Application
+## Milestone 2.5 — Background Application ✅
+
+**Done (2026-10-03).** `python -m whisperflow.service`, single-instance D-Bus, settings embedded in service process, close-to-minimize.
 
 Make the application:
 
@@ -1250,7 +1302,11 @@ Make the application:
 
 ---
 
-## Milestone 2.6 — Desktop Integration
+## Milestone 2.6 — Desktop Integration (mostly done)
+
+**Done (2026-10-03).** `.desktop` file, dock icon, LauncherEntry recording badge, StatusNotifierItem (tray hidden when top bar is hidden by `hidetopbar`).
+
+**Remaining:** pin-to-dock documentation, optional autostart.
 
 Add:
 
@@ -1276,6 +1332,8 @@ Only after the application works correctly:
 ---
 
 # 30. First Acceptance Test
+
+**Status (2026-10-03):** steps 1–13, 15–17 verified by the user. Step 14 (change shortcut from UI) not implemented. Step 11 (every listed app) not formally re-tested as a matrix.
 
 Before considering Stage 2 successful, the following must work:
 

@@ -48,22 +48,29 @@ def _load_gtk():
 
 
 class SettingsApp:
-    def __init__(self, gtk) -> None:
+    def __init__(self, gtk, on_quit=None) -> None:
         self.gtk = gtk
-        self.app = gtk.Application(application_id="com.whisperflow.Settings")
-        self.app.connect("activate", self._activate)
+        self._on_quit = on_quit
         self._rows = gtk.ListBox()
         self._status = gtk.Label(xalign=0)
         self._model_buttons: dict[str, object] = {}
+        self.window = None
 
     def run(self, argv: list[str] | None) -> int:
-        return self.app.run(None if argv is None else argv)
+        app = self.gtk.Application(application_id="com.whisperflow.Settings")
+        app.connect("activate", self._activate)
+        return app.run(None if argv is None else argv)
 
     def _activate(self, app) -> None:
+        window = self.build(app)
+        window.present()
+
+    def build(self, app):
         gtk = self.gtk
         config = load_config()
         window = gtk.ApplicationWindow(application=app, title="WhisperFlow")
         window.set_default_size(560, 520)
+        self.window = window
 
         page = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=16)
         page.set_margin_top(16)
@@ -79,10 +86,17 @@ class SettingsApp:
         page.append(self._heading("Dictionary"))
         page.append(self._dictionary_box(config.dictionary))
 
-        self._status.set_text("Changes apply the next time transcription starts.")
+        if self._on_quit is None:
+            self._status.set_text("Changes apply the next time transcription starts.")
+        else:
+            self._status.set_text("Closing this window leaves WhisperFlow in the dock.")
         page.append(self._status)
 
         actions = gtk.Box(spacing=8, halign=gtk.Align.END)
+        if self._on_quit is not None:
+            quit_button = gtk.Button(label="Quit")
+            quit_button.connect("clicked", lambda *_args: self._on_quit())
+            actions.append(quit_button)
         save = gtk.Button(label="Save")
         save.add_css_class("suggested-action")
         save.connect("clicked", self._save)
@@ -90,7 +104,7 @@ class SettingsApp:
         page.append(actions)
 
         window.set_child(page)
-        window.present()
+        return window
 
     def _heading(self, text: str):
         label = self.gtk.Label(label=text, xalign=0)
