@@ -1,4 +1,5 @@
-# Stage 1 settings. LLM, hotkey, and text injection are intentionally absent.
+# Model, audio, and dictionary. The dictionary runs once on the finished
+# sentence, and only when typing into the focused window (--inject).
 
 audio:
   sample_rate: 16000
@@ -31,3 +32,11 @@ vad:
   hangover_ms: 700
   preroll_ms: 300
   highpass_hz: 100
+
+dictionary:
+  - phrase: github
+    replacement: GitHub
+  - phrase: javascript
+    replacement: JavaScript
+  - phrase: open pull request
+    replacement: Open Pull Request

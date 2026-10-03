@@ -73,11 +73,19 @@ class VadConfig:
 
 
 @dataclass(frozen=True)
+class DictionaryEntry:
+    phrase: str
+    replacement: str
+    enabled: bool = True
+
+
+@dataclass(frozen=True)
 class Config:
     audio: AudioConfig = AudioConfig()
     asr: AsrConfig = AsrConfig()
     streaming: StreamingConfig = StreamingConfig()
     vad: VadConfig = VadConfig()
+    dictionary: tuple[DictionaryEntry, ...] = ()
 
     def resolve(self, path: str) -> Path:
         candidate = Path(path)
@@ -112,4 +120,28 @@ def load_config(path: Path | None = None) -> Config:
         asr=_section(data, "asr", AsrConfig),
         streaming=_section(data, "streaming", StreamingConfig),
         vad=_section(data, "vad", VadConfig),
+        dictionary=_dictionary(data),
     )
+
+
+def _dictionary(data: dict) -> tuple[DictionaryEntry, ...]:
+    raw = data.get("dictionary") or []
+    if not isinstance(raw, list):
+        raise TypeError("dictionary must be a list")
+    entries: list[DictionaryEntry] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            raise TypeError("dictionary entries must be mappings")
+        unknown = set(item) - {"phrase", "replacement", "enabled"}
+        if unknown:
+            raise ValueError(f"unknown dictionary settings: {', '.join(sorted(unknown))}")
+        if "phrase" not in item or "replacement" not in item:
+            raise ValueError("dictionary entries need phrase and replacement")
+        entries.append(
+            DictionaryEntry(
+                phrase=str(item["phrase"]),
+                replacement=str(item["replacement"]),
+                enabled=bool(item.get("enabled", True)),
+            )
+        )
+    return tuple(entries)

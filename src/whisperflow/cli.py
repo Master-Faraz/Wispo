@@ -55,6 +55,7 @@ def transcribe_main(argv: list[str] | None = None) -> int:
     app = TranscriptionApp(config)
     keyboard = None
     overview = None
+    dictionary = None
     _print_banner(app)
     print(f"Mic: {app.capture.description}")
     if app.device.use_gpu:
@@ -64,8 +65,10 @@ def transcribe_main(argv: list[str] | None = None) -> int:
     print()
     if args.inject:
         from whisperflow.injection.portal import PortalError, PortalKeyboard
+        from whisperflow.processing.dictionary import DictionaryProcessor
 
         keyboard = PortalKeyboard()
+        dictionary = DictionaryProcessor(config.dictionary)
         print("Opening the input session. Allow the permission dialog if GNOME shows one.")
         try:
             keyboard.open()
@@ -118,7 +121,7 @@ def transcribe_main(argv: list[str] | None = None) -> int:
                 text = app.stop_recording()
                 recording = False
                 if keyboard is not None:
-                    _inject_final(keyboard, text)
+                    _inject_final(keyboard, text, dictionary)
                     print(f"Hold {hold.description} to talk again.")
                 else:
                     _print_final(text)
@@ -130,7 +133,7 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         if recording:
             text = app.stop_recording()
             if keyboard is not None:
-                _inject_final(keyboard, text)
+                _inject_final(keyboard, text, dictionary)
             else:
                 _print_final(text)
         return 0
@@ -151,7 +154,7 @@ def _print_final(text: str) -> None:
     print()
 
 
-def _inject_final(keyboard, text: str) -> None:
+def _inject_final(keyboard, text: str, dictionary) -> None:
     from whisperflow.injection.keymap import UnsupportedCharacter
     from whisperflow.injection.portal import PortalError
 
@@ -160,6 +163,7 @@ def _inject_final(keyboard, text: str) -> None:
         print("(no speech heard)")
         print()
         return
+    text = dictionary.process(text)
     try:
         keyboard.insert(text)
     except (PortalError, UnsupportedCharacter) as exc:
