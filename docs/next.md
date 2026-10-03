@@ -174,7 +174,7 @@ The project roadmap is now:
       [x] .desktop entry (com.whisperflow.WhisperFlow.desktop)
       [x] application icon (dock + launcher)
       [ ] AppImage
-      [ ] optional startup integration
+      [ ] optional startup integration (Don't implement it not needed)
 
 [ ] Stage 4 — Hardware & Model Optimization
       ├── SYCL optimization

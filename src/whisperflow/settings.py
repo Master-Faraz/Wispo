@@ -63,7 +63,7 @@ class SettingsApp:
         gtk = self.gtk
         config = load_config()
         window = gtk.ApplicationWindow(application=app, title="WhisperFlow")
-        window.set_default_size(560, 640)
+        window.set_default_size(560, 760)
         self.window = window
         self._hotkey_keys = config.hotkey.keys
 
@@ -74,7 +74,7 @@ class SettingsApp:
         page.set_margin_end(16)
 
         page.append(self._heading("Model"))
-        page.append(self._model_box(config.asr.model))
+        page.append(self._model_box(config.asr.model, config.asr.model_path))
         page.append(self._heading("Push-to-talk"))
         page.append(self._shortcut_box())
         window.connect("close-request", self._stop_capture)
@@ -106,12 +106,19 @@ class SettingsApp:
         label.add_css_class("title-4")
         return label
 
-    def _model_box(self, selected: str):
+    def _model_box(self, selected: str, selected_path: str = ""):
         gtk = self.gtk
         box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
         group = None
         on_disk = {name for name, _size in installed_models()}
-        for name, _size in CATALOG:
+        chosen = selected if selected in on_disk else ""
+        if not chosen:
+            for name in on_disk:
+                if selected_path.endswith(f"ggml-{name}.bin"):
+                    chosen = name
+                    break
+        for spec in CATALOG:
+            name = spec.name
             row = gtk.Box(spacing=8)
             button = gtk.CheckButton(label=self._model_label(name))
             if group is None:
@@ -120,7 +127,7 @@ class SettingsApp:
                 button.set_group(group)
             present = name in on_disk
             button.set_sensitive(present)
-            button.set_active(present and name == selected)
+            button.set_active(name == chosen)
             self._model_buttons[name] = button
             row.append(button)
             if not present:

@@ -36,3 +36,7 @@ def test_installed_models_are_the_files_on_disk():
     assert "medium.en" in model_names()
     assert "large-v3-turbo" in model_names()
     assert "large-v3-turbo-q5_0" in model_names()
+    assert "distil-small.en" in model_names()
+    assert "distil-medium.en" in model_names()
+    assert "distil-large-v3" in model_names()
+    assert "distil-large-v3.5" in model_names()

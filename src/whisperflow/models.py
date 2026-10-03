@@ -1,38 +1,77 @@
 """Whisper model files the settings window can download.
 
 The default stays base.en. A name is only usable after its ggml file is in
-models/. Downloads come from the whisper.cpp Hugging Face repo.
+models/. OpenAI models come from the whisper.cpp Hugging Face repo. Distil
+models come from the official distil-whisper ggml files.
 """
 
 from __future__ import annotations
 
 import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
 
 from whisperflow.config import project_root
 
-# Approximate sizes from the whisper.cpp model list, shown before download.
-CATALOG: tuple[tuple[str, str], ...] = (
-    ("tiny.en", "75 MB"),
-    ("base.en", "148 MB"),
-    ("small.en", "488 MB"),
-    ("medium.en", "1.5 GB"),
-    ("large-v3-turbo-q5_0", "547 MB"),
-    ("large-v3-turbo", "1.5 GB"),
+_WHISPER_CPP = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
+
+
+def _whisper_cpp(name: str) -> str:
+    return f"{_WHISPER_CPP}/ggml-{name}.bin"
+
+
+@dataclass(frozen=True)
+class ModelSpec:
+    name: str
+    size: str
+    url: str
+
+
+# Sizes are the published file sizes, shown before download.
+CATALOG: tuple[ModelSpec, ...] = (
+    ModelSpec("tiny.en", "75 MB", _whisper_cpp("tiny.en")),
+    ModelSpec("base.en", "148 MB", _whisper_cpp("base.en")),
+    ModelSpec("small.en", "488 MB", _whisper_cpp("small.en")),
+    ModelSpec("medium.en", "1.5 GB", _whisper_cpp("medium.en")),
+    ModelSpec("large-v3-turbo-q5_0", "547 MB", _whisper_cpp("large-v3-turbo-q5_0")),
+    ModelSpec("large-v3-turbo", "1.5 GB", _whisper_cpp("large-v3-turbo")),
+    ModelSpec(
+        "distil-small.en",
+        "336 MB",
+        "https://huggingface.co/distil-whisper/distil-small.en/resolve/main/ggml-distil-small.en.bin",
+    ),
+    ModelSpec(
+        "distil-medium.en",
+        "794 MB",
+        "https://huggingface.co/distil-whisper/distil-medium.en/resolve/main/ggml-medium-32-2.en.bin",
+    ),
+    ModelSpec(
+        "distil-large-v3",
+        "1.5 GB",
+        "https://huggingface.co/distil-whisper/distil-large-v3-ggml/resolve/main/ggml-distil-large-v3.bin",
+    ),
+    ModelSpec(
+        "distil-large-v3.5",
+        "1.4 GB",
+        "https://huggingface.co/distil-whisper/distil-large-v3.5-ggml/resolve/main/ggml-model.bin",
+    ),
 )
 
 DEFAULT_MODEL = "base.en"
-_HF = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
 
 
 def model_names() -> tuple[str, ...]:
-    return tuple(name for name, _size in CATALOG)
+    return tuple(spec.name for spec in CATALOG)
 
 
 def catalog_size(name: str) -> str:
-    for model, size in CATALOG:
-        if model == name:
-            return size
+    return _spec(name).size
+
+
+def _spec(name: str) -> ModelSpec:
+    for spec in CATALOG:
+        if spec.name == name:
+            return spec
     raise ValueError(f"unknown model {name!r}")
 
 
@@ -61,7 +100,7 @@ def download_model(name: str, root: Path | None = None, progress=None) -> Path:
         return dest
     tmp = dest.with_name(dest.name + ".partial")
     request = urllib.request.Request(
-        f"{_HF}/{dest.name}",
+        _spec(name).url,
         headers={"User-Agent": "whisperflow"},
     )
     try:

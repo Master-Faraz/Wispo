@@ -32,3 +32,8 @@ dictionary:
 - phrase: open pull request
   replacement: Open Pull Request
   enabled: true
+hotkey:
+  keys:
+  - ctrl
+  - alt
+  - key43
