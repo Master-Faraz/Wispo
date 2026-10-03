@@ -20,9 +20,9 @@ The application is designed primarily for **low-resource local hardware** and sh
 
 The developer's reference machine:
 
-* Ubuntu Linux
-* Intel Core Ultra 5 225H
-* Intel Arc 130T integrated GPU
+- Ubuntu Linux
+- Intel Core Ultra 5 225H
+- Intel Arc 130T integrated GPU
 
 The Intel Arc GPU should be the preferred ASR acceleration path on supported systems. whisper.cpp provides an Intel SYCL backend and supports Intel Arc and Intel integrated Arc GPUs on Linux.
 
@@ -34,27 +34,27 @@ CPU inference must remain available as a fallback.
 
 ## Primary Goals
 
-* Near-real-time speech transcription.
-* Very low latency.
-* Low CPU and RAM consumption.
-* GPU acceleration when available.
-* Completely local/offline operation.
-* System-wide text insertion.
-* Hold-to-talk interaction.
-* Optional post-processing with a local LLM.
-* Modular architecture allowing ASR and LLM implementations to be replaced independently.
-* Support lower-end hardware through smaller/quantized models.
+- Near-real-time speech transcription.
+- Very low latency.
+- Low CPU and RAM consumption.
+- GPU acceleration when available.
+- Completely local/offline operation.
+- System-wide text insertion.
+- Hold-to-talk interaction.
+- Optional post-processing with a local LLM.
+- Modular architecture allowing ASR and LLM implementations to be replaced independently.
+- Support lower-end hardware through smaller/quantized models.
 
 ## Non-Goals for V1
 
-* Cloud transcription.
-* Cloud LLM APIs.
-* Mobile applications.
-* Web application.
-* Multi-user functionality.
-* Complex GUI.
-* Conversation history.
-* Automatic actions based on spoken commands.
+- Cloud transcription.
+- Cloud LLM APIs.
+- Mobile applications.
+- Web application.
+- Multi-user functionality.
+- Complex GUI.
+- Conversation history.
+- Automatic actions based on spoken commands.
 
 ---
 
@@ -163,31 +163,31 @@ The only goal is to make transcription fast, reliable, and measurable.
 
 Primary language:
 
-* Python 3.12+
+- Python 3.12+
 
 ASR engine:
 
-* `whisper.cpp`
+- `whisper.cpp`
 
 GPU backend:
 
-* Intel SYCL / Level Zero
+- Intel SYCL / Level Zero
 
 CPU fallback:
 
-* whisper.cpp CPU backend
+- whisper.cpp CPU backend
 
 Audio:
 
-* Linux microphone input
-* 16 kHz
-* mono
-* PCM audio
+- Linux microphone input
+- 16 kHz
+- mono
+- PCM audio
 
 VAD:
 
-* whisper.cpp VAD initially
-* Silero VAD may be evaluated later
+- whisper.cpp VAD initially
+- Silero VAD may be evaluated later
 
 whisper.cpp already includes a real-time microphone streaming example and sliding-window/VAD mode.
 
@@ -270,8 +270,8 @@ whisper.cpp's existing streaming implementation samples audio continuously and s
 
 The engine must distinguish between:
 
-* committed text
-* current partial transcription
+- committed text
+- current partial transcription
 
 Example:
 
@@ -320,18 +320,18 @@ The transcription engine must be benchmarked.
 
 Measure:
 
-* Model loading time.
-* Idle RAM.
-* Model RAM.
-* Peak RAM.
-* CPU utilization.
-* GPU utilization.
-* GPU memory/shared memory.
-* Audio-to-text latency.
-* Real-Time Factor (RTF).
-* Transcription accuracy.
-* Startup time.
-* Time from speech ending to final transcript.
+- Model loading time.
+- Idle RAM.
+- Model RAM.
+- Peak RAM.
+- CPU utilization.
+- GPU utilization.
+- GPU memory/shared memory.
+- Audio-to-text latency.
+- Real-Time Factor (RTF).
+- Transcription accuracy.
+- Startup time.
+- Time from speech ending to final transcript.
 
 ## Target
 
@@ -385,7 +385,7 @@ No text injection.
 
 ## Objective
 
-Allow the user to hold a global keyboard shortcut while speaking and insert the final transcript into the currently focused application.
+Allow the user to hold a global keyboard shortcut while speaking and insert the final transcript into the currently focused application. currently we have configured to hold the left control for transcribing start and for finishing we left then it transcribes in the terminal.
 
 ## Interaction
 
@@ -407,12 +407,12 @@ Insert text
 
 ## Requirements
 
-* Global keyboard shortcut.
-* Configurable shortcut.
-* Key-down starts recording.
-* Key-up stops recording.
-* Text insertion into active application.
-* No application-specific integrations initially.
+- Global keyboard shortcut.
+- Configurable shortcut.
+- Key-down starts recording.
+- Key-up stops recording.
+- Text insertion into active application.
+- No application-specific integrations initially.
 
 ## Text Injection Abstraction
 
@@ -454,13 +454,13 @@ Text injection
 
 Potential operations:
 
-* Remove filler words.
-* Fix punctuation.
-* Correct obvious transcription errors.
-* Format text.
-* Structure output.
-* Convert speech into code-friendly text.
-* Produce JSON when explicitly configured.
+- Remove filler words.
+- Fix punctuation.
+- Correct obvious transcription errors.
+- Format text.
+- Structure output.
+- Convert speech into code-friendly text.
+- Produce JSON when explicitly configured.
 
 ## LLM Interface
 
@@ -472,9 +472,9 @@ class TextProcessor:
 
 Possible backend:
 
-* Ollama
-* llama.cpp
-* OpenAI-compatible local inference server
+- Ollama
+- llama.cpp
+- OpenAI-compatible local inference server
 
 The ASR engine must not depend on a particular LLM backend.
 
@@ -521,16 +521,16 @@ Only after the core engine is stable.
 
 Features:
 
-* Background daemon.
-* System tray indicator.
-* Configuration file.
-* Model management.
-* Hardware detection.
-* Startup on login.
-* Logging.
-* Diagnostics.
-* Benchmark command.
-* Installation package.
+- Background daemon.
+- System tray indicator.
+- Configuration file.
+- Model management.
+- Hardware detection.
+- Startup on login.
+- Logging.
+- Diagnostics.
+- Benchmark command.
+- Installation package.
 
 Example:
 
@@ -683,12 +683,12 @@ output:
 
 Test independently:
 
-* Audio buffer.
-* Chunk creation.
-* Overlap handling.
-* Transcript merging.
-* Configuration.
-* Hardware detection.
+- Audio buffer.
+- Chunk creation.
+- Overlap handling.
+- Transcript merging.
+- Configuration.
+- Hardware detection.
 
 ## Integration Tests
 
@@ -716,15 +716,15 @@ At minimum:
 
 Create a fixed speech test set containing:
 
-* Normal speech.
-* Fast speech.
-* Technical terminology.
-* Programming terminology.
-* Numbers.
-* Punctuation.
-* Short phrases.
-* Long phrases.
-* Background noise.
+- Normal speech.
+- Fast speech.
+- Technical terminology.
+- Programming terminology.
+- Numbers.
+- Punctuation.
+- Short phrases.
+- Long phrases.
+- Background noise.
 
 Compare models and quantization levels.
 
@@ -771,23 +771,23 @@ The benchmark must be used to select the default model/backend.
 
 Stage 1 is complete only when:
 
-* [ ] Microphone capture works.
-* [ ] 16 kHz mono audio works.
-* [ ] VAD works.
-* [ ] Whisper model loads successfully.
-* [ ] Intel Arc GPU backend works on the reference machine.
-* [ ] CPU fallback works.
-* [ ] Streaming transcription works.
-* [ ] Partial transcripts are produced.
-* [ ] Duplicate overlapping text is handled.
-* [ ] Final transcript is produced correctly.
-* [ ] Model remains loaded between recordings.
-* [ ] RAM usage is measured.
-* [ ] CPU usage is measured.
-* [ ] GPU usage is measured.
-* [ ] Latency is measured.
-* [ ] Benchmark command works.
-* [ ] No LLM dependency exists.
+- [ ] Microphone capture works.
+- [ ] 16 kHz mono audio works.
+- [ ] VAD works.
+- [ ] Whisper model loads successfully.
+- [ ] Intel Arc GPU backend works on the reference machine.
+- [ ] CPU fallback works.
+- [ ] Streaming transcription works.
+- [ ] Partial transcripts are produced.
+- [ ] Duplicate overlapping text is handled.
+- [ ] Final transcript is produced correctly.
+- [ ] Model remains loaded between recordings.
+- [ ] RAM usage is measured.
+- [ ] CPU usage is measured.
+- [ ] GPU usage is measured.
+- [ ] Latency is measured.
+- [ ] Benchmark command works.
+- [ ] No LLM dependency exists.
 
 Only after all items are complete should Stage 2 begin.
 
@@ -795,24 +795,24 @@ Only after all items are complete should Stage 2 begin.
 
 # 18. Definition of Done — Stage 2
 
-* [ ] Global hotkey works.
-* [ ] Key-down starts recording.
-* [ ] Key-up stops recording.
-* [ ] Final transcript is generated.
-* [ ] Transcript can be inserted into the active application.
-* [ ] Works in at least VS Code, browser text field, and terminal.
-* [ ] ASR engine remains independent from input injection.
+- [ ] Global hotkey works.
+- [ ] Key-down starts recording.
+- [ ] Key-up stops recording.
+- [ ] Final transcript is generated.
+- [ ] Transcript can be inserted into the active application.
+- [ ] Works in at least VS Code, browser text field, and terminal.
+- [ ] ASR engine remains independent from input injection.
 
 ---
 
 # 19. Definition of Done — Stage 3
 
-* [ ] LLM processing is optional.
-* [ ] LLM is never invoked during recording.
-* [ ] Final transcript is passed to LLM after key release.
-* [ ] LLM output can be inserted into active application.
-* [ ] LLM backend is replaceable.
-* [ ] LLM can be disabled without changing ASR behavior.
+- [ ] LLM processing is optional.
+- [ ] LLM is never invoked during recording.
+- [ ] Final transcript is passed to LLM after key release.
+- [ ] LLM output can be inserted into active application.
+- [ ] LLM backend is replaceable.
+- [ ] LLM can be disabled without changing ASR behavior.
 
 ---
 

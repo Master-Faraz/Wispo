@@ -8,6 +8,7 @@ the model choice will be based on.
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 import time
 import wave
@@ -39,14 +40,21 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         default="leftctrl",
         help="Key to hold while speaking (leftctrl, rightctrl, rightalt, leftalt, space).",
     )
+    parser.add_argument(
+        "--inject",
+        action="store_true",
+        help="Type the finished sentence into the focused window. Hold Ctrl and the Windows key.",
+    )
     args = parser.parse_args(argv)
     config = load_config(args.config)
     if args.device:
         config = _with_device(config, args.device)
 
-    from whisperflow.hotkey.linux import HoldKey
+    from whisperflow.hotkey.linux import HoldChord, HoldKey, OverviewKey
 
     app = TranscriptionApp(config)
+    keyboard = None
+    overview = None
     _print_banner(app)
     print(f"Mic: {app.capture.description}")
     if app.device.use_gpu:
@@ -54,19 +62,45 @@ def transcribe_main(argv: list[str] | None = None) -> int:
     else:
         print("Inference: whisper.cpp CPU.")
     print()
-    print("Loading model...")
-    started = time.perf_counter()
-    app.load_model()
-    print(f"Model ready in {time.perf_counter() - started:.2f}s")
-    print(app.engine.system_info().strip())
-    print()
-    hold = HoldKey(args.key)
-    hold.start()
-    print("Hold the Left Ctrl key and speak. Release it to finish.")
-    print("Keep holding for about a second to see a partial line. Press Ctrl+C to quit.")
-    print()
+    if args.inject:
+        from whisperflow.injection.portal import PortalError, PortalKeyboard
+
+        keyboard = PortalKeyboard()
+        print("Opening the input session. Allow the permission dialog if GNOME shows one.")
+        try:
+            keyboard.open()
+        except PortalError as exc:
+            print(f"Input session failed: {exc}", file=sys.stderr)
+            return 1
+        print("Input session ready. The finished sentence is typed into the focused window.")
+        print()
+        overview = OverviewKey()
+        try:
+            overview.start()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            print(f"Could not move the overview key aside: {exc}", file=sys.stderr)
+            overview = None
+    hold = None
     recording = False
     try:
+        print("Loading model...")
+        started = time.perf_counter()
+        app.load_model()
+        print(f"Model ready in {time.perf_counter() - started:.2f}s")
+        print(app.engine.system_info().strip())
+        print()
+        if args.inject:
+            hold = HoldChord()
+            hold.start()
+            print("Hold Ctrl and the Windows key together, then speak.")
+            print("Release either key to type the finished sentence.")
+            print("The sentence is not printed here. Press Ctrl+C to quit.")
+        else:
+            hold = HoldKey(args.key)
+            hold.start()
+            print(f"Hold {args.key} and speak. Release it to finish.")
+            print("Keep holding for about a second to see a partial line. Press Ctrl+C to quit.")
+        print()
         while True:
             if hold.held.is_set():
                 if not recording:
@@ -75,29 +109,66 @@ def transcribe_main(argv: list[str] | None = None) -> int:
                     print()
                     print("Recording...")
                 event = app.read_once(force_speech=True)
-                if isinstance(event, Partial) and event.text:
+                # Partials are how the live GPU path stays current. They are
+                # printed in the terminal tool only. --inject types the final
+                # sentence and nothing earlier.
+                if keyboard is None and isinstance(event, Partial) and event.text:
                     print(f"[partial] {event.text}", flush=True)
             elif recording:
                 text = app.stop_recording()
                 recording = False
-                _print_final(text)
-                print("Hold Left Ctrl to talk again.")
+                if keyboard is not None:
+                    _inject_final(keyboard, text)
+                    print(f"Hold {hold.description} to talk again.")
+                else:
+                    _print_final(text)
+                    print(f"Hold {args.key} to talk again.")
             else:
                 time.sleep(0.02)
     except KeyboardInterrupt:
         print()
         if recording:
-            _print_final(app.stop_recording())
+            text = app.stop_recording()
+            if keyboard is not None:
+                _inject_final(keyboard, text)
+            else:
+                _print_final(text)
         return 0
     finally:
-        hold.stop()
+        if hold is not None:
+            hold.stop()
         app.capture.stop()
+        if overview is not None:
+            overview.stop()
+        if keyboard is not None:
+            keyboard.close()
 
 
 def _print_final(text: str) -> None:
     print()
     print("Final:")
     print(text or "(no speech heard)")
+    print()
+
+
+def _inject_final(keyboard, text: str) -> None:
+    from whisperflow.injection.keymap import UnsupportedCharacter
+    from whisperflow.injection.portal import PortalError
+
+    if not text:
+        print()
+        print("(no speech heard)")
+        print()
+        return
+    try:
+        keyboard.insert(text)
+    except (PortalError, UnsupportedCharacter) as exc:
+        print()
+        print(f"Could not type the sentence: {exc}")
+        print()
+        return
+    print()
+    print("Inserted.")
     print()
 
 
