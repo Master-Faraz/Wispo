@@ -86,6 +86,8 @@ _SINGLE_KEYS = {
     "n": 49,
     "m": 50,
     "space": 57,
+    "copilot": 193,
+    "f23": 193,
 }
 _MODIFIER_ORDER = ("shift", "ctrl", "alt", "super")
 _LABELS = {
@@ -98,6 +100,8 @@ _LABELS = {
     "tab": "Tab",
     "esc": "Esc",
     "backspace": "Backspace",
+    "copilot": "Copilot",
+    "f23": "Copilot",
 }
 
 _EVENT = struct.Struct("llHHi")
@@ -269,6 +273,12 @@ def format_chord(keys: tuple[str, ...] | list[str]) -> str:
 
 def chord_from_codes(codes: set[int]) -> tuple[str, ...]:
     """Turn the keys that were held together into shortcut names."""
+    # The physical Copilot key on modern laptops sends Shift (42) + Meta (125) + F23 (193).
+    # Normalize this macro into the single dedicated 'copilot' key so synthetic modifiers
+    # (especially Meta/Super) do not interfere with GNOME Shell's overlay key.
+    if 193 in codes:
+        return ("copilot",)
+
     names: list[str] = []
     seen: set[str] = set()
     for code in sorted(codes):
@@ -288,7 +298,7 @@ def capture_chord(stop: threading.Event, timeout: float = 8.0) -> tuple[str, ...
     """Read the next press-and-release from the keyboard. Empty on timeout."""
     import time
 
-    fds = _open_keyboards(CTRL_CODES | META_CODES | {KEY_CODES["space"]})
+    fds = _open_keyboards(CTRL_CODES | META_CODES | {KEY_CODES["space"], 193})
     if not fds:
         raise RuntimeError(
             "no keyboard was readable. The account needs to be in the input group."

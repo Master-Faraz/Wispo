@@ -40,3 +40,12 @@ def test_binding_description_comes_from_the_portal():
 
 def test_other_shortcuts_are_ignored():
     assert describe_binding({"shortcuts": [("something-else", {})]}) == ""
+
+
+def test_copilot_key_normalized_and_formatted():
+    assert chord_from_codes({42, 125, 193}) == ("copilot",)
+    assert chord_from_codes({193}) == ("copilot",)
+    assert format_chord(("copilot",)) == "Copilot"
+    assert codes_for("copilot") == {193}
+    assert chord_satisfied({42, 125, 193}, (codes_for("copilot"),))
+

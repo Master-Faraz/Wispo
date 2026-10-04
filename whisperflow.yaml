@@ -34,6 +34,4 @@ dictionary:
   enabled: true
 hotkey:
   keys:
-  - ctrl
-  - alt
-  - key43
+  - copilot
