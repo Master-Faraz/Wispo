@@ -211,6 +211,8 @@ SVG_ICONS = {
     "sliders": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/></svg>""",
     "refresh": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>""",
     "chip": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>""",
+    "shield_check": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>""",
+    "zap": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>""",
 }
 
 _MACOS_LIQUID_GLASS_CSS = """
@@ -671,6 +673,106 @@ scale.glass-scale slider {
     margin: -5px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
+
+/* Push-to-talk Studio Styling */
+.kbd-chip-large {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.5px;
+}
+
+.kbd-chip-modifier {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.18) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    border-bottom: 3px solid rgba(139, 92, 246, 0.65);
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: 800;
+    font-size: 14px;
+    color: #e0e7ff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.5px;
+}
+
+.btn-record-chord {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.55);
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 7px 20px;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    transition: all 150ms ease;
+}
+
+.btn-record-chord:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5) 0%, rgba(139, 92, 246, 0.35) 100%);
+    border-color: #a78bfa;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+}
+
+.btn-record-active {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 7px 20px;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.btn-record-active:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.preset-card-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 11px;
+    padding: 9px 13px;
+    margin-bottom: 5px;
+    transition: all 160ms ease;
+}
+
+.preset-card-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.preset-card-selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1.5px solid rgba(129, 140, 248, 0.85);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.mode-card-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 11px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    transition: all 160ms ease;
+}
+
+.mode-card-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.mode-card-selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1.5px solid rgba(129, 140, 248, 0.85);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
 """
 
 
@@ -727,6 +829,18 @@ class SettingsApp:
         self._hotkey_box = None
         self._dict_preview_box = None
         self._capture_stop = threading.Event()
+
+        # Push-to-talk Studio state
+        self._is_capturing_shortcut = False
+        self._ptt_trigger_mode = "hold"
+        self._audio_feedback_enabled = True
+        self._ptt_hotkey_box = None
+        self._ptt_record_btn = None
+        self._ptt_status_lbl = None
+        self._ptt_preset_rows: dict[str, object] = {}
+        self._ptt_preset_radio_imgs: dict[str, object] = {}
+        self._ptt_mode_rows: dict[str, object] = {}
+        self._ptt_mode_radio_imgs: dict[str, object] = {}
 
         # Audio & Mic state
         self._selected_audio_device = self._config.audio.device
@@ -852,9 +966,12 @@ class SettingsApp:
         audio_panel = self._build_audio_panel()
         self._main_stack.add_named(audio_panel, "audio")
 
-        # 3. Placeholders for other sidebar sections
+        # 3. Push-to-talk Section (Full width studio)
+        ptt_panel = self._build_push_to_talk_panel()
+        self._main_stack.add_named(ptt_panel, "push_to_talk")
+
+        # 4. Placeholders for other sidebar sections
         placeholders = [
-            ("push_to_talk", "Push-to-talk", "Keyboard shortcuts and global push-to-talk dictation controls."),
             ("dictionary", "Dictionary", "Manage vocabulary replacements and phonetic word corrections."),
             ("general", "General Settings", "Desktop integration, startup behavior, and application options."),
             ("about", "About WhisperFlow", "System diagnostics, version info, and credits."),
@@ -1074,6 +1191,8 @@ class SettingsApp:
     def _switch_section(self, target_tag: str) -> None:
         if target_tag != "audio" and self._is_testing_mic:
             self._stop_mic_test()
+        if target_tag != "push_to_talk" and self._is_capturing_shortcut:
+            self._stop_capture()
 
         for tag, row in self._sidebar_nav_rows.items():
             if tag == target_tag:
@@ -1711,6 +1830,411 @@ class SettingsApp:
         return True
 
     # -------------------------------------------------------------------------
+    # Push-to-Talk Studio: Key Mapping, Hardware Presets & Activation Behavior
+    # -------------------------------------------------------------------------
+    def _build_push_to_talk_panel(self):
+        gtk = self.gtk
+
+        scroller = gtk.ScrolledWindow()
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_hexpand(True)
+        scroller.set_vexpand(True)
+
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        vbox.add_css_class("audio-panel")
+        vbox.set_hexpand(True)
+
+        # 1. Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="Push-to-talk", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>Push-to-talk</span>")
+        sub = gtk.Label(label="Configure global keyboard shortcuts and dictation trigger activation.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>Configure global keyboard shortcuts and dictation trigger activation.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+
+        status_pill = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        status_pill.add_css_class("pill-size")
+        status_pill.set_valign(gtk.Align.CENTER)
+        status_lbl = gtk.Label()
+        status_lbl.set_markup("<span font_weight='600' font_size='8.5pt' color='#a5b4fc'>Kernel evdev • Zero Latency</span>")
+        status_pill.append(status_lbl)
+        top_row.append(status_pill)
+        vbox.append(top_row)
+
+        # 2. Card 1: Shortcut Studio (Keycaps + Live Recorder)
+        vbox.append(self._build_ptt_studio_card())
+
+        # 3. Card 2: Recommended Hardware Presets
+        vbox.append(self._build_ptt_presets_card())
+
+        # 4. Card 3: Activation Mode & Cues
+        vbox.append(self._build_ptt_behavior_card())
+
+        # 5. Card 4: Linux Input Subsystem Diagnostics
+        vbox.append(self._build_ptt_diagnostics_card())
+
+        scroller.set_child(vbox)
+        return scroller
+
+    def _build_ptt_studio_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        card.add_css_class("audio-card")
+
+        # Header
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("keyboard"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Shortcut Studio", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Shortcut Studio</span>")
+        s = gtk.Label(label="Hold this key combination anywhere in your operating system to speak.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Hold this key combination anywhere in your operating system to speak.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        # Action Buttons on right of header
+        btn_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        btn_box.set_valign(gtk.Align.CENTER)
+
+        reset_btn = gtk.Button(label="↺ Reset")
+        reset_btn.add_css_class("btn-learn")
+        reset_btn.set_cursor_from_name("pointer")
+        reset_btn.connect("clicked", lambda *_: self._reset_ptt_default())
+        btn_box.append(reset_btn)
+
+        record_btn = gtk.Button(label="🔴 Record Shortcut")
+        record_btn.add_css_class("btn-record-chord")
+        record_btn.set_cursor_from_name("pointer")
+        record_btn.connect("clicked", self._start_capture)
+        self._ptt_record_btn = record_btn
+        btn_box.append(record_btn)
+
+        hdr.append(btn_box)
+        card.append(hdr)
+
+        # Center Keycap Display Row
+        display_frame = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+        display_frame.set_margin_top(4)
+        display_frame.set_margin_bottom(4)
+
+        self._ptt_hotkey_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        self._ptt_hotkey_box.set_hexpand(True)
+        display_frame.append(self._ptt_hotkey_box)
+        card.append(display_frame)
+
+        # Subtitle Status Note
+        status_lbl = gtk.Label(xalign=0)
+        status_lbl.set_markup("<span font_size='8.5pt' alpha='50%'>Hold down the shortcut while speaking in any application. Click Record to rebind.</span>")
+        self._ptt_status_lbl = status_lbl
+        card.append(status_lbl)
+
+        # Render current keycaps
+        self._render_hotkey_chips()
+        return card
+
+    def _reset_ptt_default(self) -> None:
+        self._hotkey_keys = ("copilot",)
+        self._render_hotkey_chips()
+        self._status_label.set_markup("<span font_size='8.5pt' color='#34d399'>● Reset shortcut to Copilot key. Click Save to apply.</span>")
+
+    def _build_ptt_presets_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("zap"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Recommended Hardware Presets", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Recommended Hardware Presets</span>")
+        s = gtk.Label(label="Quickly bind popular single-key and multi-key chord combinations.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Quickly bind popular single-key and multi-key chord combinations.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        preset_items = [
+            (
+                "copilot",
+                ("copilot",),
+                "Copilot Key (Single Key)",
+                "Dedicated hardware AI key on modern laptop keyboards. Effortless thumb hold.",
+                "Hardware AI Key",
+            ),
+            (
+                "rightctrl",
+                ("rightctrl",),
+                "Right Ctrl (Single Key)",
+                "Single modifier key located at the bottom-right corner. Zero chord gymnastics.",
+                "Single Key",
+            ),
+            (
+                "ctrl_super_space",
+                ("ctrl", "super", "space"),
+                "Ctrl + Super + Space",
+                "Familiar macOS Spotlight and Raycast global search shortcut.",
+                "Raycast Style",
+            ),
+            (
+                "alt_space",
+                ("alt", "space"),
+                "Alt + Space",
+                "Fast, ergonomic two-finger thumb chord with high comfort.",
+                "Thumb Chord",
+            ),
+            (
+                "super_h",
+                ("super", "h"),
+                "Super + H",
+                "Standard Windows and GNOME system dictation key combination.",
+                "Windows Style",
+            ),
+        ]
+
+        self._ptt_preset_rows.clear()
+        self._ptt_preset_radio_imgs.clear()
+
+        current_keys = tuple(k.lower() for k in self._hotkey_keys)
+
+        for p_id, p_keys, p_name, p_sub, p_tag in preset_items:
+            is_match = (current_keys == p_keys)
+
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.add_css_class("preset-card-row")
+            if is_match:
+                row.add_css_class("preset-card-selected")
+            row._keys_tuple = p_keys
+
+            radio_img = self._make_svg("radio_on" if is_match else "radio_off")
+            radio_img.set_valign(gtk.Align.CENTER)
+            row.append(radio_img)
+            self._ptt_preset_radio_imgs[p_id] = radio_img
+
+            info_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+            name_lbl = gtk.Label(xalign=0)
+            name_lbl.set_markup(f"<span font_weight='600' font_size='9.5pt' color='#ffffff'>{pango_esc(p_name)}</span>")
+            sub_lbl = gtk.Label(xalign=0)
+            sub_lbl.set_markup(f"<span font_size='8pt' alpha='50%'>{pango_esc(p_sub)}</span>")
+            info_col.append(name_lbl)
+            info_col.append(sub_lbl)
+            row.append(info_col)
+
+            tag_lbl = gtk.Label()
+            tag_lbl.add_css_class("pill-recommended" if p_tag in ("Hardware AI Key", "Single Key") else "pill-size")
+            tag_lbl.set_markup(f"<span font_weight='700' font_size='8pt'>{pango_esc(p_tag)}</span>")
+            tag_lbl.set_valign(gtk.Align.CENTER)
+            row.append(tag_lbl)
+
+            click = gtk.GestureClick()
+            click.connect("released", lambda _g, _n, _x, _y, k=p_keys, n=p_name: self._select_ptt_preset(k, n))
+            row.add_controller(click)
+            row.set_cursor_from_name("pointer")
+
+            self._ptt_preset_rows[p_id] = row
+            card.append(row)
+
+        return card
+
+    def _select_ptt_preset(self, keys: tuple[str, ...], name: str) -> None:
+        self._hotkey_keys = keys
+        self._render_hotkey_chips()
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>Selected preset: {pango_esc(name)}. Click Save to apply.</span>")
+
+    def _sync_preset_highlights(self) -> None:
+        from gi.repository import Gdk, GLib
+
+        current_tuple = tuple(k.lower() for k in self._hotkey_keys)
+        for p_id, row in self._ptt_preset_rows.items():
+            preset_tuple = row._keys_tuple
+            is_match = (current_tuple == preset_tuple)
+            if is_match:
+                row.add_css_class("preset-card-selected")
+            else:
+                row.remove_css_class("preset-card-selected")
+            if p_id in self._ptt_preset_radio_imgs:
+                svg_data = SVG_ICONS["radio_on" if is_match else "radio_off"].encode("utf-8")
+                bytes_data = GLib.Bytes.new(svg_data)
+                tex = Gdk.Texture.new_from_bytes(bytes_data)
+                self._ptt_preset_radio_imgs[p_id].set_from_paintable(tex)
+
+    def _build_ptt_behavior_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("reticle"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Activation Mode & Cues", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Activation Mode &amp; Cues</span>")
+        s = gtk.Label(label="Choose how the hotkey activates audio streaming and feedback cues.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Choose how the hotkey activates audio streaming and feedback cues.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        modes = [
+            (
+                "hold",
+                "Hold-to-Talk (Push-to-Talk)",
+                "Audio is captured exclusively while physical keys are pressed down. Releases trigger instant transcription.",
+                "Recommended",
+            ),
+            (
+                "toggle",
+                "Toggle Mode (Hands-Free Dictation)",
+                "Press shortcut once to start recording; press again or let pause silence trigger end of utterance.",
+                "Hands-Free",
+            ),
+        ]
+
+        self._ptt_mode_rows.clear()
+        self._ptt_mode_radio_imgs.clear()
+
+        for m_id, m_title, m_desc, m_tag in modes:
+            is_active = (self._ptt_trigger_mode == m_id)
+
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.add_css_class("mode-card-row")
+            if is_active:
+                row.add_css_class("mode-card-selected")
+
+            radio_img = self._make_svg("radio_on" if is_active else "radio_off")
+            radio_img.set_valign(gtk.Align.CENTER)
+            row.append(radio_img)
+            self._ptt_mode_radio_imgs[m_id] = radio_img
+
+            info_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+            l1 = gtk.Label(xalign=0)
+            l1.set_markup(f"<span font_weight='600' font_size='9.5pt' color='#ffffff'>{pango_esc(m_title)}</span>")
+            l2 = gtk.Label(xalign=0)
+            l2.set_markup(f"<span font_size='8pt' alpha='50%'>{pango_esc(m_desc)}</span>")
+            info_col.append(l1)
+            info_col.append(l2)
+            row.append(info_col)
+
+            tag_lbl = gtk.Label()
+            tag_lbl.add_css_class("pill-recommended" if m_id == "hold" else "pill-size")
+            tag_lbl.set_markup(f"<span font_weight='700' font_size='8pt'>{pango_esc(m_tag)}</span>")
+            tag_lbl.set_valign(gtk.Align.CENTER)
+            row.append(tag_lbl)
+
+            click = gtk.GestureClick()
+            click.connect("released", lambda _g, _n, _x, _y, mid=m_id: self._select_ptt_mode(mid))
+            row.add_controller(click)
+            row.set_cursor_from_name("pointer")
+
+            self._ptt_mode_rows[m_id] = row
+            card.append(row)
+
+        return card
+
+    def _select_ptt_mode(self, mode_id: str) -> None:
+        from gi.repository import Gdk, GLib
+
+        self._ptt_trigger_mode = mode_id
+        for mid, row in self._ptt_mode_rows.items():
+            is_sel = (mid == mode_id)
+            if is_sel:
+                row.add_css_class("mode-card-selected")
+            else:
+                row.remove_css_class("mode-card-selected")
+            if mid in self._ptt_mode_radio_imgs:
+                svg_data = SVG_ICONS["radio_on" if is_sel else "radio_off"].encode("utf-8")
+                bytes_data = GLib.Bytes.new(svg_data)
+                tex = Gdk.Texture.new_from_bytes(bytes_data)
+                self._ptt_mode_radio_imgs[mid].set_from_paintable(tex)
+
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>Activation mode set to {'Hold-to-Talk' if mode_id == 'hold' else 'Toggle Mode'}. Click Save to apply.</span>")
+
+    def _build_ptt_diagnostics_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("shield_check"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Linux Kernel Input Diagnostics", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Linux Kernel Input Diagnostics</span>")
+        s = gtk.Label(label="Kernel-level event monitoring verifying input group permissions and edge latency.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Kernel-level event monitoring verifying input group permissions and edge latency.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        can_read = False
+        try:
+            from whisperflow.hotkey.linux import CTRL_CODES, KEY_CODES, META_CODES, _open_keyboards
+
+            fds = _open_keyboards(CTRL_CODES | META_CODES | {KEY_CODES["space"], 193})
+            can_read = len(fds) > 0
+            for fd in fds:
+                os.close(fd)
+        except Exception:
+            can_read = False
+
+        perm_str = "● Access Active (input group OK)" if can_read else "⚠ Permission Required"
+
+        grid = gtk.Grid()
+        grid.set_column_spacing(12)
+        grid.set_row_spacing(8)
+        grid.set_hexpand(True)
+
+        metrics = [
+            ("Driver Subsystem", "Linux evdev (/dev/input)", "Direct character device link", 0, 0),
+            ("Permissions", perm_str, "User in 'input' system group", 1, 0),
+            ("Edge Detection", "Native Key-Up (EV_KEY)", "Zero-latency chord release", 2, 0),
+            ("Polling Latency", "< 5 ms Hardware Interrupt", "Kernel interrupt buffer", 0, 1),
+            ("Display Server", "Wayland & X11 Transparent", "Global kernel-level shortcut", 1, 1),
+            ("Injection Target", "Active Focus Window", "Direct keyboard simulation", 2, 1),
+        ]
+
+        for m_title, m_val, m_desc, col, row in metrics:
+            b = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2)
+            b.add_css_class("diag-metric-box")
+            b.set_hexpand(True)
+
+            l1 = gtk.Label(xalign=0)
+            l1.set_markup(f"<span font_size='7.5pt' alpha='50%'>{pango_esc(m_title)}</span>")
+            l2 = gtk.Label(xalign=0)
+            color = "#34d399" if "Access Active" in m_val else "#ffffff"
+            l2.set_markup(f"<span font_weight='700' font_size='9pt' color='{color}'>{pango_esc(m_val)}</span>")
+            l3 = gtk.Label(xalign=0)
+            l3.set_markup(f"<span font_size='7.5pt' alpha='40%'>{pango_esc(m_desc)}</span>")
+
+            b.append(l1)
+            b.append(l2)
+            b.append(l3)
+            grid.attach(b, col, row, 1, 1)
+
+        card.append(grid)
+        return card
+
+    # -------------------------------------------------------------------------
     # Column 2: Center Model Selection List
     # -------------------------------------------------------------------------
     def _build_center_panel(self):
@@ -2003,23 +2527,50 @@ class SettingsApp:
         return v
 
     def _render_hotkey_chips(self) -> None:
-        if self._hotkey_box is None:
-            return
         gtk = self.gtk
-        while True:
-            c = self._hotkey_box.get_first_child()
-            if c is None:
-                break
-            self._hotkey_box.remove(c)
 
-        for i, key in enumerate(self._hotkey_keys):
-            if i > 0:
-                plus = gtk.Label(label="+")
-                plus.set_opacity(0.4)
-                self._hotkey_box.append(plus)
-            chip = gtk.Label(label=key.capitalize())
-            chip.add_css_class("kbd-chip")
-            self._hotkey_box.append(chip)
+        # 1. Update mini inspector box
+        if self._hotkey_box is not None:
+            while True:
+                c = self._hotkey_box.get_first_child()
+                if c is None:
+                    break
+                self._hotkey_box.remove(c)
+
+            for i, key in enumerate(self._hotkey_keys):
+                if i > 0:
+                    plus = gtk.Label(label="+")
+                    plus.set_opacity(0.4)
+                    self._hotkey_box.append(plus)
+                chip = gtk.Label(label=key.capitalize())
+                chip.add_css_class("kbd-chip")
+                self._hotkey_box.append(chip)
+
+        # 2. Update large Push-to-Talk Studio box
+        if self._ptt_hotkey_box is not None:
+            while True:
+                c = self._ptt_hotkey_box.get_first_child()
+                if c is None:
+                    break
+                self._ptt_hotkey_box.remove(c)
+
+            modifier_names = {"ctrl", "super", "alt", "shift"}
+            for i, key in enumerate(self._hotkey_keys):
+                if i > 0:
+                    plus = gtk.Label()
+                    plus.set_markup("<span font_weight='700' font_size='11pt' alpha='40%'>+</span>")
+                    plus.set_valign(gtk.Align.CENTER)
+                    self._ptt_hotkey_box.append(plus)
+                chip = gtk.Label(label=key.upper() if key.lower() in ("ctrl", "f23") else key.capitalize())
+                if key.lower() in modifier_names:
+                    chip.add_css_class("kbd-chip-modifier")
+                else:
+                    chip.add_css_class("kbd-chip-large")
+                chip.set_valign(gtk.Align.CENTER)
+                self._ptt_hotkey_box.append(chip)
+
+        # 3. Synchronize preset selections
+        self._sync_preset_highlights()
 
     def _render_dict_preview(self) -> None:
         if self._dict_preview_box is None:
@@ -2252,17 +2803,35 @@ class SettingsApp:
     # -------------------------------------------------------------------------
     def _stop_capture(self, *_args) -> bool:
         self._capture_stop.set()
+        self._is_capturing_shortcut = False
+        if self._ptt_record_btn:
+            self._ptt_record_btn.remove_css_class("btn-record-active")
+            self._ptt_record_btn.add_css_class("btn-record-chord")
+            self._ptt_record_btn.set_label("🔴 Record Shortcut")
+        if self._ptt_status_lbl:
+            self._ptt_status_lbl.set_markup("<span font_size='8.5pt' alpha='50%'>Hold down the shortcut while speaking in any application. Click Record to rebind.</span>")
         return False
 
     def _start_capture(self, *_args) -> None:
+        if self._is_capturing_shortcut:
+            self._stop_capture()
+            return
         self._capture_stop.set()
         self._capture_stop = threading.Event()
         stop = self._capture_stop
+        self._is_capturing_shortcut = True
+
+        if self._ptt_record_btn:
+            self._ptt_record_btn.remove_css_class("btn-record-chord")
+            self._ptt_record_btn.add_css_class("btn-record-active")
+            self._ptt_record_btn.set_label("⏹ Cancel (Listening...)")
+        if self._ptt_status_lbl:
+            self._ptt_status_lbl.set_markup("<span font_size='9pt' font_weight='700' color='#f87171'>● Listening: Press and release your shortcut keys on the keyboard...</span>")
         self._status_label.set_markup("<span font_size='8.5pt' color='#a855f7' font_weight='bold'>● Listening: Press the shortcut keys on your keyboard...</span>")
 
         def work() -> None:
             try:
-                keys = capture_chord(stop)
+                keys = capture_chord(stop, timeout=10.0)
             except Exception as exc:
                 self._idle(self._shortcut_failed, str(exc))
                 return
@@ -2271,15 +2840,34 @@ class SettingsApp:
         threading.Thread(target=work, name="whisperflow-capture", daemon=True).start()
 
     def _shortcut_done(self, keys: tuple[str, ...]) -> bool:
+        self._is_capturing_shortcut = False
+        if self._ptt_record_btn:
+            self._ptt_record_btn.remove_css_class("btn-record-active")
+            self._ptt_record_btn.add_css_class("btn-record-chord")
+            self._ptt_record_btn.set_label("🔴 Record Shortcut")
+
         if not keys:
+            if self._ptt_status_lbl:
+                self._ptt_status_lbl.set_markup("<span font_size='8.5pt' alpha='65%'>Capture timed out. No shortcut pressed.</span>")
             self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>No shortcut captured.</span>")
             return False
+
         self._hotkey_keys = keys
         self._render_hotkey_chips()
-        self._status_label.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#34d399'>● Shortcut updated to {pango_esc(format_chord(keys))}. Click Save to apply.</span>")
+        chord_str = format_chord(keys)
+        if self._ptt_status_lbl:
+            self._ptt_status_lbl.set_markup(f"<span font_size='9pt' font_weight='700' color='#34d399'>● Assigned to {pango_esc(chord_str)}. Click Save to apply.</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#34d399'>● Shortcut updated to {pango_esc(chord_str)}. Click Save to apply.</span>")
         return False
 
     def _shortcut_failed(self, message: str) -> bool:
+        self._is_capturing_shortcut = False
+        if self._ptt_record_btn:
+            self._ptt_record_btn.remove_css_class("btn-record-active")
+            self._ptt_record_btn.add_css_class("btn-record-chord")
+            self._ptt_record_btn.set_label("🔴 Record Shortcut")
+        if self._ptt_status_lbl:
+            self._ptt_status_lbl.set_markup(f"<span font_size='8.5pt' color='#f87171'>Capture error: {pango_esc(message)}</span>")
         self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Shortcut capture failed: {pango_esc(message)}</span>")
         return False
 
