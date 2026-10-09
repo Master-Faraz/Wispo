@@ -5,8 +5,8 @@ audio:
   frame_ms: 30
 asr:
   backend: whisper_cpp
-  model: large-v3-turbo-q5_0
-  model_path: models/ggml-large-v3-turbo-q5_0.bin
+  model: small.en
+  model_path: models/ggml-small.en.bin
   device: auto
   quantization: fp16
   threads: 4

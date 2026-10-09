@@ -27,22 +27,22 @@ class ModelSpec:
     url: str
 
 
-# Sizes are the published file sizes, shown before download.
+# Sizes are the verified published and on-disk file sizes, shown before download.
 CATALOG: tuple[ModelSpec, ...] = (
     ModelSpec("tiny.en", "75 MB", _whisper_cpp("tiny.en")),
-    ModelSpec("base.en", "148 MB", _whisper_cpp("base.en")),
-    ModelSpec("small.en", "488 MB", _whisper_cpp("small.en")),
+    ModelSpec("base.en", "142 MB", _whisper_cpp("base.en")),
+    ModelSpec("small.en", "466 MB", _whisper_cpp("small.en")),
     ModelSpec("medium.en", "1.5 GB", _whisper_cpp("medium.en")),
-    ModelSpec("large-v3-turbo-q5_0", "547 MB", _whisper_cpp("large-v3-turbo-q5_0")),
+    ModelSpec("large-v3-turbo-q5_0", "548 MB", _whisper_cpp("large-v3-turbo-q5_0")),
     ModelSpec("large-v3-turbo", "1.5 GB", _whisper_cpp("large-v3-turbo")),
     ModelSpec(
         "distil-small.en",
-        "336 MB",
+        "321 MB",
         "https://huggingface.co/distil-whisper/distil-small.en/resolve/main/ggml-distil-small.en.bin",
     ),
     ModelSpec(
         "distil-medium.en",
-        "794 MB",
+        "758 MB",
         "https://huggingface.co/distil-whisper/distil-medium.en/resolve/main/ggml-medium-32-2.en.bin",
     ),
     ModelSpec(
@@ -52,7 +52,7 @@ CATALOG: tuple[ModelSpec, ...] = (
     ),
     ModelSpec(
         "distil-large-v3.5",
-        "1.4 GB",
+        "1.45 GB",
         "https://huggingface.co/distil-whisper/distil-large-v3.5-ggml/resolve/main/ggml-model.bin",
     ),
 )

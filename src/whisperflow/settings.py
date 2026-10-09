@@ -25,15 +25,17 @@ def pango_esc(text: str) -> str:
     return html.escape(str(text))
 
 
-# Rich metadata matching the design specification
+# Rich metadata verified from whisper.cpp and distil-whisper official benchmarks
 MODEL_METADATA: dict[str, dict] = {
     "tiny.en": {
         "title": "tiny.en",
         "subtitle": "Fastest, good for clean audio.",
-        "desc": "An ultra-compact model optimized for blazing speed and minimal memory footprint. Best for rapid dictation on low-power devices.",
-        "size_str": "74 MB",
+        "desc": "An ultra-compact 39M parameter model optimized for minimal memory footprint and fast inference. Best for rapid commands and clean audio on low-power CPUs.",
+        "params": "39M",
+        "size_str": "75 MB",
+        "ram_str": "~273 MB RAM",
         "lang": "English only",
-        "best_for": "Fast commands & clean audio",
+        "best_for": "Quick commands & clean audio",
         "speed_pct": 0.95,
         "speed_label": "Very Fast",
         "acc_pct": 0.55,
@@ -43,8 +45,10 @@ MODEL_METADATA: dict[str, dict] = {
     "base.en": {
         "title": "base.en",
         "subtitle": "Balanced speed and accuracy for English.",
-        "desc": "The standard balanced model for everyday English dictation. Provides reliable transcription with near-zero latency.",
-        "size_str": "141 MB",
+        "desc": "The standard balanced 74M parameter model. Provides reliable English dictation with near-zero latency and minimal CPU/GPU overhead.",
+        "params": "74M",
+        "size_str": "142 MB",
+        "ram_str": "~388 MB RAM",
         "lang": "English only",
         "best_for": "General usage & everyday speech",
         "speed_pct": 0.85,
@@ -56,8 +60,10 @@ MODEL_METADATA: dict[str, dict] = {
     "small.en": {
         "title": "small.en",
         "subtitle": "Better accuracy, still fast.",
-        "desc": "High accuracy model capable of handling accents, technical vocabulary, and background noise with great precision.",
-        "size_str": "465 MB",
+        "desc": "High accuracy 244M parameter model capable of handling diverse regional accents, technical vocabulary, and noisy background environments.",
+        "params": "244M",
+        "size_str": "466 MB",
+        "ram_str": "~852 MB RAM",
         "lang": "English only",
         "best_for": "Accents & technical terms",
         "speed_pct": 0.65,
@@ -69,10 +75,12 @@ MODEL_METADATA: dict[str, dict] = {
     "medium.en": {
         "title": "medium.en",
         "subtitle": "High accuracy for nuanced context.",
-        "desc": "Substantially deeper acoustic model with excellent linguistic nuance. Recommended for users with dedicated GPU headroom.",
+        "desc": "Deep 769M parameter acoustic model with excellent linguistic nuance and low Word Error Rate. Ideal for users with dedicated GPU headroom.",
+        "params": "769M",
         "size_str": "1.5 GB",
+        "ram_str": "~2.1 GB RAM",
         "lang": "English only",
-        "best_for": "Complex vocabulary & noisy environments",
+        "best_for": "Complex vocabulary & noisy audio",
         "speed_pct": 0.40,
         "speed_label": "Slower",
         "acc_pct": 0.92,
@@ -82,8 +90,10 @@ MODEL_METADATA: dict[str, dict] = {
     "large-v3-turbo-q5_0": {
         "title": "large-v3-turbo-q5_0",
         "subtitle": "High accuracy, optimized for speed.",
-        "desc": "Quantized 5-bit Turbo checkpoint. Delivers state-of-the-art Large-v3 accuracy with 3x faster inference speed and low RAM.",
-        "size_str": "547 MB",
+        "desc": "Quantized 5-bit Turbo checkpoint. Delivers state-of-the-art Large-v3 accuracy with 3x faster decoding, low VRAM usage, and 809M parameters.",
+        "params": "809M (Q5_0)",
+        "size_str": "548 MB",
+        "ram_str": "~1.1 GB RAM",
         "lang": "Multilingual / English",
         "best_for": "Maximum accuracy with fast speed",
         "speed_pct": 0.62,
@@ -95,11 +105,13 @@ MODEL_METADATA: dict[str, dict] = {
     "large-v3-turbo": {
         "title": "large-v3-turbo",
         "subtitle": "Uncompromising accuracy, 4-layer decoder.",
-        "desc": "Flagship 4-layer decoder architecture with unmatched accuracy across technical jargon, acronyms, and overlapping phrases.",
+        "desc": "OpenAI's official 4-layer fast decoder model. Uncompromised Large-v3 robustness across technical jargon and acronyms with 8x lower latency.",
+        "params": "809M",
         "size_str": "1.5 GB",
+        "ram_str": "~1.8 GB RAM",
         "lang": "Multilingual / English",
         "best_for": "Professional transcription",
-        "speed_pct": 0.48,
+        "speed_pct": 0.50,
         "speed_label": "Moderate",
         "acc_pct": 0.96,
         "acc_label": "Near-Perfect",
@@ -108,8 +120,10 @@ MODEL_METADATA: dict[str, dict] = {
     "distil-small.en": {
         "title": "distil-small.en",
         "subtitle": "Fast and lightweight distilled model.",
-        "desc": "Distilled version of small.en running 6x faster while preserving over 99% of transcription accuracy.",
+        "desc": "Knowledge-distilled version of small.en running 6x faster while preserving over 99% accuracy. Ideal for real-time streaming on Intel Arc.",
+        "params": "166M",
         "size_str": "321 MB",
+        "ram_str": "~600 MB RAM",
         "lang": "English only",
         "best_for": "Real-time streaming & coding",
         "speed_pct": 0.88,
@@ -121,10 +135,12 @@ MODEL_METADATA: dict[str, dict] = {
     "distil-medium.en": {
         "title": "distil-medium.en",
         "subtitle": "Good balance of speed, size and accuracy.",
-        "desc": "A distilled model that offers a great balance between speed and accuracy. Recommended for most users.",
-        "size_str": "757 MB",
+        "desc": "Distilled 394M parameter model offering the sweet spot of speed, compact size, and accuracy. 6.8x faster than standard medium.",
+        "params": "394M",
+        "size_str": "758 MB",
+        "ram_str": "~1.2 GB RAM",
         "lang": "English only",
-        "best_for": "General usage",
+        "best_for": "General usage & coding",
         "speed_pct": 0.75,
         "speed_label": "Fast",
         "acc_pct": 0.90,
@@ -134,10 +150,12 @@ MODEL_METADATA: dict[str, dict] = {
     "distil-large-v3": {
         "title": "distil-large-v3",
         "subtitle": "Flagship accuracy with 7.5x speedup.",
-        "desc": "Distilled flagship model providing Large-v3 robustness with 7.5x faster throughput on modern Intel Arc GPUs.",
+        "desc": "Distilled flagship model providing Large-v3 robustness with 7.5x faster throughput on modern Intel Arc GPUs and 756M parameters.",
+        "params": "756M",
         "size_str": "1.5 GB",
+        "ram_str": "~2.1 GB RAM",
         "lang": "English only",
-        "best_for": "Heavy prose & medical/legal terms",
+        "best_for": "Heavy prose & technical dictation",
         "speed_pct": 0.58,
         "speed_label": "Moderate",
         "acc_pct": 0.94,
@@ -147,8 +165,10 @@ MODEL_METADATA: dict[str, dict] = {
     "distil-large-v3.5": {
         "title": "distil-large-v3.5",
         "subtitle": "Best accuracy, larger size.",
-        "desc": "Latest state-of-the-art distilled large model with enhanced noise robustness and specialized technical tokenization.",
-        "size_str": "1449 MB",
+        "desc": "Latest state-of-the-art distilled large checkpoint with enhanced noise robustness, 756M parameters, and specialized technical tokenization.",
+        "params": "756M",
+        "size_str": "1.45 GB",
+        "ram_str": "~2.1 GB RAM",
         "lang": "English only",
         "best_for": "Coding, punctuation & technical dictation",
         "speed_pct": 0.52,
@@ -176,6 +196,10 @@ SVG_ICONS = {
     "pencil": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>""",
     "reticle": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>""",
     "footer_info": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
+    # Traffic light hover icons - compact (4.8px), razor-sharp, high-contrast Windows/macOS design
+    "traffic_close": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.6 4.6L9.4 9.4M9.4 4.6L4.6 9.4" stroke="#000000" stroke-width="1.25" stroke-linecap="round"/></svg>""",
+    "traffic_max": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="5" height="5" stroke="#000000" stroke-width="1.25" stroke-linejoin="miter"/></svg>""",
+    "traffic_min": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="4.3" y1="7" x2="9.7" y2="7" stroke="#000000" stroke-width="1.3" stroke-linecap="round"/></svg>""",
 }
 
 _MACOS_LIQUID_GLASS_CSS = """
@@ -190,6 +214,13 @@ window.macos-window {
     box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
 }
 
+/* Maximized / Full Screen: square corners to seamlessly fill screen without showing background */
+window.macos-window.window-maximized {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
 /* Sidebar Column */
 .sidebar-panel {
     background: rgba(255, 255, 255, 0.018);
@@ -199,8 +230,8 @@ window.macos-window {
 
 button.traffic-light {
     border-radius: 50%;
-    min-width: 12px;
-    min-height: 12px;
+    min-width: 14px;
+    min-height: 14px;
     padding: 0;
     margin: 0;
     border: none;
@@ -208,31 +239,38 @@ button.traffic-light {
     transition: all 120ms ease;
 }
 
+button.traffic-light image {
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.traffic-box:hover button.traffic-light image,
+button.traffic-light:hover image {
+    opacity: 1;
+}
+
 button.traffic-red {
     background: #ff5f57;
-    border: 1px solid #e0443e;
+    border: 0.5px solid rgba(0, 0, 0, 0.18);
 }
 button.traffic-red:hover {
-    background: #ff3b30;
-    box-shadow: 0 0 6px #ff5f57;
+    background: #ff453a;
 }
 
 button.traffic-yellow {
     background: #febc2e;
-    border: 1px solid #d89e24;
+    border: 0.5px solid rgba(0, 0, 0, 0.18);
 }
 button.traffic-yellow:hover {
     background: #ffcc00;
-    box-shadow: 0 0 6px #febc2e;
 }
 
 button.traffic-green {
     background: #28c840;
-    border: 1px solid #1aab29;
+    border: 0.5px solid rgba(0, 0, 0, 0.18);
 }
 button.traffic-green:hover {
     background: #34c759;
-    box-shadow: 0 0 6px #28c840;
 }
 
 .app-brand-badge {
@@ -350,6 +388,7 @@ button.traffic-green:hover {
     border-left: 1px solid rgba(255, 255, 255, 0.06);
     padding: 22px 20px 14px 20px;
     background: rgba(255, 255, 255, 0.012);
+    min-width: 320px;
 }
 
 .inspector-card {
@@ -491,6 +530,7 @@ class SettingsApp:
 
         # UI Widget references
         self.window = None
+        self._gtk_app = None
         self._status_label = gtk.Label(xalign=0)
         self._model_row_boxes: dict[str, object] = {}
         self._radio_indicators: dict[str, object] = {}
@@ -500,7 +540,9 @@ class SettingsApp:
         # Inspector widgets
         self._inspector_model_title = None
         self._inspector_model_desc = None
+        self._inspector_params = None
         self._inspector_size = None
+        self._inspector_ram = None
         self._inspector_lang = None
         self._inspector_best_for = None
         self._inspector_speed_bar = None
@@ -545,53 +587,122 @@ class SettingsApp:
 
     def build(self, app):
         gtk = self.gtk
+        self._gtk_app = app
         self._apply_css()
 
         window = gtk.ApplicationWindow(application=app, title="WhisperFlow")
-        window.set_default_size(1040, 750)
+        window.set_default_size(1040, 720)
+        window.set_size_request(850, 560)  # Responsive minimum size
+        window.set_resizable(True)
         window.set_decorated(False)  # Frameless for native macOS style
         window.add_css_class("macos-window")
         self.window = window
 
         # Top-level layout: Horizontal layout so sidebar spans full vertical height
         root_hbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        root_hbox.set_hexpand(True)
+        root_hbox.set_vexpand(True)
 
         # 1. Left Sidebar (Full height)
         sidebar = self._build_sidebar()
         sidebar.set_size_request(215, -1)
+        sidebar.set_vexpand(True)
         root_hbox.append(sidebar)
 
         # 2. Right Container (VBox: Header + Main Body + Footer)
-        right_vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, hexpand=True)
+        right_vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL)
+        right_vbox.set_hexpand(True)
+        right_vbox.set_vexpand(True)
 
         # Main 2-column container (Center Model List + Right Inspector)
-        columns_hbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, vexpand=True)
+        columns_hbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        columns_hbox.set_hexpand(True)
+        columns_hbox.set_vexpand(True)
 
         center = self._build_center_panel()
         center.set_hexpand(True)
+        center.set_halign(gtk.Align.FILL)
+        center.set_vexpand(True)
         columns_hbox.append(center)
 
         inspector = self._build_inspector_panel()
-        inspector.set_size_request(295, -1)
+        inspector.set_size_request(320, -1)
+        inspector.set_hexpand(False)
+        inspector.set_halign(gtk.Align.END)
+        inspector.set_vexpand(True)
         columns_hbox.append(inspector)
 
         # Wrap columns in a window handle so the user can drag window anywhere
         handle = gtk.WindowHandle()
+        handle.set_hexpand(True)
+        handle.set_vexpand(True)
         handle.set_child(columns_hbox)
         right_vbox.append(handle)
 
-        # Bottom Footer Bar
+        # Bottom Footer Bar (anchored flush to the bottom)
         footer = self._build_footer()
+        footer.set_hexpand(True)
+        footer.set_valign(gtk.Align.END)
         right_vbox.append(footer)
 
         root_hbox.append(right_vbox)
 
-        window.connect("close-request", self._stop_capture)
+        window.connect("close-request", self._on_window_close_request)
+        window.connect("notify::maximized", self._on_maximized_notify)
+        window.connect("notify::fullscreened", self._on_maximized_notify)
         window.set_child(root_hbox)
 
         # Initialize inspector with currently selected model
         self._update_inspector(self._selected_model_name)
         return window
+
+    # -------------------------------------------------------------------------
+    # Window Actions: Traffic Lights
+    # -------------------------------------------------------------------------
+    def _on_maximized_notify(self, window, _pspec) -> None:
+        is_max = window.is_maximized() or window.is_fullscreen()
+        self._update_maximized_state(is_max)
+
+    def _update_maximized_state(self, is_max: bool) -> None:
+        if not self.window:
+            return
+        if is_max:
+            self.window.add_css_class("window-maximized")
+        else:
+            self.window.remove_css_class("window-maximized")
+
+    def _on_red_clicked(self, *_args) -> None:
+        """Quit the application."""
+        self._stop_capture()
+        if self._on_quit:
+            self._on_quit()
+        if self.window:
+            self.window.close()
+        if self._gtk_app:
+            self._gtk_app.quit()
+
+    def _on_yellow_clicked(self, *_args) -> None:
+        """Maximize or restore the application window."""
+        if not self.window:
+            return
+        if self.window.is_maximized() or self.window.is_fullscreen():
+            self.window.unmaximize()
+            self._update_maximized_state(False)
+        else:
+            self.window.maximize()
+            self._update_maximized_state(True)
+
+    def _on_green_clicked(self, *_args) -> None:
+        """Minimize the application window."""
+        if not self.window:
+            return
+        self.window.minimize()
+
+    def _on_window_close_request(self, *_args) -> bool:
+        self._stop_capture()
+        if self._on_quit:
+            self._on_quit()
+        return False
 
     # -------------------------------------------------------------------------
     # Column 1: Left Sidebar (Full Height)
@@ -603,36 +714,39 @@ class SettingsApp:
 
         # Top Traffic Light Window Controls
         traffic_box = gtk.Box(spacing=8, orientation=gtk.Orientation.HORIZONTAL)
+        traffic_box.add_css_class("traffic-box")
         traffic_box.set_margin_top(4)
         traffic_box.set_margin_bottom(12)
 
+        # Red = Quit Application (Cross icon on hover)
         r = gtk.Button()
         r.add_css_class("traffic-light")
         r.add_css_class("traffic-red")
-        r.set_size_request(12, 12)
+        r.set_size_request(14, 14)
         r.set_valign(gtk.Align.CENTER)
-        r.connect("clicked", lambda *_: self.window.close())
+        r.set_child(self._make_svg("traffic_close"))
+        r.set_cursor_from_name("pointer")
+        r.connect("clicked", self._on_red_clicked)
 
+        # Yellow = Maximize / Full Screen (Windows/macOS square icon on hover)
         y = gtk.Button()
         y.add_css_class("traffic-light")
         y.add_css_class("traffic-yellow")
-        y.set_size_request(12, 12)
+        y.set_size_request(14, 14)
         y.set_valign(gtk.Align.CENTER)
-        y.connect("clicked", lambda *_: self.window.minimize())
+        y.set_child(self._make_svg("traffic_max"))
+        y.set_cursor_from_name("pointer")
+        y.connect("clicked", self._on_yellow_clicked)
 
+        # Green = Minimize (Minus icon on hover)
         g = gtk.Button()
         g.add_css_class("traffic-light")
         g.add_css_class("traffic-green")
-        g.set_size_request(12, 12)
+        g.set_size_request(14, 14)
         g.set_valign(gtk.Align.CENTER)
-
-        def toggle_maximize(*_):
-            if self.window.is_maximized():
-                self.window.unmaximize()
-            else:
-                self.window.maximize()
-
-        g.connect("clicked", toggle_maximize)
+        g.set_child(self._make_svg("traffic_min"))
+        g.set_cursor_from_name("pointer")
+        g.connect("clicked", self._on_green_clicked)
 
         traffic_box.append(r)
         traffic_box.append(y)
@@ -743,8 +857,10 @@ class SettingsApp:
 
         # Scrolled Model Card List
         scroller = gtk.ScrolledWindow(vexpand=True)
+        scroller.set_hexpand(True)
         scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
         list_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        list_box.set_hexpand(True)
 
         on_disk = {name for name, _size in installed_models()}
 
@@ -770,6 +886,7 @@ class SettingsApp:
             is_active = name == self._selected_model_name
 
             row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.set_hexpand(True)
             row.add_css_class("model-card-row")
             if is_active:
                 row.add_css_class("model-card-selected")
@@ -847,10 +964,14 @@ class SettingsApp:
         gtk = self.gtk
         vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
         vbox.add_css_class("inspector-panel")
+        vbox.set_size_request(320, -1)
+        vbox.set_hexpand(False)
+        vbox.set_halign(gtk.Align.END)
 
         # 1. Model Information Inspector Card
         model_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
         model_card.add_css_class("inspector-card")
+        model_card.set_hexpand(False)
 
         card_heading = gtk.Label(label="Model Information", xalign=0)
         card_heading.set_markup("<span font_size='8.5pt' font_weight='700' alpha='75%'>Model Information</span>")
@@ -868,53 +989,64 @@ class SettingsApp:
         model_card.append(title_box)
 
         self._inspector_model_desc = gtk.Label(xalign=0, wrap=True)
+        self._inspector_model_desc.set_max_width_chars(32)
         self._inspector_model_desc.set_markup(
-            "<span font_size='8.5pt' alpha='65%'>A distilled model that offers a great balance between speed and accuracy. Recommended for most users.</span>"
+            "<span font_size='8.5pt' alpha='65%'>Distilled 394M parameter model offering the sweet spot of speed, compact size, and accuracy. 6.8x faster than standard medium.</span>"
         )
         model_card.append(self._inspector_model_desc)
 
         # Key-Value Grid
         grid = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=5)
 
-        self._inspector_size = self._make_spec_row(grid, "Size", "757 MB")
+        self._inspector_params = self._make_spec_row(grid, "Parameters", "394M")
+        self._inspector_size = self._make_spec_row(grid, "Disk Size", "758 MB")
+        self._inspector_ram = self._make_spec_row(grid, "Approx. RAM", "~1.2 GB RAM")
         self._inspector_lang = self._make_spec_row(grid, "Language", "English only")
-        self._inspector_best_for = self._make_spec_row(grid, "Best for", "General usage")
+        self._inspector_best_for = self._make_spec_row(grid, "Best for", "General usage & coding")
 
-        # Speed row with progress bar
+        # Speed row with progress bar (fixed 85px bar width)
         speed_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
         sp_lbl = gtk.Label(label="Speed", xalign=0)
+        sp_lbl.set_size_request(65, -1)
         sp_lbl.set_markup("<span font_size='8.5pt' alpha='55%'>Speed</span>")
         speed_row.append(sp_lbl)
 
         sp_container = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8, hexpand=True, halign=gtk.Align.END)
         self._inspector_speed_bar = gtk.ProgressBar()
         self._inspector_speed_bar.add_css_class("mini-pbar")
-        self._inspector_speed_bar.set_size_request(68, 6)
+        self._inspector_speed_bar.set_size_request(85, 6)
+        self._inspector_speed_bar.set_hexpand(False)
         self._inspector_speed_bar.set_fraction(0.75)
         self._inspector_speed_bar.set_valign(gtk.Align.CENTER)
         sp_container.append(self._inspector_speed_bar)
 
-        self._inspector_speed_lbl = gtk.Label(label="Fast")
+        self._inspector_speed_lbl = gtk.Label(label="Fast", xalign=1.0)
+        self._inspector_speed_lbl.set_size_request(75, -1)
+        self._inspector_speed_lbl.set_hexpand(False)
         self._inspector_speed_lbl.set_markup("<span font_size='8.5pt' font_weight='600'>Fast</span>")
         sp_container.append(self._inspector_speed_lbl)
         speed_row.append(sp_container)
         grid.append(speed_row)
 
-        # Accuracy row with progress bar
+        # Accuracy row with progress bar (fixed 85px bar width identical to speed bar)
         acc_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
         ac_lbl = gtk.Label(label="Accuracy", xalign=0)
+        ac_lbl.set_size_request(65, -1)
         ac_lbl.set_markup("<span font_size='8.5pt' alpha='55%'>Accuracy</span>")
         acc_row.append(ac_lbl)
 
         ac_container = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8, hexpand=True, halign=gtk.Align.END)
         self._inspector_acc_bar = gtk.ProgressBar()
         self._inspector_acc_bar.add_css_class("mini-pbar")
-        self._inspector_acc_bar.set_size_request(68, 6)
+        self._inspector_acc_bar.set_size_request(85, 6)
+        self._inspector_acc_bar.set_hexpand(False)
         self._inspector_acc_bar.set_fraction(0.90)
         self._inspector_acc_bar.set_valign(gtk.Align.CENTER)
         ac_container.append(self._inspector_acc_bar)
 
-        self._inspector_acc_lbl = gtk.Label(label="High")
+        self._inspector_acc_lbl = gtk.Label(label="High", xalign=1.0)
+        self._inspector_acc_lbl.set_size_request(75, -1)
+        self._inspector_acc_lbl.set_hexpand(False)
         self._inspector_acc_lbl.set_markup("<span font_size='8.5pt' font_weight='600'>High</span>")
         ac_container.append(self._inspector_acc_lbl)
         acc_row.append(ac_container)
@@ -926,6 +1058,7 @@ class SettingsApp:
         # 2. Push-to-Talk Quick Card
         hotkey_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
         hotkey_card.add_css_class("inspector-card")
+        hotkey_card.set_hexpand(False)
 
         hk_head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
         hk_head.append(self._make_svg("reticle"))
@@ -953,6 +1086,7 @@ class SettingsApp:
         # 3. Dictionary Quick Card
         dict_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
         dict_card.add_css_class("inspector-card")
+        dict_card.set_hexpand(False)
 
         dt_head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
         dt_head.append(self._make_svg("book"))
@@ -1051,7 +1185,7 @@ class SettingsApp:
         # Right Actions: Quit & Save
         quit_btn = gtk.Button(label="Quit")
         quit_btn.add_css_class("btn-quit")
-        quit_btn.connect("clicked", lambda *_args: self._on_quit() if self._on_quit else self.window.close())
+        quit_btn.connect("clicked", self._on_red_clicked)
         footer.append(quit_btn)
 
         save_btn = gtk.Button(label="Save")
@@ -1104,8 +1238,12 @@ class SettingsApp:
             self._inspector_model_title.set_markup(f"<span font_weight='700' font_size='11pt' color='#ffffff'>{pango_esc(name)}</span>")
         if self._inspector_model_desc:
             self._inspector_model_desc.set_markup(f"<span font_size='8.5pt' alpha='65%'>{pango_esc(meta['desc'])}</span>")
+        if self._inspector_params:
+            self._inspector_params.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta.get('params', ''))}</span>")
         if self._inspector_size:
             self._inspector_size.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta['size_str'])}</span>")
+        if self._inspector_ram:
+            self._inspector_ram.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta.get('ram_str', ''))}</span>")
         if self._inspector_lang:
             self._inspector_lang.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta['lang'])}</span>")
         if self._inspector_best_for:
