@@ -132,12 +132,11 @@ class WhisperCppEngine:
         return info.decode("utf-8", errors="replace") if info else ""
 
     def transcribe_chunk(self, audio: np.ndarray) -> str:
-        return self._transcribe(audio, single_segment=True)
+        return self._transcribe(audio, single_segment=False)
 
     def finalize(self, audio: np.ndarray) -> str:
         # A finished phrase may contain more than one sentence. Allow whisper
-        # to split segments here. Streaming windows stay single-segment so the
-        # partial line is one hypothesis, not a list of timestamped pieces.
+        # to split segments here.
         return self._transcribe(audio, single_segment=False)
 
     def stop(self) -> None:

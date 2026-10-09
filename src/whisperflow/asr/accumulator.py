@@ -40,6 +40,12 @@ def merge_transcript(previous: str, incoming: str) -> str:
     if inc_keys[: len(prev_keys)] == prev_keys:
         return inc
 
+    # If the incoming text is completely contained in the previous text, keep previous
+    prev_joined = " ".join(prev_keys)
+    inc_joined = " ".join(inc_keys)
+    if inc_joined in prev_joined:
+        return prev
+
     max_k = min(len(prev_words), len(inc_words))
     overlap = 0
     for k in range(max_k, 0, -1):

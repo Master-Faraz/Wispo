@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import ctypes
 import json
+import logging
 import os
+import queue
+import threading
 from ctypes import c_char_p, c_int, c_uint, c_ulong, c_void_p
 
 import numpy as np
@@ -63,22 +66,25 @@ class AudioCapture:
         self.frame_samples = max(1, int(sample_rate * frame_ms / 1000))
         self._pcm = c_void_p()
         self._open = False
+        self._queue: queue.Queue[np.ndarray] = queue.Queue(maxsize=3000)
+        self._thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
+        self._error: Exception | None = None
 
     def start(self) -> None:
         if self._open:
             return
         # The PipeWire ALSA plugin reads this when the device is opened and
-        # connects the stream to that source. Without it, "default" follows
-        # the session default, which on this PC is a silent Bluetooth loopback.
+        # connects the stream to that source.
         if self.pipewire_target:
             os.environ["PIPEWIRE_PROPS"] = json.dumps({"target.object": self.pipewire_target})
         handle = c_void_p()
         rc = _alsa.snd_pcm_open(ctypes.byref(handle), self.device.encode(), _STREAM_CAPTURE, 0)
         if rc < 0:
             raise _alsa_error(rc, f"opening microphone {self.description!r}")
-        # soft_resample=1 lets PipeWire/ALSA give us 16 kHz even when the
-        # hardware capture device runs at another rate.
-        latency_us = 200_000
+        # soft_resample=1 lets PipeWire/ALSA give us 16 kHz even when hardware runs at another rate.
+        # Use 1,500,000 µs (1.5 seconds) buffer to ensure hardware never overflows during inference.
+        latency_us = 1_500_000
         rc = _alsa.snd_pcm_set_params(
             handle,
             _FORMAT_S16_LE,
@@ -93,35 +99,87 @@ class AudioCapture:
             raise _alsa_error(rc, "configuring microphone")
         self._pcm = handle
         self._open = True
+        self._error = None
+        self._stop_event.clear()
+        while not self._queue.empty():
+            try:
+                self._queue.get_nowait()
+            except queue.Empty:
+                break
+        self._thread = threading.Thread(
+            target=self._capture_loop,
+            name="whisperflow-capture",
+            daemon=True,
+        )
+        self._thread.start()
 
-    def read(self) -> np.ndarray:
+    def _capture_loop(self) -> None:
+        raw = np.empty(self.frame_samples, dtype=np.int16)
+        while not self._stop_event.is_set():
+            remaining = self.frame_samples
+            offset = 0
+            read_failed = False
+            while remaining > 0 and not self._stop_event.is_set():
+                got = _alsa.snd_pcm_readi(
+                    self._pcm,
+                    raw[offset:].ctypes.data_as(c_void_p),
+                    remaining,
+                )
+                if got < 0:
+                    recovered = _alsa.snd_pcm_recover(self._pcm, int(got), 1)
+                    if recovered < 0:
+                        self._error = _alsa_error(recovered, "reading microphone")
+                        read_failed = True
+                        break
+                    continue
+                offset += int(got)
+                remaining -= int(got)
+            if read_failed or self._stop_event.is_set():
+                break
+            frame = (raw.astype(np.float32) / 32768.0).copy()
+            try:
+                self._queue.put(frame, timeout=0.1)
+            except queue.Full:
+                try:
+                    self._queue.get_nowait()
+                    self._queue.put_nowait(frame)
+                except (queue.Empty, queue.Full):
+                    pass
+
+    def read(self, timeout: float = 0.5) -> np.ndarray:
         if not self._open:
             raise RuntimeError("microphone is not started")
-        raw = np.empty(self.frame_samples, dtype=np.int16)
-        remaining = self.frame_samples
-        offset = 0
-        while remaining > 0:
-            got = _alsa.snd_pcm_readi(
-                self._pcm,
-                raw[offset:].ctypes.data_as(c_void_p),
-                remaining,
-            )
-            if got < 0:
-                # A desktop session sometimes interrupts capture (suspend, device
-                # switch). recover() puts the stream back into a readable state.
-                recovered = _alsa.snd_pcm_recover(self._pcm, int(got), 1)
-                if recovered < 0:
-                    raise _alsa_error(recovered, "reading microphone")
-                continue
-            offset += int(got)
-            remaining -= int(got)
-        return raw.astype(np.float32) / 32768.0
+        if self._error is not None:
+            err = self._error
+            self._error = None
+            raise err
+        try:
+            return self._queue.get(timeout=timeout)
+        except queue.Empty:
+            if not self._open:
+                raise RuntimeError("microphone is not started")
+            return np.zeros(self.frame_samples, dtype=np.float32)
+
+    def drain(self) -> list[np.ndarray]:
+        """Drain and return all currently buffered frames without waiting."""
+        frames: list[np.ndarray] = []
+        while True:
+            try:
+                frames.append(self._queue.get_nowait())
+            except queue.Empty:
+                break
+        return frames
 
     def stop(self) -> None:
         if not self._open:
             return
-        _alsa.snd_pcm_drop(self._pcm)
-        _alsa.snd_pcm_close(self._pcm)
+        self._stop_event.set()
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=0.5)
+        self._thread = None
+        if self._pcm.value is not None:
+            _alsa.snd_pcm_drop(self._pcm)
+            _alsa.snd_pcm_close(self._pcm)
         self._pcm = c_void_p()
         self._open = False
 

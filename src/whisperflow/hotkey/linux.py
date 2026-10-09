@@ -140,12 +140,35 @@ class HoldKey:
         self._fds = []
 
     def _loop(self) -> None:
+        import time
+
         while not self._stop.is_set():
-            readable, _, _ = select.select(self._fds, [], [], 0.05)
+            if not self._fds:
+                self._fds = _open_keyboards(self.code)
+                if not self._fds:
+                    time.sleep(1.0)
+                    continue
+            try:
+                readable, _, _ = select.select(self._fds, [], [], 0.05)
+            except (ValueError, OSError):
+                dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
+                for fd in dead:
+                    self._fds.remove(fd)
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                continue
+
+            dead_fds = []
             for fd in readable:
                 try:
                     data = os.read(fd, _EVENT.size * 64)
+                    if not data:
+                        dead_fds.append(fd)
+                        continue
                 except OSError:
+                    dead_fds.append(fd)
                     continue
                 for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
                     _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
@@ -155,6 +178,13 @@ class HoldKey:
                         self.held.set()
                     elif value == 0:
                         self.held.clear()
+            for fd in dead_fds:
+                if fd in self._fds:
+                    self._fds.remove(fd)
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
 
 
 class HoldChord:
@@ -194,15 +224,41 @@ class HoldChord:
         self._fds = []
 
     def _loop(self) -> None:
+        import time
+
         watched: set[int] = set()
         for group in self.groups:
             watched.update(group)
         while not self._stop.is_set():
-            readable, _, _ = select.select(self._fds, [], [], 0.05)
+            if not self._fds:
+                codes: set[int] = set()
+                for group in self.groups:
+                    codes.update(group)
+                self._fds = _open_keyboards(codes)
+                if not self._fds:
+                    time.sleep(1.0)
+                    continue
+            try:
+                readable, _, _ = select.select(self._fds, [], [], 0.05)
+            except (ValueError, OSError):
+                dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
+                for fd in dead:
+                    self._fds.remove(fd)
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                continue
+
+            dead_fds = []
             for fd in readable:
                 try:
                     data = os.read(fd, _EVENT.size * 64)
+                    if not data:
+                        dead_fds.append(fd)
+                        continue
                 except OSError:
+                    dead_fds.append(fd)
                     continue
                 for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
                     _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
@@ -216,6 +272,13 @@ class HoldChord:
                         self.held.set()
                     else:
                         self.held.clear()
+            for fd in dead_fds:
+                if fd in self._fds:
+                    self._fds.remove(fd)
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
 
 
 class OverviewKey:
@@ -390,3 +453,11 @@ def _parse_key_bits(hex_words: str) -> int:
         bits |= int(word, 16) << shift
         shift += 64
     return bits
+
+
+def _is_fd_valid(fd: int) -> bool:
+    try:
+        os.fstat(fd)
+        return True
+    except OSError:
+        return False

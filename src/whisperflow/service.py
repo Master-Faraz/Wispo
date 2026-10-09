@@ -164,23 +164,35 @@ def _listen(stop_event: threading.Event, status) -> None:
             status.set_state("idle")
         logging.info("ready")
         while not stop_event.is_set():
-            if hold.held.is_set():
-                if not recording:
-                    app.start_recording()
-                    recording = True
+            try:
+                if hold.held.is_set():
+                    if not recording:
+                        app.start_recording()
+                        recording = True
+                        if status is not None:
+                            status.set_state("recording")
+                    app.read_once(force_speech=True)
+                elif recording:
                     if status is not None:
-                        status.set_state("recording")
-                app.read_once(force_speech=True)
-            elif recording:
-                if status is not None:
-                    status.set_state("processing")
-                text = app.stop_recording()
-                recording = False
-                _inject_final(keyboard, text, dictionary)
+                        status.set_state("processing")
+                    text = app.stop_recording()
+                    recording = False
+                    _inject_final(keyboard, text, dictionary)
+                    if status is not None:
+                        status.set_state("idle")
+                else:
+                    time.sleep(0.02)
+            except Exception:
+                logging.exception("error during recording cycle; recovering state")
+                if recording:
+                    try:
+                        app.stop_recording()
+                    except Exception:
+                        pass
+                    recording = False
                 if status is not None:
                     status.set_state("idle")
-            else:
-                time.sleep(0.02)
+                time.sleep(0.2)
     except PortalError:
         logging.exception("input session failed")
     except KeyboardInterrupt:

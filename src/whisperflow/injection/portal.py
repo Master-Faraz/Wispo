@@ -133,7 +133,17 @@ class PortalKeyboard(TextInjector):
         if not text:
             return
         if self._session is None or self._conn is None:
-            raise PortalError("open the input session before inserting text")
+            self.open()
+        try:
+            self._do_insert(text)
+        except PortalError:
+            # Session may have been revoked upon screen lock or idle timeout.
+            # Reconnect using the stored restore token and retry once.
+            self.close()
+            self.open()
+            self._do_insert(text)
+
+    def _do_insert(self, text: str) -> None:
         events = key_events(text)
         try:
             for code, state in events:
@@ -141,9 +151,6 @@ class PortalKeyboard(TextInjector):
                 if state == 0:
                     time.sleep(self.key_gap_s)
         finally:
-            # A failure halfway through can leave Shift logically held inside
-            # the remote-desktop session. Release it so the next sentence is
-            # not typed in capitals.
             try:
                 self._notify(KEY_LEFTSHIFT, 0)
             except PortalError:

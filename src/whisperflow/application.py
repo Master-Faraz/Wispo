@@ -107,6 +107,13 @@ class TranscriptionApp:
     def stop_recording(self) -> str:
         """Stop the microphone and return the current phrase. The model stays loaded."""
         text = ""
+        if self._recording:
+            leftovers = self.capture.drain()
+            if leftovers:
+                tail = np.concatenate(leftovers)
+                self._utterance = np.concatenate((self._utterance, tail))
+                if self._saw_window or self._in_speech:
+                    self.chunker.push(tail)
         if self._recording and self._in_speech:
             final = self._finish_utterance()
             text = final.text if final else ""
@@ -125,21 +132,31 @@ class TranscriptionApp:
         if not self._recording:
             raise RuntimeError("start_recording() before read_once()")
         frame = self.capture.read()
+        extra_frames = self.capture.drain()
         if force_speech:
             opening = not self._in_speech
             if opening:
                 self._begin_utterance()
-            return self._on_speech(frame, opening=opening)
-        was_speech = self._in_speech
-        is_speech = self.vad.process(frame)
-        if is_speech and not was_speech:
-            self._begin_utterance()
-        if is_speech:
-            return self._on_speech(frame, opening=not was_speech)
-        if was_speech:
-            return self._finish_utterance()
-        self.preroll.write(frame)
-        return None
+            combined = np.concatenate([frame, *extra_frames]) if extra_frames else frame
+            return self._on_speech(combined, opening=opening)
+        frames = [frame, *extra_frames] if extra_frames else [frame]
+        result: Partial | Final | None = None
+        for f in frames:
+            was_speech = self._in_speech
+            is_speech = self.vad.process(f)
+            if is_speech and not was_speech:
+                self._begin_utterance()
+            if is_speech:
+                partial = self._on_speech(f, opening=not was_speech)
+                if partial is not None:
+                    result = partial
+            elif was_speech:
+                final = self._finish_utterance()
+                if final is not None:
+                    result = final
+            else:
+                self.preroll.write(f)
+        return result
 
     def _begin_utterance(self) -> None:
         self._in_speech = True
