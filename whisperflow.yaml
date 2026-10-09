@@ -21,7 +21,7 @@ vad:
   noise_multiplier: 4.0
   hangover_ms: 700
   preroll_ms: 300
-  highpass_hz: 100
+  highpass_hz: 80.0
 dictionary:
 - phrase: github
   replacement: GitHub

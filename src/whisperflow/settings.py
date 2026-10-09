@@ -9,13 +9,20 @@ after saving to use a new model or dictionary.
 from __future__ import annotations
 
 import html
+import math
 import os
+import queue
+import subprocess
 import sys
 import threading
 import time
 from pathlib import Path
 
+import numpy as np
+
 from whisperflow.asr.device import select_device
+from whisperflow.audio.capture import AudioCapture
+from whisperflow.audio.sources import _node_name, parse_wpctl_sources, resolve_mic
 from whisperflow.config import DictionaryEntry, load_config, project_root, save_user_settings
 from whisperflow.hotkey.linux import capture_chord, format_chord
 from whisperflow.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
@@ -200,6 +207,10 @@ SVG_ICONS = {
     "traffic_close": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.6 4.6L9.4 9.4M9.4 4.6L4.6 9.4" stroke="#000000" stroke-width="1.25" stroke-linecap="round"/></svg>""",
     "traffic_max": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="5" height="5" stroke="#000000" stroke-width="1.25" stroke-linejoin="miter"/></svg>""",
     "traffic_min": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="4.3" y1="7" x2="9.7" y2="7" stroke="#000000" stroke-width="1.3" stroke-linecap="round"/></svg>""",
+    "wave": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4"/><path d="M6 6v12"/><path d="M10 3v18"/><path d="M14 8v8"/><path d="M18 5v14"/><path d="M22 10v4"/></svg>""",
+    "sliders": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/></svg>""",
+    "refresh": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>""",
+    "chip": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>""",
 }
 
 _MACOS_LIQUID_GLASS_CSS = """
@@ -498,6 +509,168 @@ button.traffic-green:hover {
     color: #ffffff;
     padding: 6px 10px;
 }
+
+/* Audio Section Styling */
+.audio-panel {
+    padding: 22px 28px 18px 28px;
+}
+
+.audio-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.audio-badge {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 8px;
+    min-width: 28px;
+    min-height: 28px;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+}
+
+.mic-device-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 11px;
+    padding: 9px 13px;
+    margin-bottom: 5px;
+    transition: all 160ms ease;
+}
+
+.mic-device-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.mic-device-selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1.5px solid rgba(129, 140, 248, 0.85);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.vu-meter-bar {
+    min-height: 12px;
+    border-radius: 6px;
+}
+
+.vu-meter-bar trough {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    min-height: 12px;
+}
+
+.vu-meter-bar progress {
+    background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 70%, #ec4899 90%, #ef4444 100%);
+    border-radius: 6px;
+    min-height: 12px;
+}
+
+.btn-test-mic {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 11.5px;
+    padding: 5px 14px;
+    transition: all 150ms ease;
+}
+
+.btn-test-mic:hover {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: #818cf8;
+}
+
+.btn-test-mic-active {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 9px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 5px 14px;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
+}
+
+.btn-test-mic-active:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.preset-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 12px;
+    transition: all 140ms ease;
+}
+
+.preset-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.preset-pill-active {
+    background: rgba(99, 102, 241, 0.25);
+    border: 1px solid rgba(129, 140, 248, 0.6);
+    color: #c7d2fe;
+    font-weight: 600;
+}
+
+.badge-speech-detected {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #34d399;
+}
+
+.badge-speech-idle {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.diag-metric-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 9px;
+    padding: 8px 12px;
+}
+
+scale.glass-scale trough {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    min-height: 5px;
+}
+
+scale.glass-scale highlight {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 4px;
+    min-height: 5px;
+}
+
+scale.glass-scale slider {
+    background: #ffffff;
+    border-radius: 50%;
+    min-width: 14px;
+    min-height: 14px;
+    margin: -5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
 """
 
 
@@ -554,6 +727,39 @@ class SettingsApp:
         self._hotkey_box = None
         self._dict_preview_box = None
         self._capture_stop = threading.Event()
+
+        # Audio & Mic state
+        self._selected_audio_device = self._config.audio.device
+        self._vad_rms_threshold = float(self._config.vad.rms_threshold)
+        self._vad_noise_mult = float(self._config.vad.noise_multiplier)
+        self._vad_hangover_ms = int(self._config.vad.hangover_ms)
+        self._vad_highpass_hz = float(self._config.vad.highpass_hz)
+
+        self._is_testing_mic = False
+        self._test_capture: AudioCapture | None = None
+        self._test_timer_id: int | None = None
+        self._meter_level = 0.0
+        self._meter_target = 0.0
+
+        # Audio widgets
+        self._test_mic_btn = None
+        self._test_vu_meter = None
+        self._test_db_label = None
+        self._test_speech_badge = None
+        self._rms_scale = None
+        self._rms_val_lbl = None
+        self._hangover_scale = None
+        self._hangover_val_lbl = None
+        self._highpass_scale = None
+        self._highpass_val_lbl = None
+        self._preset_pills: dict[str, object] = {}
+        self._mic_device_rows: dict[str, object] = {}
+        self._mic_radio_indicators: dict[str, object] = {}
+        self._devices_list_box = None
+
+        # Navigation state
+        self._main_stack = None
+        self._sidebar_nav_rows: dict[str, object] = {}
 
     def _make_svg(self, name: str):
         from gi.repository import Gdk, GLib
@@ -632,11 +838,35 @@ class SettingsApp:
         inspector.set_vexpand(True)
         columns_hbox.append(inspector)
 
-        # Wrap columns in a window handle so the user can drag window anywhere
+        # Main Stack for switching between sections
+        self._main_stack = gtk.Stack()
+        self._main_stack.set_transition_type(gtk.StackTransitionType.CROSSFADE)
+        self._main_stack.set_transition_duration(150)
+        self._main_stack.set_hexpand(True)
+        self._main_stack.set_vexpand(True)
+
+        # 1. Model Section (2-column layout)
+        self._main_stack.add_named(columns_hbox, "model")
+
+        # 2. Audio Section (Full width)
+        audio_panel = self._build_audio_panel()
+        self._main_stack.add_named(audio_panel, "audio")
+
+        # 3. Placeholders for other sidebar sections
+        placeholders = [
+            ("push_to_talk", "Push-to-talk", "Keyboard shortcuts and global push-to-talk dictation controls."),
+            ("dictionary", "Dictionary", "Manage vocabulary replacements and phonetic word corrections."),
+            ("general", "General Settings", "Desktop integration, startup behavior, and application options."),
+            ("about", "About WhisperFlow", "System diagnostics, version info, and credits."),
+        ]
+        for p_name, p_title, p_sub in placeholders:
+            self._main_stack.add_named(self._build_placeholder_panel(p_title, p_sub), p_name)
+
+        # Wrap stack in a window handle so the user can drag window anywhere
         handle = gtk.WindowHandle()
         handle.set_hexpand(True)
         handle.set_vexpand(True)
-        handle.set_child(columns_hbox)
+        handle.set_child(self._main_stack)
         right_vbox.append(handle)
 
         # Bottom Footer Bar (anchored flush to the bottom)
@@ -673,6 +903,7 @@ class SettingsApp:
 
     def _on_red_clicked(self, *_args) -> None:
         """Quit the application."""
+        self._stop_mic_test()
         self._stop_capture()
         if self._on_quit:
             self._on_quit()
@@ -699,6 +930,7 @@ class SettingsApp:
         self.window.minimize()
 
     def _on_window_close_request(self, *_args) -> bool:
+        self._stop_mic_test()
         self._stop_capture()
         if self._on_quit:
             self._on_quit()
@@ -775,15 +1007,16 @@ class SettingsApp:
 
         # Nav Items with crisp SVGs
         nav_items = [
-            ("Model", "Choose transcription engine", "cube", True),
-            ("Audio", "Microphone & detection", "microphone", False),
-            ("Push-to-talk", "Keyboard shortcut", "keyboard", False),
-            ("Dictionary", "Custom word corrections", "book", False),
-            ("General", "App behavior", "cog", False),
-            ("About", "Version & updates", "info", False),
+            ("Model", "Choose transcription engine", "cube", True, "model"),
+            ("Audio", "Microphone & detection", "microphone", False, "audio"),
+            ("Push-to-talk", "Keyboard shortcut", "keyboard", False, "push_to_talk"),
+            ("Dictionary", "Custom word corrections", "book", False, "dictionary"),
+            ("General", "App behavior", "cog", False, "general"),
+            ("About", "Version & updates", "info", False, "about"),
         ]
 
-        for item_name, subtitle, icon_key, is_active in nav_items:
+        self._sidebar_nav_rows.clear()
+        for item_name, subtitle, icon_key, is_active, tab_tag in nav_items:
             row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
             row.add_css_class("nav-item")
             if is_active:
@@ -801,6 +1034,12 @@ class SettingsApp:
             text_col.append(t)
             text_col.append(s)
             row.append(text_col)
+
+            click = gtk.GestureClick()
+            click.connect("released", lambda _g, _n, _x, _y, t=tab_tag: self._switch_section(t))
+            row.add_controller(click)
+            row.set_cursor_from_name("pointer")
+            self._sidebar_nav_rows[tab_tag] = row
 
             vbox.append(row)
 
@@ -828,6 +1067,648 @@ class SettingsApp:
         vbox.append(storage_card)
 
         return vbox
+
+    # -------------------------------------------------------------------------
+    # Navigation & Section Switching
+    # -------------------------------------------------------------------------
+    def _switch_section(self, target_tag: str) -> None:
+        if target_tag != "audio" and self._is_testing_mic:
+            self._stop_mic_test()
+
+        for tag, row in self._sidebar_nav_rows.items():
+            if tag == target_tag:
+                row.add_css_class("nav-item-active")
+            else:
+                row.remove_css_class("nav-item-active")
+
+        if self._main_stack:
+            self._main_stack.set_visible_child_name(target_tag)
+
+    def _build_placeholder_panel(self, title_text: str, subtitle_text: str):
+        gtk = self.gtk
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=16)
+        vbox.add_css_class("audio-panel")
+        vbox.set_hexpand(True)
+        vbox.set_vexpand(True)
+
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label=title_text, xalign=0)
+        t.set_markup(f"<span font_weight='800' font_size='18pt' color='#ffffff'>{pango_esc(title_text)}</span>")
+        s = gtk.Label(label=subtitle_text, xalign=0)
+        s.set_markup(f"<span font_size='9pt' alpha='55%'>{pango_esc(subtitle_text)}</span>")
+        head_text.append(t)
+        head_text.append(s)
+        top_row.append(head_text)
+        vbox.append(top_row)
+
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        card.add_css_class("audio-card")
+        card.set_margin_top(12)
+        card.set_valign(gtk.Align.START)
+
+        c_title = gtk.Label(label=title_text, xalign=0)
+        c_title.set_markup(f"<span font_weight='700' font_size='11pt' color='#ffffff'>{pango_esc(title_text)} Configuration</span>")
+        card.append(c_title)
+
+        desc = gtk.Label(xalign=0)
+        desc.set_markup("<span font_size='9pt' alpha='65%'>Settings for this section are managed in <span font_family='monospace'>whisperflow.yaml</span> and can also be adjusted directly from the Model Inspector.</span>")
+        card.append(desc)
+        vbox.append(card)
+
+        return vbox
+
+    # -------------------------------------------------------------------------
+    # Audio View: Input Devices, Real-Time VU Meter & VAD Tuning
+    # -------------------------------------------------------------------------
+    def _build_audio_panel(self):
+        gtk = self.gtk
+
+        scroller = gtk.ScrolledWindow()
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_hexpand(True)
+        scroller.set_vexpand(True)
+
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        vbox.add_css_class("audio-panel")
+        vbox.set_hexpand(True)
+
+        # 1. Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="Audio", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>Audio</span>")
+        sub = gtk.Label(label="Configure microphones, live level monitoring, and voice activity detection.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>Configure microphones, live level monitoring, and voice activity detection.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+
+        status_pill = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        status_pill.add_css_class("pill-size")
+        status_pill.set_valign(gtk.Align.CENTER)
+        status_lbl = gtk.Label()
+        status_lbl.set_markup("<span font_weight='600' font_size='8.5pt' color='#a5b4fc'>PipeWire Native • 16 kHz</span>")
+        status_pill.append(status_lbl)
+        top_row.append(status_pill)
+        vbox.append(top_row)
+
+        # 2. Card: Live VU Meter
+        vbox.append(self._build_mic_meter_card())
+
+        # 3. Card: Input Devices
+        vbox.append(self._build_mic_devices_card())
+
+        # 4. Card: VAD Sensitivity & Sliders
+        vbox.append(self._build_vad_sensitivity_card())
+
+        # 5. Card: Audio Hardware Pipeline Diagnostics
+        vbox.append(self._build_audio_diagnostics_card())
+
+        scroller.set_child(vbox)
+        return scroller
+
+    def _build_mic_meter_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("microphone"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Live Microphone Input", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Live Microphone Input</span>")
+        s = gtk.Label(label="Monitor real-time audio volume and test voice activity detection triggers.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Monitor real-time audio volume and test voice activity detection triggers.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        test_btn = gtk.Button(label="▶ Test Microphone")
+        test_btn.add_css_class("btn-test-mic")
+        test_btn.set_valign(gtk.Align.CENTER)
+        test_btn.set_cursor_from_name("pointer")
+        test_btn.connect("clicked", self._toggle_mic_test)
+        self._test_mic_btn = test_btn
+        hdr.append(test_btn)
+        card.append(hdr)
+
+        # VU Meter Progress Bar
+        meter_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+        vu = gtk.ProgressBar()
+        vu.add_css_class("vu-meter-bar")
+        vu.set_fraction(0.0)
+        self._test_vu_meter = vu
+        meter_col.append(vu)
+
+        # dB Scale markings
+        scale_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        db_marks = ["-60 dB", "-45 dB", "-30 dB", "-20 dB", "-10 dB", "-3 dB", "0 dB"]
+        for idx, mark in enumerate(db_marks):
+            lbl = gtk.Label(label=mark)
+            lbl.set_markup(f"<span font_size='7.5pt' alpha='40%'>{mark}</span>")
+            if idx == 0:
+                lbl.set_halign(gtk.Align.START)
+                lbl.set_hexpand(True)
+            elif idx == len(db_marks) - 1:
+                lbl.set_halign(gtk.Align.END)
+            else:
+                lbl.set_halign(gtk.Align.CENTER)
+                lbl.set_hexpand(True)
+            scale_box.append(lbl)
+        meter_col.append(scale_box)
+        card.append(meter_col)
+
+        # Status & Speech Detection readout
+        status_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+        status_row.set_margin_top(4)
+
+        db_lbl = gtk.Label(xalign=0, hexpand=True)
+        db_lbl.set_markup("<span font_size='9pt' alpha='50%'>Idle • Click Test Microphone to begin monitoring</span>")
+        self._test_db_label = db_lbl
+        status_row.append(db_lbl)
+
+        thresh_note = gtk.Label(xalign=1)
+        thresh_note.set_markup(f"<span font_size='8pt' alpha='50%'>VAD Threshold: {self._vad_rms_threshold:.4f}</span>")
+        status_row.append(thresh_note)
+
+        speech_badge = gtk.Label()
+        speech_badge.add_css_class("badge-speech-idle")
+        speech_badge.set_markup("<span font_size='8.5pt' alpha='60%'>● Idle</span>")
+        self._test_speech_badge = speech_badge
+        status_row.append(speech_badge)
+
+        card.append(status_row)
+        return card
+
+    def _build_mic_devices_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("wave"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Input Device", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Input Device</span>")
+        s = gtk.Label(label="Select the audio capture source used by WhisperFlow.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Select the audio capture source used by WhisperFlow.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        rescan_btn = gtk.Button()
+        rescan_btn.add_css_class("btn-learn")
+        rescan_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        rescan_box.append(self._make_svg("refresh"))
+        rescan_lbl = gtk.Label(label="Rescan")
+        rescan_box.append(rescan_lbl)
+        rescan_btn.set_child(rescan_box)
+        rescan_btn.set_cursor_from_name("pointer")
+        rescan_btn.connect("clicked", lambda *_: self._render_device_rows())
+        hdr.append(rescan_btn)
+        card.append(hdr)
+
+        self._devices_list_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        self._render_device_rows()
+        card.append(self._devices_list_box)
+
+        return card
+
+    def _scan_audio_devices(self) -> list[dict]:
+        devices = [
+            {
+                "id": "auto",
+                "name": "Auto-Detect Microphone",
+                "sub": "Automatically selects primary built-in digital mic or active session input",
+                "tag": "Recommended",
+            },
+            {
+                "id": "default",
+                "name": "PipeWire Session Default",
+                "sub": "Follows desktop ALSA / PipeWire session default routing",
+                "tag": "",
+            },
+        ]
+        try:
+            completed = subprocess.run(
+                ["wpctl", "status"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+            sources = parse_wpctl_sources(completed.stdout)
+            for sid, desc in sources:
+                node = _node_name(sid)
+                if node:
+                    is_digital = "digital" in desc.lower()
+                    tag = "Internal Mic" if is_digital else "Stereo Mic"
+                    devices.append({
+                        "id": node,
+                        "name": desc,
+                        "sub": f"PipeWire node: {node}",
+                        "tag": tag,
+                    })
+        except Exception:
+            pass
+        return devices
+
+    def _render_device_rows(self) -> None:
+        gtk = self.gtk
+        if not self._devices_list_box:
+            return
+
+        child = self._devices_list_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            self._devices_list_box.remove(child)
+            child = next_child
+
+        self._mic_device_rows.clear()
+        self._mic_radio_indicators.clear()
+
+        devices = self._scan_audio_devices()
+        for dev in devices:
+            dev_id = dev["id"]
+            is_selected = (self._selected_audio_device == dev_id)
+
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.add_css_class("mic-device-row")
+            if is_selected:
+                row.add_css_class("mic-device-selected")
+
+            radio_img = self._make_svg("radio_on" if is_selected else "radio_off")
+            radio_img.set_valign(gtk.Align.CENTER)
+            row.append(radio_img)
+            self._mic_radio_indicators[dev_id] = radio_img
+
+            info_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+            name_lbl = gtk.Label(xalign=0)
+            name_lbl.set_markup(f"<span font_weight='600' font_size='9.5pt' color='#ffffff'>{pango_esc(dev['name'])}</span>")
+            sub_lbl = gtk.Label(xalign=0)
+            sub_lbl.set_markup(f"<span font_size='8pt' alpha='50%'>{pango_esc(dev['sub'])}</span>")
+            info_col.append(name_lbl)
+            info_col.append(sub_lbl)
+            row.append(info_col)
+
+            if dev["tag"]:
+                tag_lbl = gtk.Label()
+                tag_lbl.add_css_class("pill-recommended" if dev["tag"] == "Recommended" else "pill-size")
+                tag_lbl.set_markup(f"<span font_weight='700' font_size='8pt'>{pango_esc(dev['tag'])}</span>")
+                tag_lbl.set_valign(gtk.Align.CENTER)
+                row.append(tag_lbl)
+
+            click = gtk.GestureClick()
+            click.connect("released", lambda _g, _n, _x, _y, d=dev_id: self._select_audio_device(d))
+            row.add_controller(click)
+            row.set_cursor_from_name("pointer")
+
+            self._mic_device_rows[dev_id] = row
+            self._devices_list_box.append(row)
+
+    def _select_audio_device(self, dev_id: str) -> None:
+        from gi.repository import Gdk, GLib
+
+        self._selected_audio_device = dev_id
+        for d_id, row in self._mic_device_rows.items():
+            is_sel = (d_id == dev_id)
+            if is_sel:
+                row.add_css_class("mic-device-selected")
+            else:
+                row.remove_css_class("mic-device-selected")
+            if d_id in self._mic_radio_indicators:
+                svg_data = SVG_ICONS["radio_on" if is_sel else "radio_off"].encode("utf-8")
+                bytes_data = GLib.Bytes.new(svg_data)
+                tex = Gdk.Texture.new_from_bytes(bytes_data)
+                self._mic_radio_indicators[d_id].set_from_paintable(tex)
+
+        if self._is_testing_mic:
+            self._stop_mic_test()
+            self._start_mic_test()
+
+        target = resolve_mic(dev_id)
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>Selected audio input: {pango_esc(target.description)}. Click Save to apply.</span>")
+
+    def _build_vad_sensitivity_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("sliders"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Voice Activity Detection (VAD)", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Voice Activity Detection (VAD)</span>")
+        s = gtk.Label(label="Tune speech energy thresholds and trailing silence parameters.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Tune speech energy thresholds and trailing silence parameters.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        presets_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        presets_box.set_valign(gtk.Align.CENTER)
+        preset_configs = [
+            ("Quiet", 0.008, 600, 60.0),
+            ("Balanced", 0.015, 700, 80.0),
+            ("Noisy", 0.035, 850, 120.0),
+        ]
+        for pname, prms, phang, phigh in preset_configs:
+            btn = gtk.Button(label=pname)
+            btn.add_css_class("preset-pill")
+            if abs(self._vad_rms_threshold - prms) < 0.003:
+                btn.add_css_class("preset-pill-active")
+            btn.set_cursor_from_name("pointer")
+            btn.connect("clicked", lambda *_, n=pname, r=prms, h=phang, f=phigh: self._apply_vad_preset(r, h, f, n))
+            self._preset_pills[pname] = btn
+            presets_box.append(btn)
+        hdr.append(presets_box)
+        card.append(hdr)
+
+        # 1. Slider: RMS Energy Threshold
+        rms_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        rms_top = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        rms_lbl = gtk.Label(xalign=0, hexpand=True)
+        rms_lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>Speech RMS Threshold</span>")
+        self._rms_val_lbl = gtk.Label(xalign=1)
+        self._rms_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{self._vad_rms_threshold:.4f}</span>")
+        rms_top.append(rms_lbl)
+        rms_top.append(self._rms_val_lbl)
+        rms_box.append(rms_top)
+
+        rms_scale = gtk.Scale.new_with_range(gtk.Orientation.HORIZONTAL, 0.002, 0.080, 0.001)
+        rms_scale.add_css_class("glass-scale")
+        rms_scale.set_value(self._vad_rms_threshold)
+        rms_scale.set_draw_value(False)
+        rms_scale.set_hexpand(True)
+        rms_scale.connect("value-changed", self._on_rms_scale_changed)
+        self._rms_scale = rms_scale
+        rms_box.append(rms_scale)
+
+        rms_sub = gtk.Label(xalign=0)
+        rms_sub.set_markup("<span font_size='8pt' alpha='45%'>Absolute energy floor. Speech quieter than this is ignored. Lower is more sensitive.</span>")
+        rms_box.append(rms_sub)
+        card.append(rms_box)
+
+        # 2. Slider: Hangover Duration (ms)
+        hang_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        hang_top = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        hang_lbl = gtk.Label(xalign=0, hexpand=True)
+        hang_lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>Trailing Silence (Hangover)</span>")
+        self._hangover_val_lbl = gtk.Label(xalign=1)
+        self._hangover_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{self._vad_hangover_ms} ms</span>")
+        hang_top.append(hang_lbl)
+        hang_top.append(self._hangover_val_lbl)
+        hang_box.append(hang_top)
+
+        hang_scale = gtk.Scale.new_with_range(gtk.Orientation.HORIZONTAL, 200, 1500, 50)
+        hang_scale.add_css_class("glass-scale")
+        hang_scale.set_value(self._vad_hangover_ms)
+        hang_scale.set_draw_value(False)
+        hang_scale.set_hexpand(True)
+        hang_scale.connect("value-changed", self._on_hangover_scale_changed)
+        self._hangover_scale = hang_scale
+        hang_box.append(hang_scale)
+
+        hang_sub = gtk.Label(xalign=0)
+        hang_sub.set_markup("<span font_size='8pt' alpha='45%'>How long to keep recording after voice drops to capture complete sentence endings.</span>")
+        hang_box.append(hang_sub)
+        card.append(hang_box)
+
+        # 3. Slider: High-Pass Filter (Hz)
+        high_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        high_top = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        high_lbl = gtk.Label(xalign=0, hexpand=True)
+        high_lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>High-Pass Filter Cutoff</span>")
+        self._highpass_val_lbl = gtk.Label(xalign=1)
+        self._highpass_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{int(self._vad_highpass_hz)} Hz</span>")
+        high_top.append(high_lbl)
+        high_top.append(self._highpass_val_lbl)
+        high_box.append(high_top)
+
+        high_scale = gtk.Scale.new_with_range(gtk.Orientation.HORIZONTAL, 20, 250, 10)
+        high_scale.add_css_class("glass-scale")
+        high_scale.set_value(self._vad_highpass_hz)
+        high_scale.set_draw_value(False)
+        high_scale.set_hexpand(True)
+        high_scale.connect("value-changed", self._on_highpass_scale_changed)
+        self._highpass_scale = high_scale
+        high_box.append(high_scale)
+
+        high_sub = gtk.Label(xalign=0)
+        high_sub.set_markup("<span font_size='8pt' alpha='45%'>Attenuates table thumps, fan vibrations, and low-frequency HVAC rumble before VAD processing.</span>")
+        high_box.append(high_sub)
+        card.append(high_box)
+
+        return card
+
+    def _build_audio_diagnostics_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("audio-badge")
+        badge.append(self._make_svg("chip"))
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Audio Pipeline Diagnostics", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Audio Pipeline Diagnostics</span>")
+        s = gtk.Label(label="Low-level audio driver specifications and whisper.cpp buffer contract.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Low-level audio driver specifications and whisper.cpp buffer contract.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        grid = gtk.Grid()
+        grid.set_column_spacing(12)
+        grid.set_row_spacing(8)
+        grid.set_hexpand(True)
+
+        metrics = [
+            ("Sample Rate", "16,000 Hz (16 kHz)", "Whisper acoustic requirement", 0, 0),
+            ("Channels", "1 (Mono Channel)", "Single-channel capture", 1, 0),
+            ("Data Format", "Float32 [-1.0, 1.0]", "Native 32-bit floating point", 2, 0),
+            ("Driver ABI", "ALSA + PipeWire Native", "Direct libasound.so.2 link", 0, 1),
+            ("Frame Buffer", "480 Samples (30 ms)", "Real-time low-latency slices", 1, 1),
+            ("Ring Buffer", "1,500 ms Latency", "Anti-underrun safety buffer", 2, 1),
+        ]
+
+        for m_title, m_val, m_desc, col, row in metrics:
+            b = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2)
+            b.add_css_class("diag-metric-box")
+            b.set_hexpand(True)
+
+            l1 = gtk.Label(xalign=0)
+            l1.set_markup(f"<span font_size='7.5pt' alpha='50%'>{m_title}</span>")
+            l2 = gtk.Label(xalign=0)
+            l2.set_markup(f"<span font_weight='700' font_size='9pt' color='#ffffff'>{m_val}</span>")
+            l3 = gtk.Label(xalign=0)
+            l3.set_markup(f"<span font_size='7.5pt' alpha='40%'>{m_desc}</span>")
+
+            b.append(l1)
+            b.append(l2)
+            b.append(l3)
+            grid.attach(b, col, row, 1, 1)
+
+        card.append(grid)
+        return card
+
+    def _on_rms_scale_changed(self, scale) -> None:
+        val = scale.get_value()
+        self._vad_rms_threshold = val
+        if self._rms_val_lbl:
+            self._rms_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{val:.4f}</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>VAD RMS Threshold set to {val:.4f}. Click Save to apply.</span>")
+
+    def _on_hangover_scale_changed(self, scale) -> None:
+        val = int(scale.get_value())
+        self._vad_hangover_ms = val
+        if self._hangover_val_lbl:
+            self._hangover_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{val} ms</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>VAD Hangover set to {val} ms. Click Save to apply.</span>")
+
+    def _on_highpass_scale_changed(self, scale) -> None:
+        val = scale.get_value()
+        self._vad_highpass_hz = val
+        if self._highpass_val_lbl:
+            self._highpass_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{int(val)} Hz</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>High-Pass Filter set to {int(val)} Hz. Click Save to apply.</span>")
+
+    def _apply_vad_preset(self, rms: float, hangover: int, highpass: float, name: str) -> None:
+        self._vad_rms_threshold = rms
+        self._vad_hangover_ms = hangover
+        self._vad_highpass_hz = highpass
+        if self._rms_scale:
+            self._rms_scale.set_value(rms)
+        if self._hangover_scale:
+            self._hangover_scale.set_value(hangover)
+        if self._highpass_scale:
+            self._highpass_scale.set_value(highpass)
+        for pname, btn in self._preset_pills.items():
+            if pname == name:
+                btn.add_css_class("preset-pill-active")
+            else:
+                btn.remove_css_class("preset-pill-active")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>Applied {name} preset. Click Save to apply.</span>")
+
+    def _toggle_mic_test(self, *_args) -> None:
+        if self._is_testing_mic:
+            self._stop_mic_test()
+        else:
+            self._start_mic_test()
+
+    def _start_mic_test(self) -> None:
+        from gi.repository import GLib
+
+        if self._is_testing_mic:
+            return
+        try:
+            target = resolve_mic(self._selected_audio_device)
+            self._test_capture = AudioCapture(
+                device=target.alsa_device,
+                sample_rate=16000,
+                frame_ms=30,
+                pipewire_target=target.pipewire_target,
+                description=target.description,
+            )
+            self._test_capture.start()
+            self._is_testing_mic = True
+            self._meter_level = 0.0
+            self._meter_target = 0.0
+            if self._test_mic_btn:
+                self._test_mic_btn.remove_css_class("btn-test-mic")
+                self._test_mic_btn.add_css_class("btn-test-mic-active")
+                self._test_mic_btn.set_label("⏹ Stop Test")
+            self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>Testing microphone: {pango_esc(target.description)}</span>")
+            self._test_timer_id = GLib.timeout_add(40, self._on_mic_test_tick)
+        except Exception as exc:
+            self._is_testing_mic = False
+            self._test_capture = None
+            self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Microphone test failed: {pango_esc(str(exc))}</span>")
+
+    def _stop_mic_test(self) -> None:
+        from gi.repository import GLib
+
+        if self._test_timer_id is not None:
+            GLib.source_remove(self._test_timer_id)
+            self._test_timer_id = None
+        if self._test_capture is not None:
+            try:
+                self._test_capture.stop()
+            except Exception:
+                pass
+            self._test_capture = None
+        self._is_testing_mic = False
+        self._meter_level = 0.0
+        self._meter_target = 0.0
+        if self._test_mic_btn:
+            self._test_mic_btn.remove_css_class("btn-test-mic-active")
+            self._test_mic_btn.add_css_class("btn-test-mic")
+            self._test_mic_btn.set_label("▶ Test Microphone")
+        if self._test_vu_meter:
+            self._test_vu_meter.set_fraction(0.0)
+        if self._test_db_label:
+            self._test_db_label.set_markup("<span font_size='9pt' alpha='50%'>Idle • Click Test to monitor</span>")
+        if self._test_speech_badge:
+            self._test_speech_badge.remove_css_class("badge-speech-detected")
+            self._test_speech_badge.add_css_class("badge-speech-idle")
+            self._test_speech_badge.set_markup("<span font_size='9pt' alpha='60%'>● Idle</span>")
+
+    def _on_mic_test_tick(self) -> bool:
+        if not self._is_testing_mic or self._test_capture is None:
+            return False
+        frames = self._test_capture.drain()
+        if frames:
+            peak_rms = max(float(np.sqrt(np.mean(f ** 2))) for f in frames)
+            self._meter_target = peak_rms
+        else:
+            self._meter_target *= 0.88
+
+        if self._meter_target > self._meter_level:
+            self._meter_level = self._meter_level * 0.3 + self._meter_target * 0.7
+        else:
+            self._meter_level = self._meter_level * 0.82 + self._meter_target * 0.18
+
+        db = 20 * math.log10(max(self._meter_level, 1e-4))
+        fraction = max(0.0, min(1.0, (db + 60.0) / 60.0))
+
+        if self._test_vu_meter:
+            self._test_vu_meter.set_fraction(fraction)
+
+        is_speech = self._meter_level >= self._vad_rms_threshold
+        if self._test_db_label:
+            self._test_db_label.set_markup(
+                f"<span font_weight='700' font_size='10pt' color='#ffffff'>{db:+.1f} dB</span> "
+                f"<span font_size='8.5pt' alpha='55%'>RMS: {self._meter_level:.4f}</span>"
+            )
+
+        if self._test_speech_badge:
+            if is_speech:
+                self._test_speech_badge.remove_css_class("badge-speech-idle")
+                self._test_speech_badge.add_css_class("badge-speech-detected")
+                self._test_speech_badge.set_markup("<span font_weight='700' font_size='9pt' color='#34d399'>● Speech Detected</span>")
+            else:
+                self._test_speech_badge.remove_css_class("badge-speech-detected")
+                self._test_speech_badge.add_css_class("badge-speech-idle")
+                self._test_speech_badge.set_markup("<span font_size='9pt' alpha='60%'>● Background Noise</span>")
+
+        return True
 
     # -------------------------------------------------------------------------
     # Column 2: Center Model Selection List
@@ -1514,7 +2395,20 @@ class SettingsApp:
             self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Please download {pango_esc(model)} before saving.</span>")
             return
         path = project_root() / "whisperflow.yaml"
-        save_user_settings(path, model, self._dictionary_entries_list, self._hotkey_keys)
+        vad_data = {
+            "rms_threshold": round(float(self._vad_rms_threshold), 4),
+            "noise_multiplier": round(float(self._vad_noise_mult), 2),
+            "hangover_ms": int(self._vad_hangover_ms),
+            "highpass_hz": round(float(self._vad_highpass_hz), 1),
+        }
+        save_user_settings(
+            path=path,
+            model=model,
+            entries=self._dictionary_entries_list,
+            hotkey=self._hotkey_keys,
+            audio_device=self._selected_audio_device,
+            vad_settings=vad_data,
+        )
         self._status_label.set_markup("<span font_size='8.5pt' font_weight='700' color='#34d399'>● Settings saved successfully!</span>")
 
     def _idle(self, callback, *args) -> None:

@@ -137,8 +137,10 @@ def save_user_settings(
     model: str,
     entries: tuple[DictionaryEntry, ...] | list[DictionaryEntry],
     hotkey: tuple[str, ...] | list[str] | None = None,
+    audio_device: str | None = None,
+    vad_settings: dict | None = None,
 ) -> None:
-    """Update the model and dictionary in the YAML file.
+    """Update the model, dictionary, hotkey, and audio settings in the YAML file.
 
     Other sections stay as they are. Comments in the file are not kept,
     because PyYAML rewrites the mapping. The running transcription process
@@ -160,6 +162,18 @@ def save_user_settings(
     ]
     if hotkey is not None:
         data["hotkey"] = {"keys": [str(key) for key in hotkey]}
+    if audio_device is not None:
+        audio = data.get("audio") or {}
+        if not isinstance(audio, dict):
+            audio = {}
+        audio["device"] = audio_device
+        data["audio"] = audio
+    if vad_settings is not None:
+        vad = data.get("vad") or {}
+        if not isinstance(vad, dict):
+            vad = {}
+        vad.update(vad_settings)
+        data["vad"] = vad
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 
