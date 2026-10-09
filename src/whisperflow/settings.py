@@ -26,6 +26,7 @@ from whisperflow.audio.sources import _node_name, parse_wpctl_sources, resolve_m
 from whisperflow.config import DictionaryEntry, load_config, project_root, save_user_settings
 from whisperflow.hotkey.linux import capture_chord, format_chord
 from whisperflow.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
+from whisperflow.processing.dictionary import DictionaryProcessor
 
 # Helper to escape any text for Pango markup
 def pango_esc(text: str) -> str:
@@ -213,6 +214,9 @@ SVG_ICONS = {
     "chip": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>""",
     "shield_check": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>""",
     "zap": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>""",
+    "trash": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>""",
+    "sparkles": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>""",
+    "flask": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31L4.69 18.5A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.71-3L14 9.31V2"/><path d="M8.5 2h7"/><path d="M6.5 16h11"/></svg>""",
 }
 
 _MACOS_LIQUID_GLASS_CSS = """
@@ -773,6 +777,98 @@ scale.glass-scale slider {
     border: 1.5px solid rgba(129, 140, 248, 0.85);
     box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
+
+/* Dictionary Studio Styling */
+.dict-panel {
+    padding: 22px 28px 24px 28px;
+}
+
+.dict-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dict-badge {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.dict-rule-row {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    transition: all 150ms ease;
+}
+
+.dict-rule-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dict-chip-spoken {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    padding: 5px 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.dict-chip-repl {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 7px;
+    padding: 5px 12px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.dict-btn-del {
+    border: none;
+    background: rgba(244, 63, 94, 0.09);
+    color: #fb7185;
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 140ms ease;
+}
+
+.dict-btn-del:hover {
+    background: rgba(244, 63, 94, 0.24);
+    color: #fda4af;
+}
+
+.dict-preset-chip {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #cbd5e1;
+    transition: all 150ms ease;
+}
+
+.dict-preset-chip:hover {
+    background: rgba(255, 255, 255, 0.055);
+    border-color: rgba(129, 140, 248, 0.35);
+}
+
+.dict-test-box {
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
 """
 
 
@@ -870,6 +966,17 @@ class SettingsApp:
         self._mic_device_rows: dict[str, object] = {}
         self._mic_radio_indicators: dict[str, object] = {}
         self._devices_list_box = None
+
+        # Dictionary Studio state
+        self._dict_search_query = ""
+        self._dict_rules_vbox = None
+        self._dict_badge_lbl = None
+        self._dict_count_lbl = None
+        self._dict_new_phrase_entry = None
+        self._dict_new_repl_entry = None
+        self._dict_add_feedback = None
+        self._dict_test_input = None
+        self._dict_test_output = None
 
         # Navigation state
         self._main_stack = None
@@ -970,9 +1077,12 @@ class SettingsApp:
         ptt_panel = self._build_push_to_talk_panel()
         self._main_stack.add_named(ptt_panel, "push_to_talk")
 
-        # 4. Placeholders for other sidebar sections
+        # 4. Dictionary Section (Full width studio)
+        dict_panel = self._build_dictionary_panel()
+        self._main_stack.add_named(dict_panel, "dictionary")
+
+        # 5. Placeholders for other sidebar sections
         placeholders = [
-            ("dictionary", "Dictionary", "Manage vocabulary replacements and phonetic word corrections."),
             ("general", "General Settings", "Desktop integration, startup behavior, and application options."),
             ("about", "About WhisperFlow", "System diagnostics, version info, and credits."),
         ]
@@ -2235,6 +2345,436 @@ class SettingsApp:
         return card
 
     # -------------------------------------------------------------------------
+    # Dedicated Section: Full Dictionary View & Vocabulary Rules
+    # -------------------------------------------------------------------------
+    def _build_dictionary_panel(self):
+        gtk = self.gtk
+        scroller = gtk.ScrolledWindow()
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_hexpand(True)
+        scroller.set_vexpand(True)
+
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=16)
+        vbox.add_css_class("dict-panel")
+        vbox.set_hexpand(True)
+
+        # Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="Dictionary", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>Dictionary</span>")
+        sub = gtk.Label(label="Custom vocabulary replacements, phonetic word corrections, and domain jargon.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>Custom vocabulary replacements, phonetic word corrections, and domain jargon.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+
+        # Header status badge
+        self._dict_badge_lbl = gtk.Label(xalign=0.5)
+        self._dict_badge_lbl.add_css_class("dict-badge")
+        self._dict_badge_lbl.set_valign(gtk.Align.START)
+        top_row.append(self._dict_badge_lbl)
+        vbox.append(top_row)
+
+        # 1. Quick Add Rule Composer Card
+        vbox.append(self._build_dict_add_card())
+
+        # 2. Active Vocabulary Rules Table Card
+        vbox.append(self._build_dict_rules_card())
+
+        # 3. Interactive Live Playground Card
+        vbox.append(self._build_dict_playground_card())
+
+        # 4. Recommended Starter Packs Card
+        vbox.append(self._build_dict_packs_card())
+
+        # Initial render of rules and badge
+        self._refresh_dict_rules()
+
+        scroller.set_child(vbox)
+        return scroller
+
+    def _build_dict_add_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("dict-card")
+
+        # Head row
+        head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head.append(self._make_svg("pencil"))
+        t_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Add Vocabulary Replacement</span>")
+        s = gtk.Label(xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Phonetically misheard spoken phrases are automatically swapped before injection.</span>")
+        t_box.append(t)
+        t_box.append(s)
+        head.append(t_box)
+        card.append(head)
+
+        # Input Row
+        form_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        form_row.set_hexpand(True)
+
+        self._dict_new_phrase_entry = gtk.Entry()
+        self._dict_new_phrase_entry.set_placeholder_text("Spoken phrase (e.g. pie torch)")
+        self._dict_new_phrase_entry.add_css_class("glass-entry")
+        self._dict_new_phrase_entry.set_hexpand(True)
+        self._dict_new_phrase_entry.connect("activate", self._on_add_dict_rule)
+        form_row.append(self._dict_new_phrase_entry)
+
+        arrow_lbl = gtk.Label(label="➔")
+        arrow_lbl.set_markup("<span font_size='11pt' alpha='45%'>➔</span>")
+        form_row.append(arrow_lbl)
+
+        self._dict_new_repl_entry = gtk.Entry()
+        self._dict_new_repl_entry.set_placeholder_text("Formatted replacement (e.g. PyTorch)")
+        self._dict_new_repl_entry.add_css_class("glass-entry")
+        self._dict_new_repl_entry.set_hexpand(True)
+        self._dict_new_repl_entry.connect("activate", self._on_add_dict_rule)
+        form_row.append(self._dict_new_repl_entry)
+
+        add_btn = gtk.Button(label="+ Add Rule")
+        add_btn.add_css_class("btn-save-purple")
+        add_btn.connect("clicked", self._on_add_dict_rule)
+        form_row.append(add_btn)
+        card.append(form_row)
+
+        self._dict_add_feedback = gtk.Label(xalign=0)
+        self._dict_add_feedback.set_markup("<span font_size='8pt' alpha='50%'>Tip: Matching is case-insensitive and respects surrounding punctuation.</span>")
+        card.append(self._dict_add_feedback)
+
+        return card
+
+    def _on_add_dict_rule(self, *_args):
+        phrase = self._dict_new_phrase_entry.get_text().strip() if self._dict_new_phrase_entry else ""
+        repl = self._dict_new_repl_entry.get_text().strip() if self._dict_new_repl_entry else ""
+        if not phrase:
+            if self._dict_add_feedback:
+                self._dict_add_feedback.set_markup("<span font_size='8pt' color='#f87171'>Please enter a spoken phrase to match.</span>")
+            return
+
+        if not repl:
+            repl = phrase
+
+        # Check if already present
+        existing_idx = next((i for i, e in enumerate(self._dictionary_entries_list) if e.phrase.lower() == phrase.lower()), None)
+        if existing_idx is not None:
+            self._dictionary_entries_list[existing_idx] = DictionaryEntry(phrase=phrase, replacement=repl, enabled=True)
+            msg = f"Updated rule: '{phrase}' ➔ '{repl}'"
+        else:
+            self._dictionary_entries_list.append(DictionaryEntry(phrase=phrase, replacement=repl, enabled=True))
+            msg = f"Added rule: '{phrase}' ➔ '{repl}'"
+
+        if self._dict_new_phrase_entry:
+            self._dict_new_phrase_entry.set_text("")
+            self._dict_new_phrase_entry.grab_focus()
+        if self._dict_new_repl_entry:
+            self._dict_new_repl_entry.set_text("")
+
+        if self._dict_add_feedback:
+            self._dict_add_feedback.set_markup(f"<span font_size='8pt' color='#34d399'>● {pango_esc(msg)}</span>")
+
+        self._refresh_dict_rules()
+        self._update_dict_playground()
+        self._render_dict_preview()
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● {pango_esc(msg)}. Click Save to apply.</span>")
+
+    def _build_dict_rules_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("dict-card")
+
+        # Top row with title and search bar
+        head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        head.append(self._make_svg("book"))
+
+        t_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Active Vocabulary Rules</span>")
+        self._dict_count_lbl = gtk.Label(xalign=0)
+        t_box.append(t)
+        t_box.append(self._dict_count_lbl)
+        head.append(t_box)
+
+        # Search / filter field
+        search_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        search_box.set_valign(gtk.Align.CENTER)
+        search_in = gtk.Entry()
+        search_in.set_placeholder_text("Search rules...")
+        search_in.add_css_class("glass-entry")
+        search_in.connect("changed", self._on_dict_search_changed)
+        search_box.append(search_in)
+        head.append(search_box)
+        card.append(head)
+
+        # Dynamic rules container
+        self._dict_rules_vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+        card.append(self._dict_rules_vbox)
+
+        return card
+
+    def _on_dict_search_changed(self, entry):
+        self._dict_search_query = entry.get_text().strip().lower()
+        self._refresh_dict_rules()
+
+    def _refresh_dict_rules(self):
+        gtk = self.gtk
+        if not self._dict_rules_vbox:
+            return
+
+        # Clear existing children
+        while True:
+            c = self._dict_rules_vbox.get_first_child()
+            if c is None:
+                break
+            self._dict_rules_vbox.remove(c)
+
+        total_rules = len(self._dictionary_entries_list)
+        active_count = sum(1 for e in self._dictionary_entries_list if e.enabled)
+
+        # Update badge
+        if self._dict_badge_lbl:
+            self._dict_badge_lbl.set_markup(f"<span font_size='8.5pt' font_weight='700'>● {active_count} Active Rules</span>")
+
+        # Filter entries
+        q = self._dict_search_query
+        filtered = [
+            (idx, e)
+            for idx, e in enumerate(self._dictionary_entries_list)
+            if not q or (q in e.phrase.lower() or q in e.replacement.lower())
+        ]
+
+        if self._dict_count_lbl:
+            if q:
+                self._dict_count_lbl.set_markup(f"<span font_size='8.5pt' alpha='55%'>Showing {len(filtered)} of {total_rules} rules matching \"{pango_esc(q)}\"</span>")
+            else:
+                self._dict_count_lbl.set_markup(f"<span font_size='8.5pt' alpha='55%'>{total_rules} configured rules ({active_count} enabled for speech)</span>")
+
+        if not filtered:
+            empty_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+            empty_box.set_margin_top(14)
+            empty_box.set_margin_bottom(14)
+            empty_box.set_halign(gtk.Align.CENTER)
+            lbl1 = gtk.Label(xalign=0.5)
+            lbl1.set_markup("<span font_weight='600' font_size='10pt' alpha='65%'>No vocabulary rules found</span>")
+            lbl2 = gtk.Label(xalign=0.5)
+            lbl2.set_markup("<span font_size='8.5pt' alpha='40%'>Add a custom term above or import a starter pack below.</span>")
+            empty_box.append(lbl1)
+            empty_box.append(lbl2)
+            self._dict_rules_vbox.append(empty_box)
+            return
+
+        for orig_idx, entry in filtered:
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+            row.add_css_class("dict-rule-row")
+            row.set_hexpand(True)
+
+            cb = gtk.CheckButton(active=entry.enabled)
+            cb.set_valign(gtk.Align.CENTER)
+            cb.connect("toggled", lambda _cb, idx=orig_idx: self._toggle_dict_entry(idx, _cb.get_active()))
+            row.append(cb)
+
+            sp_lbl = gtk.Label(xalign=0)
+            sp_alpha = "90%" if entry.enabled else "40%"
+            sp_lbl.set_markup(f"<span font_weight='600' font_size='9pt' color='#ffffff' alpha='{sp_alpha}'>{pango_esc(entry.phrase)}</span>")
+            sp_box = gtk.Box()
+            sp_box.add_css_class("dict-chip-spoken")
+            sp_box.append(sp_lbl)
+            row.append(sp_box)
+
+            arrow = gtk.Label(label="➔")
+            arr_alpha = "50%" if entry.enabled else "25%"
+            arrow.set_markup(f"<span font_size='9pt' alpha='{arr_alpha}'>➔</span>")
+            row.append(arrow)
+
+            rp_lbl = gtk.Label(xalign=0)
+            rp_color = "#a5b4fc" if entry.enabled else "#94a3b8"
+            rp_alpha = "100%" if entry.enabled else "40%"
+            rp_lbl.set_markup(f"<span font_weight='700' font_size='9pt' color='{rp_color}' alpha='{rp_alpha}'>{pango_esc(entry.replacement)}</span>")
+            rp_box = gtk.Box()
+            rp_box.add_css_class("dict-chip-repl")
+            rp_box.append(rp_lbl)
+            row.append(rp_box)
+
+            # Spacer
+            row.append(gtk.Box(hexpand=True))
+
+            # Status tag
+            tag_lbl = gtk.Label(xalign=1)
+            if entry.enabled:
+                tag_lbl.set_markup("<span font_size='7.5pt' color='#34d399' alpha='85%'>ENABLED</span>")
+            else:
+                tag_lbl.set_markup("<span font_size='7.5pt' alpha='40%'>MUTED</span>")
+            row.append(tag_lbl)
+
+            # Delete button
+            del_b = gtk.Button(label="✕")
+            del_b.add_css_class("dict-btn-del")
+            del_b.set_valign(gtk.Align.CENTER)
+            del_b.connect("clicked", lambda _b, idx=orig_idx: self._delete_dict_entry(idx))
+            row.append(del_b)
+
+            self._dict_rules_vbox.append(row)
+
+    def _toggle_dict_entry(self, idx: int, is_active: bool):
+        if 0 <= idx < len(self._dictionary_entries_list):
+            e = self._dictionary_entries_list[idx]
+            self._dictionary_entries_list[idx] = DictionaryEntry(phrase=e.phrase, replacement=e.replacement, enabled=is_active)
+            self._refresh_dict_rules()
+            self._update_dict_playground()
+            self._render_dict_preview()
+
+    def _delete_dict_entry(self, idx: int):
+        if 0 <= idx < len(self._dictionary_entries_list):
+            deleted = self._dictionary_entries_list.pop(idx)
+            self._refresh_dict_rules()
+            self._update_dict_playground()
+            self._render_dict_preview()
+            self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>● Deleted rule '{pango_esc(deleted.phrase)}'. Click Save to apply.</span>")
+
+    def _build_dict_playground_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        card.add_css_class("dict-card")
+
+        head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head.append(self._make_svg("flask"))
+        t_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Interactive Vocabulary Playground</span>")
+        s = gtk.Label(xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Test your dictionary substitutions live on sample dictation sentences.</span>")
+        t_box.append(t)
+        t_box.append(s)
+        head.append(t_box)
+        card.append(head)
+
+        self._dict_test_input = gtk.Entry()
+        self._dict_test_input.set_placeholder_text("Type sample speech here (e.g. 'i love pie torch and cube netties daily')...")
+        self._dict_test_input.add_css_class("glass-entry")
+        self._dict_test_input.connect("changed", self._update_dict_playground)
+        card.append(self._dict_test_input)
+
+        out_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        out_box.add_css_class("dict-test-box")
+        out_box.set_hexpand(True)
+
+        l_tag = gtk.Label(xalign=0)
+        l_tag.set_markup("<span font_size='7.5pt' alpha='50%'>TRANSCRIPTION OUTPUT PREVIEW</span>")
+        out_box.append(l_tag)
+
+        self._dict_test_output = gtk.Label(xalign=0, wrap=True)
+        self._dict_test_output.set_markup("<span font_size='9pt' alpha='40%' font_style='italic'>Transformed text will preview here automatically...</span>")
+        out_box.append(self._dict_test_output)
+        card.append(out_box)
+
+        return card
+
+    def _update_dict_playground(self, *_args):
+        if not self._dict_test_input or not self._dict_test_output:
+            return
+        raw = self._dict_test_input.get_text()
+        if not raw:
+            self._dict_test_output.set_markup("<span font_size='9pt' alpha='40%' font_style='italic'>Transformed text will preview here automatically...</span>")
+            return
+
+        processor = DictionaryProcessor(self._dictionary_entries_list)
+        result = processor.process(raw)
+        self._dict_test_output.set_markup(f"<span font_size='9.5pt' font_weight='600' color='#a5b4fc'>{pango_esc(result)}</span>")
+
+    def _build_dict_packs_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        card.add_css_class("dict-card")
+
+        head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head.append(self._make_svg("sparkles"))
+        t_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Curated Vocabulary Packs</span>")
+        s = gtk.Label(xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>One-click presets for popular software engineering, ML frameworks, and cloud terminology.</span>")
+        t_box.append(t)
+        t_box.append(s)
+        head.append(t_box)
+        card.append(head)
+
+        packs = [
+            (
+                "AI & Machine Learning",
+                "PyTorch, TensorFlow, Hugging Face, WhisperFlow, scikit-learn",
+                [
+                    ("pie torch", "PyTorch"),
+                    ("tensor flow", "TensorFlow"),
+                    ("hugging face", "Hugging Face"),
+                    ("whisper flow", "WhisperFlow"),
+                    ("scikit learn", "scikit-learn"),
+                ],
+            ),
+            (
+                "Cloud & DevOps",
+                "Kubernetes, Docker Compose, PostgreSQL, GraphQL, gRPC",
+                [
+                    ("cube netties", "Kubernetes"),
+                    ("docker compose", "Docker Compose"),
+                    ("post gres", "PostgreSQL"),
+                    ("graph ql", "GraphQL"),
+                    ("g r p c", "gRPC"),
+                ],
+            ),
+            (
+                "Modern Web & Dev",
+                "TypeScript, JavaScript, Next.js, Tailwind CSS, GitHub",
+                [
+                    ("type script", "TypeScript"),
+                    ("java script", "JavaScript"),
+                    ("next j s", "Next.js"),
+                    ("tailwind css", "Tailwind CSS"),
+                    ("git hub", "GitHub"),
+                ],
+            ),
+        ]
+
+        packs_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        packs_row.set_hexpand(True)
+
+        for pack_name, pack_desc, pack_entries in packs:
+            p_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+            p_box.add_css_class("dict-preset-chip")
+            p_box.set_hexpand(True)
+
+            p_title = gtk.Label(xalign=0)
+            p_title.set_markup(f"<span font_weight='700' font_size='9pt' color='#ffffff'>{pango_esc(pack_name)}</span>")
+            p_desc = gtk.Label(xalign=0, wrap=True)
+            p_desc.set_markup(f"<span font_size='7.5pt' alpha='50%'>{pango_esc(pack_desc)}</span>")
+            p_box.append(p_title)
+            p_box.append(p_desc)
+
+            btn = gtk.Button(label="+ Import Pack")
+            btn.add_css_class("btn-edit-pill")
+            btn.set_halign(gtk.Align.START)
+            btn.connect("clicked", lambda _b, n=pack_name, entries=pack_entries: self._import_dict_pack(n, entries))
+            p_box.append(btn)
+            packs_row.append(p_box)
+
+        card.append(packs_row)
+        return card
+
+    def _import_dict_pack(self, pack_name: str, entries: list[tuple[str, str]]):
+        added = 0
+        for phrase, repl in entries:
+            if not any(e.phrase.lower() == phrase.lower() for e in self._dictionary_entries_list):
+                self._dictionary_entries_list.append(DictionaryEntry(phrase=phrase, replacement=repl, enabled=True))
+                added += 1
+
+        self._refresh_dict_rules()
+        self._update_dict_playground()
+        self._render_dict_preview()
+        msg = f"Imported {added} new terms from '{pack_name}' pack" if added > 0 else f"All terms from '{pack_name}' are already present"
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● {pango_esc(msg)}. Click Save to apply.</span>")
+
+    # -------------------------------------------------------------------------
     # Column 2: Center Model Selection List
     # -------------------------------------------------------------------------
     def _build_center_panel(self):
@@ -2501,7 +3041,7 @@ class SettingsApp:
 
         edit_dict_btn = gtk.Button(label="✏ Edit")
         edit_dict_btn.add_css_class("btn-edit-pill")
-        edit_dict_btn.connect("clicked", self._open_dictionary_modal)
+        edit_dict_btn.connect("clicked", lambda *_: self._switch_section("dictionary"))
         dt_head.append(edit_dict_btn)
         dict_card.append(dt_head)
 
