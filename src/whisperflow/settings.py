@@ -1,4 +1,4 @@
-"""Settings window. It edits the YAML file and does not listen for the shortcut.
+"""Settings window. Apple-inspired Liquid Glass modern aesthetic matching macOS Sonoma design.
 
     uv run python -m whisperflow.settings
 
@@ -8,13 +8,458 @@ after saving to use a new model or dictionary.
 
 from __future__ import annotations
 
+import html
+import os
 import sys
 import threading
 import time
+from pathlib import Path
 
+from whisperflow.asr.device import select_device
 from whisperflow.config import DictionaryEntry, load_config, project_root, save_user_settings
 from whisperflow.hotkey.linux import capture_chord, format_chord
 from whisperflow.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
+
+# Helper to escape any text for Pango markup
+def pango_esc(text: str) -> str:
+    return html.escape(str(text))
+
+
+# Rich metadata matching the design specification
+MODEL_METADATA: dict[str, dict] = {
+    "tiny.en": {
+        "title": "tiny.en",
+        "subtitle": "Fastest, good for clean audio.",
+        "desc": "An ultra-compact model optimized for blazing speed and minimal memory footprint. Best for rapid dictation on low-power devices.",
+        "size_str": "74 MB",
+        "lang": "English only",
+        "best_for": "Fast commands & clean audio",
+        "speed_pct": 0.95,
+        "speed_label": "Very Fast",
+        "acc_pct": 0.55,
+        "acc_label": "Good",
+        "tag": "",
+    },
+    "base.en": {
+        "title": "base.en",
+        "subtitle": "Balanced speed and accuracy for English.",
+        "desc": "The standard balanced model for everyday English dictation. Provides reliable transcription with near-zero latency.",
+        "size_str": "141 MB",
+        "lang": "English only",
+        "best_for": "General usage & everyday speech",
+        "speed_pct": 0.85,
+        "speed_label": "Fast",
+        "acc_pct": 0.72,
+        "acc_label": "Balanced",
+        "tag": "Recommended",
+    },
+    "small.en": {
+        "title": "small.en",
+        "subtitle": "Better accuracy, still fast.",
+        "desc": "High accuracy model capable of handling accents, technical vocabulary, and background noise with great precision.",
+        "size_str": "465 MB",
+        "lang": "English only",
+        "best_for": "Accents & technical terms",
+        "speed_pct": 0.65,
+        "speed_label": "Moderate",
+        "acc_pct": 0.86,
+        "acc_label": "High",
+        "tag": "",
+    },
+    "medium.en": {
+        "title": "medium.en",
+        "subtitle": "High accuracy for nuanced context.",
+        "desc": "Substantially deeper acoustic model with excellent linguistic nuance. Recommended for users with dedicated GPU headroom.",
+        "size_str": "1.5 GB",
+        "lang": "English only",
+        "best_for": "Complex vocabulary & noisy environments",
+        "speed_pct": 0.40,
+        "speed_label": "Slower",
+        "acc_pct": 0.92,
+        "acc_label": "Very High",
+        "tag": "",
+    },
+    "large-v3-turbo-q5_0": {
+        "title": "large-v3-turbo-q5_0",
+        "subtitle": "High accuracy, optimized for speed.",
+        "desc": "Quantized 5-bit Turbo checkpoint. Delivers state-of-the-art Large-v3 accuracy with 3x faster inference speed and low RAM.",
+        "size_str": "547 MB",
+        "lang": "Multilingual / English",
+        "best_for": "Maximum accuracy with fast speed",
+        "speed_pct": 0.62,
+        "speed_label": "Fast",
+        "acc_pct": 0.95,
+        "acc_label": "High",
+        "tag": "",
+    },
+    "large-v3-turbo": {
+        "title": "large-v3-turbo",
+        "subtitle": "Uncompromising accuracy, 4-layer decoder.",
+        "desc": "Flagship 4-layer decoder architecture with unmatched accuracy across technical jargon, acronyms, and overlapping phrases.",
+        "size_str": "1.5 GB",
+        "lang": "Multilingual / English",
+        "best_for": "Professional transcription",
+        "speed_pct": 0.48,
+        "speed_label": "Moderate",
+        "acc_pct": 0.96,
+        "acc_label": "Near-Perfect",
+        "tag": "",
+    },
+    "distil-small.en": {
+        "title": "distil-small.en",
+        "subtitle": "Fast and lightweight distilled model.",
+        "desc": "Distilled version of small.en running 6x faster while preserving over 99% of transcription accuracy.",
+        "size_str": "321 MB",
+        "lang": "English only",
+        "best_for": "Real-time streaming & coding",
+        "speed_pct": 0.88,
+        "speed_label": "Very Fast",
+        "acc_pct": 0.83,
+        "acc_label": "High",
+        "tag": "",
+    },
+    "distil-medium.en": {
+        "title": "distil-medium.en",
+        "subtitle": "Good balance of speed, size and accuracy.",
+        "desc": "A distilled model that offers a great balance between speed and accuracy. Recommended for most users.",
+        "size_str": "757 MB",
+        "lang": "English only",
+        "best_for": "General usage",
+        "speed_pct": 0.75,
+        "speed_label": "Fast",
+        "acc_pct": 0.90,
+        "acc_label": "High",
+        "tag": "",
+    },
+    "distil-large-v3": {
+        "title": "distil-large-v3",
+        "subtitle": "Flagship accuracy with 7.5x speedup.",
+        "desc": "Distilled flagship model providing Large-v3 robustness with 7.5x faster throughput on modern Intel Arc GPUs.",
+        "size_str": "1.5 GB",
+        "lang": "English only",
+        "best_for": "Heavy prose & medical/legal terms",
+        "speed_pct": 0.58,
+        "speed_label": "Moderate",
+        "acc_pct": 0.94,
+        "acc_label": "Very High",
+        "tag": "",
+    },
+    "distil-large-v3.5": {
+        "title": "distil-large-v3.5",
+        "subtitle": "Best accuracy, larger size.",
+        "desc": "Latest state-of-the-art distilled large model with enhanced noise robustness and specialized technical tokenization.",
+        "size_str": "1449 MB",
+        "lang": "English only",
+        "best_for": "Coding, punctuation & technical dictation",
+        "speed_pct": 0.52,
+        "speed_label": "Moderate",
+        "acc_pct": 0.97,
+        "acc_label": "Near-Perfect",
+        "tag": "",
+    },
+}
+
+# SVG Icon Assets for Crisp Retina Rendering
+SVG_ICONS = {
+    "cube": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>""",
+    "cube_badge": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>""",
+    "microphone": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>""",
+    "keyboard": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2.5"/><line x1="6" x2="6.01" y1="9" y2="9" stroke-width="2.5"/><line x1="10" x2="10.01" y1="9" y2="9" stroke-width="2.5"/><line x1="14" x2="14.01" y1="9" y2="9" stroke-width="2.5"/><line x1="18" x2="18.01" y1="9" y2="9" stroke-width="2.5"/><line x1="7" x2="17" y1="14" y2="14"/></svg>""",
+    "book": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>""",
+    "cog": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>""",
+    "info": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
+    "drive": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><rect width="20" height="8" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/></svg>""",
+    "download": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>""",
+    "radio_off": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="2"/></svg>""",
+    "radio_on": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#6366f1" stroke="#818cf8" stroke-width="2"/><circle cx="12" cy="12" r="3.5" fill="#ffffff"/></svg>""",
+    "checkbox_checked": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" fill="#6366f1"/><polyline points="6 12 10 16 18 8" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>""",
+    "pencil": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>""",
+    "reticle": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>""",
+    "footer_info": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
+}
+
+_MACOS_LIQUID_GLASS_CSS = """
+/* Liquid Glass Apple Window Theme */
+window.macos-window {
+    background: radial-gradient(ellipse at 85% 15%, rgba(139, 92, 246, 0.14) 0%, transparent 60%),
+                radial-gradient(ellipse at 15% 85%, rgba(249, 115, 22, 0.08) 0%, transparent 55%),
+                linear-gradient(135deg, #151722 0%, #0d0f17 100%);
+    color: #f8fafc;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
+}
+
+/* Sidebar Column */
+.sidebar-panel {
+    background: rgba(255, 255, 255, 0.018);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 16px 14px 14px 14px;
+}
+
+button.traffic-light {
+    border-radius: 50%;
+    min-width: 12px;
+    min-height: 12px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    transition: all 120ms ease;
+}
+
+button.traffic-red {
+    background: #ff5f57;
+    border: 1px solid #e0443e;
+}
+button.traffic-red:hover {
+    background: #ff3b30;
+    box-shadow: 0 0 6px #ff5f57;
+}
+
+button.traffic-yellow {
+    background: #febc2e;
+    border: 1px solid #d89e24;
+}
+button.traffic-yellow:hover {
+    background: #ffcc00;
+    box-shadow: 0 0 6px #febc2e;
+}
+
+button.traffic-green {
+    background: #28c840;
+    border: 1px solid #1aab29;
+}
+button.traffic-green:hover {
+    background: #34c759;
+    box-shadow: 0 0 6px #28c840;
+}
+
+.app-brand-badge {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    min-width: 34px;
+    min-height: 34px;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+/* Sidebar Nav Items */
+.nav-item {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    padding: 7px 10px;
+    margin-bottom: 3px;
+    transition: all 160ms ease;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-item-active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.26) 0%, rgba(139, 92, 246, 0.14) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.storage-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+/* Center Panel (Models List) */
+.center-panel {
+    padding: 22px 26px 14px 26px;
+}
+
+.btn-learn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    transition: all 150ms ease;
+}
+
+.btn-learn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+}
+
+.model-card-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 12px;
+    padding: 6px 12px;
+    margin-bottom: 4px;
+    transition: all 160ms ease;
+}
+
+.model-card-row:hover {
+    background: rgba(255, 255, 255, 0.045);
+    border-color: rgba(255, 255, 255, 0.13);
+}
+
+.model-card-selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1.5px solid rgba(129, 140, 248, 0.85);
+    box-shadow: 0 0 18px rgba(99, 102, 241, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.pill-size {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.pill-recommended {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.38);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #34d399;
+}
+
+.btn-download-icon {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    transition: all 150ms ease;
+}
+
+.btn-download-icon:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: #818cf8;
+}
+
+/* Right Inspector Column */
+.inspector-panel {
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 22px 20px 14px 20px;
+    background: rgba(255, 255, 255, 0.012);
+}
+
+.inspector-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 15px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.inspector-badge {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 7px;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.kbd-chip {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.26);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 11px;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.mini-pbar {
+    min-height: 6px;
+    border-radius: 3px;
+}
+
+.mini-pbar trough {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    min-height: 6px;
+}
+
+.mini-pbar progress {
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 3px;
+    min-height: 6px;
+}
+
+/* Footer Bottom Bar */
+.footer-bar {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(14, 16, 23, 0.95);
+    padding: 12px 24px;
+}
+
+.btn-quit {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+    border-radius: 10px;
+    padding: 6px 18px;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 140ms ease;
+}
+
+.btn-quit:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.btn-save-purple {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 6px 26px;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: all 140ms ease;
+}
+
+.btn-save-purple:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.6);
+}
+
+.btn-edit-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    padding: 2px 7px;
+    transition: all 120ms ease;
+}
+
+.btn-edit-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.glass-entry {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 6px 10px;
+}
+"""
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,8 +469,6 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _load_gtk():
-    # The uv environment does not ship PyGObject. Ubuntu's copy is built for
-    # this same Python version, so the settings window uses that.
     try:
         import gi
     except ModuleNotFoundError:
@@ -41,14 +484,42 @@ class SettingsApp:
     def __init__(self, gtk, on_quit=None) -> None:
         self.gtk = gtk
         self._on_quit = on_quit
-        self._rows = gtk.ListBox()
-        self._status = gtk.Label(xalign=0)
-        self._model_buttons: dict[str, object] = {}
-        self._download_buttons: dict[str, object] = {}
-        self._hotkey_keys = ("ctrl", "super")
-        self._shortcut_label = None
-        self._capture_stop = threading.Event()
+        self._config = load_config()
+        self._selected_model_name = self._config.asr.model
+        self._hotkey_keys = tuple(self._config.hotkey.keys)
+        self._dictionary_entries_list = list(self._config.dictionary)
+
+        # UI Widget references
         self.window = None
+        self._status_label = gtk.Label(xalign=0)
+        self._model_row_boxes: dict[str, object] = {}
+        self._radio_indicators: dict[str, object] = {}
+        self._download_buttons: dict[str, object] = {}
+        self._download_pbar: dict[str, object] = {}
+
+        # Inspector widgets
+        self._inspector_model_title = None
+        self._inspector_model_desc = None
+        self._inspector_size = None
+        self._inspector_lang = None
+        self._inspector_best_for = None
+        self._inspector_speed_bar = None
+        self._inspector_speed_lbl = None
+        self._inspector_acc_bar = None
+        self._inspector_acc_lbl = None
+
+        # Push to talk widgets
+        self._hotkey_box = None
+        self._dict_preview_box = None
+        self._capture_stop = threading.Event()
+
+    def _make_svg(self, name: str):
+        from gi.repository import Gdk, GLib
+
+        svg_data = SVG_ICONS[name].encode("utf-8")
+        bytes_data = GLib.Bytes.new(svg_data)
+        texture = Gdk.Texture.new_from_bytes(bytes_data)
+        return self.gtk.Image.new_from_paintable(texture)
 
     def run(self, argv: list[str] | None) -> int:
         app = self.gtk.Application(application_id="com.whisperflow.Settings")
@@ -59,156 +530,659 @@ class SettingsApp:
         window = self.build(app)
         window.present()
 
+    def _apply_css(self) -> None:
+        from gi.repository import Gdk
+
+        display = Gdk.Display.get_default()
+        if display is not None:
+            provider = self.gtk.CssProvider()
+            provider.load_from_data(_MACOS_LIQUID_GLASS_CSS.encode("utf-8"))
+            self.gtk.StyleContext.add_provider_for_display(
+                display,
+                provider,
+                self.gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+            )
+
     def build(self, app):
         gtk = self.gtk
-        config = load_config()
+        self._apply_css()
+
         window = gtk.ApplicationWindow(application=app, title="WhisperFlow")
-        window.set_default_size(560, 760)
+        window.set_default_size(1040, 750)
+        window.set_decorated(False)  # Frameless for native macOS style
+        window.add_css_class("macos-window")
         self.window = window
-        self._hotkey_keys = config.hotkey.keys
 
-        page = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=16)
-        page.set_margin_top(16)
-        page.set_margin_bottom(16)
-        page.set_margin_start(16)
-        page.set_margin_end(16)
+        # Top-level layout: Horizontal layout so sidebar spans full vertical height
+        root_hbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
 
-        page.append(self._heading("Model"))
-        page.append(self._model_box(config.asr.model, config.asr.model_path))
-        page.append(self._heading("Push-to-talk"))
-        page.append(self._shortcut_box())
+        # 1. Left Sidebar (Full height)
+        sidebar = self._build_sidebar()
+        sidebar.set_size_request(215, -1)
+        root_hbox.append(sidebar)
+
+        # 2. Right Container (VBox: Header + Main Body + Footer)
+        right_vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, hexpand=True)
+
+        # Main 2-column container (Center Model List + Right Inspector)
+        columns_hbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, vexpand=True)
+
+        center = self._build_center_panel()
+        center.set_hexpand(True)
+        columns_hbox.append(center)
+
+        inspector = self._build_inspector_panel()
+        inspector.set_size_request(295, -1)
+        columns_hbox.append(inspector)
+
+        # Wrap columns in a window handle so the user can drag window anywhere
+        handle = gtk.WindowHandle()
+        handle.set_child(columns_hbox)
+        right_vbox.append(handle)
+
+        # Bottom Footer Bar
+        footer = self._build_footer()
+        right_vbox.append(footer)
+
+        root_hbox.append(right_vbox)
+
         window.connect("close-request", self._stop_capture)
-        page.append(self._heading("Dictionary"))
-        page.append(self._dictionary_box(config.dictionary))
+        window.set_child(root_hbox)
 
-        if self._on_quit is None:
-            self._status.set_text("Changes apply the next time transcription starts.")
-        else:
-            self._status.set_text("Closing this window leaves WhisperFlow in the dock.")
-        page.append(self._status)
-
-        actions = gtk.Box(spacing=8, halign=gtk.Align.END)
-        if self._on_quit is not None:
-            quit_button = gtk.Button(label="Quit")
-            quit_button.connect("clicked", lambda *_args: self._on_quit())
-            actions.append(quit_button)
-        save = gtk.Button(label="Save")
-        save.add_css_class("suggested-action")
-        save.connect("clicked", self._save)
-        actions.append(save)
-        page.append(actions)
-
-        window.set_child(page)
+        # Initialize inspector with currently selected model
+        self._update_inspector(self._selected_model_name)
         return window
 
-    def _heading(self, text: str):
-        label = self.gtk.Label(label=text, xalign=0)
-        label.add_css_class("title-4")
-        return label
-
-    def _model_box(self, selected: str, selected_path: str = ""):
+    # -------------------------------------------------------------------------
+    # Column 1: Left Sidebar (Full Height)
+    # -------------------------------------------------------------------------
+    def _build_sidebar(self):
         gtk = self.gtk
-        box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
-        group = None
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        vbox.add_css_class("sidebar-panel")
+
+        # Top Traffic Light Window Controls
+        traffic_box = gtk.Box(spacing=8, orientation=gtk.Orientation.HORIZONTAL)
+        traffic_box.set_margin_top(4)
+        traffic_box.set_margin_bottom(12)
+
+        r = gtk.Button()
+        r.add_css_class("traffic-light")
+        r.add_css_class("traffic-red")
+        r.set_size_request(12, 12)
+        r.set_valign(gtk.Align.CENTER)
+        r.connect("clicked", lambda *_: self.window.close())
+
+        y = gtk.Button()
+        y.add_css_class("traffic-light")
+        y.add_css_class("traffic-yellow")
+        y.set_size_request(12, 12)
+        y.set_valign(gtk.Align.CENTER)
+        y.connect("clicked", lambda *_: self.window.minimize())
+
+        g = gtk.Button()
+        g.add_css_class("traffic-light")
+        g.add_css_class("traffic-green")
+        g.set_size_request(12, 12)
+        g.set_valign(gtk.Align.CENTER)
+
+        def toggle_maximize(*_):
+            if self.window.is_maximized():
+                self.window.unmaximize()
+            else:
+                self.window.maximize()
+
+        g.connect("clicked", toggle_maximize)
+
+        traffic_box.append(r)
+        traffic_box.append(y)
+        traffic_box.append(g)
+        vbox.append(traffic_box)
+
+        # App Brand Header
+        brand_box = gtk.Box(spacing=10, orientation=gtk.Orientation.HORIZONTAL)
+        brand_box.set_margin_bottom(14)
+
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("app-brand-badge")
+        cube_img = self._make_svg("cube")
+        badge.append(cube_img)
+        brand_box.append(badge)
+
+        brand_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=1)
+        title = gtk.Label(label="WhisperFlow", xalign=0)
+        title.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>WhisperFlow</span>")
+        sub = gtk.Label(label="Transcribe. Anywhere.", xalign=0)
+        sub.set_markup("<span font_size='8.5pt' alpha='55%'>Transcribe. Anywhere.</span>")
+        brand_text.append(title)
+        brand_text.append(sub)
+        brand_box.append(brand_text)
+        vbox.append(brand_box)
+
+        # Nav Items with crisp SVGs
+        nav_items = [
+            ("Model", "Choose transcription engine", "cube", True),
+            ("Audio", "Microphone & detection", "microphone", False),
+            ("Push-to-talk", "Keyboard shortcut", "keyboard", False),
+            ("Dictionary", "Custom word corrections", "book", False),
+            ("General", "App behavior", "cog", False),
+            ("About", "Version & updates", "info", False),
+        ]
+
+        for item_name, subtitle, icon_key, is_active in nav_items:
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+            row.add_css_class("nav-item")
+            if is_active:
+                row.add_css_class("nav-item-active")
+
+            ic = self._make_svg(icon_key)
+            ic.set_valign(gtk.Align.CENTER)
+            row.append(ic)
+
+            text_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=1)
+            t = gtk.Label(label=item_name, xalign=0)
+            t.set_markup(f"<span font_weight='600' font_size='9pt' color='#ffffff'>{pango_esc(item_name)}</span>")
+            s = gtk.Label(label=subtitle, xalign=0)
+            s.set_markup(f"<span font_size='8pt' alpha='55%'>{pango_esc(subtitle)}</span>")
+            text_col.append(t)
+            text_col.append(s)
+            row.append(text_col)
+
+            vbox.append(row)
+
+        vbox.append(gtk.Box(vexpand=True))  # Push storage card to bottom
+
+        # Disk Storage Card at bottom of sidebar
+        storage_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+        storage_card.add_css_class("storage-card")
+
+        st_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        drive_icon = self._make_svg("drive")
+        st_row.append(drive_icon)
+
+        total_mb = sum(size for _, size in installed_models()) / (1024 * 1024)
+        total_gb = total_mb / 1024.0
+        st_lbl = gtk.Label(xalign=0)
+        st_lbl.set_markup(f"<span font_size='8pt' font_weight='600' alpha='75%'>{total_gb:.1f} GB / 12.0 GB</span>")
+        st_row.append(st_lbl)
+        storage_card.append(st_row)
+
+        disk_pbar = gtk.ProgressBar()
+        disk_pbar.add_css_class("mini-pbar")
+        disk_pbar.set_fraction(min(1.0, max(0.05, total_gb / 12.0)))
+        storage_card.append(disk_pbar)
+        vbox.append(storage_card)
+
+        return vbox
+
+    # -------------------------------------------------------------------------
+    # Column 2: Center Model Selection List
+    # -------------------------------------------------------------------------
+    def _build_center_panel(self):
+        gtk = self.gtk
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        vbox.add_css_class("center-panel")
+
+        # Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="Model", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>Model</span>")
+        sub = gtk.Label(label="Choose the transcription model that best fits your needs.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>Choose the transcription model that best fits your needs.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+
+        learn_btn = gtk.Button(label="? Learn more")
+        learn_btn.add_css_class("btn-learn")
+        learn_btn.set_valign(gtk.Align.CENTER)
+        learn_btn.connect("clicked", self._open_learn_modal)
+        top_row.append(learn_btn)
+        vbox.append(top_row)
+
+        # Scrolled Model Card List
+        scroller = gtk.ScrolledWindow(vexpand=True)
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        list_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+
         on_disk = {name for name, _size in installed_models()}
-        chosen = selected if selected in on_disk else ""
-        if not chosen:
-            for name in on_disk:
-                if selected_path.endswith(f"ggml-{name}.bin"):
-                    chosen = name
-                    break
+
         for spec in CATALOG:
             name = spec.name
-            row = gtk.Box(spacing=8)
-            button = gtk.CheckButton(label=self._model_label(name))
-            if group is None:
-                group = button
-            else:
-                button.set_group(group)
+            meta = MODEL_METADATA.get(
+                name,
+                {
+                    "title": name,
+                    "subtitle": "Whisper transcription engine",
+                    "desc": "",
+                    "size_str": spec.size,
+                    "lang": "English",
+                    "best_for": "General dictation",
+                    "speed_pct": 0.5,
+                    "speed_label": "Standard",
+                    "acc_pct": 0.8,
+                    "acc_label": "Standard",
+                    "tag": "",
+                },
+            )
             present = name in on_disk
-            button.set_sensitive(present)
-            button.set_active(name == chosen)
-            self._model_buttons[name] = button
-            row.append(button)
+            is_active = name == self._selected_model_name
+
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.add_css_class("model-card-row")
+            if is_active:
+                row.add_css_class("model-card-selected")
+            self._model_row_boxes[name] = row
+
+            # Radio Icon
+            radio_img = self._make_svg("radio_on" if is_active else "radio_off")
+            radio_img.set_valign(gtk.Align.CENTER)
+            self._radio_indicators[name] = radio_img
+            row.append(radio_img)
+
+            # Center Model Metadata
+            card_info = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=3, hexpand=True)
+            top_line = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+
+            name_lbl = gtk.Label(label=name, xalign=0)
+            name_alpha = "100%" if present else "50%"
+            name_lbl.set_markup(f"<span font_weight='700' font_size='10pt' color='#ffffff' alpha='{name_alpha}'>{pango_esc(name)}</span>")
+            top_line.append(name_lbl)
+
+            size_pill = gtk.Label(label=meta["size_str"])
+            size_pill.add_css_class("pill-size")
+            top_line.append(size_pill)
+
+            if meta.get("tag"):
+                rec_pill = gtk.Label(label=meta["tag"])
+                rec_pill.add_css_class("pill-recommended")
+                top_line.append(rec_pill)
+
+            card_info.append(top_line)
+
+            sub_lbl = gtk.Label(label=meta["subtitle"], xalign=0)
+            sub_lbl.set_markup(f"<span font_size='8.5pt' alpha='50%'>{pango_esc(meta['subtitle'])}</span>")
+            card_info.append(sub_lbl)
+
+            # Hidden progress bar for downloading
+            pbar = gtk.ProgressBar()
+            pbar.add_css_class("mini-pbar")
+            pbar.set_visible(False)
+            self._download_pbar[name] = pbar
+            card_info.append(pbar)
+
+            row.append(card_info)
+
+            # Right Side: Download status & action button
             if not present:
-                download = gtk.Button(label="Download")
-                download.connect("clicked", self._start_download, name)
-                self._download_buttons[name] = download
-                row.append(download)
-            box.append(row)
-        if not any(button.get_active() for button in self._model_buttons.values()):
-            default = self._model_buttons.get(DEFAULT_MODEL)
-            if default is not None and default.get_sensitive():
-                default.set_active(True)
-        return box
+                dl_status = gtk.Label(label="Not downloaded")
+                dl_status.set_markup("<span font_size='8.5pt' alpha='40%'>Not downloaded</span>")
+                dl_status.set_valign(gtk.Align.CENTER)
+                row.append(dl_status)
 
-    def _model_label(self, name: str) -> str:
-        path = model_path(name)
-        if path.is_file():
-            label = f"{name}    {path.stat().st_size / (1024 * 1024):.0f} MB"
-        else:
-            from whisperflow.models import catalog_size
+                dl_btn = gtk.Button()
+                dl_btn.set_child(self._make_svg("download"))
+                dl_btn.add_css_class("btn-download-icon")
+                dl_btn.set_valign(gtk.Align.CENTER)
+                dl_btn.connect("clicked", self._start_download, name)
+                self._download_buttons[name] = dl_btn
+                row.append(dl_btn)
 
-            label = f"{name}    {catalog_size(name)}    not downloaded"
-        if name == DEFAULT_MODEL:
-            label += "    recommended"
-        return label
+            # Click gesture to select model
+            click_gesture = gtk.GestureClick()
+            click_gesture.connect("released", lambda _g, _n, _x, _y, m=name: self._select_model(m))
+            row.add_controller(click_gesture)
 
-    def _shortcut_box(self):
+            list_box.append(row)
+
+        scroller.set_child(list_box)
+        vbox.append(scroller)
+        return vbox
+
+    # -------------------------------------------------------------------------
+    # Column 3: Right Inspector Panel
+    # -------------------------------------------------------------------------
+    def _build_inspector_panel(self):
         gtk = self.gtk
-        row = gtk.Box(spacing=8)
-        self._shortcut_label = gtk.Label(label=format_chord(self._hotkey_keys), xalign=0, hexpand=True)
-        change = gtk.Button(label="Change shortcut")
-        change.connect("clicked", self._start_capture)
-        row.append(self._shortcut_label)
-        row.append(change)
-        return row
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        vbox.add_css_class("inspector-panel")
 
-    def _stop_capture(self, *_args) -> bool:
-        self._capture_stop.set()
-        return False
+        # 1. Model Information Inspector Card
+        model_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
+        model_card.add_css_class("inspector-card")
 
-    def _start_capture(self, *_args) -> None:
-        self._capture_stop.set()
-        self._capture_stop = threading.Event()
-        stop = self._capture_stop
-        self._status.set_text("Press the shortcut, then release.")
+        card_heading = gtk.Label(label="Model Information", xalign=0)
+        card_heading.set_markup("<span font_size='8.5pt' font_weight='700' alpha='75%'>Model Information</span>")
+        model_card.append(card_heading)
 
-        def work() -> None:
-            try:
-                keys = capture_chord(stop)
-            except Exception as exc:
-                self._idle(self._shortcut_failed, str(exc))
-                return
-            self._idle(self._shortcut_done, keys)
+        title_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class("inspector-badge")
+        badge.append(self._make_svg("cube_badge"))
+        title_box.append(badge)
 
-        threading.Thread(target=work, name="whisperflow-capture", daemon=True).start()
+        self._inspector_model_title = gtk.Label(xalign=0)
+        self._inspector_model_title.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>distil-medium.en</span>")
+        title_box.append(self._inspector_model_title)
+        model_card.append(title_box)
 
-    def _shortcut_done(self, keys: tuple[str, ...]) -> bool:
-        if not keys:
-            self._status.set_text("No shortcut captured.")
-            return False
-        self._hotkey_keys = keys
-        if self._shortcut_label is not None:
-            self._shortcut_label.set_label(format_chord(keys))
-        self._status.set_text(f"Shortcut set to {format_chord(keys)}. Save to keep it.")
-        return False
+        self._inspector_model_desc = gtk.Label(xalign=0, wrap=True)
+        self._inspector_model_desc.set_markup(
+            "<span font_size='8.5pt' alpha='65%'>A distilled model that offers a great balance between speed and accuracy. Recommended for most users.</span>"
+        )
+        model_card.append(self._inspector_model_desc)
 
-    def _shortcut_failed(self, message: str) -> bool:
-        self._status.set_text(message)
-        return False
+        # Key-Value Grid
+        grid = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=5)
 
+        self._inspector_size = self._make_spec_row(grid, "Size", "757 MB")
+        self._inspector_lang = self._make_spec_row(grid, "Language", "English only")
+        self._inspector_best_for = self._make_spec_row(grid, "Best for", "General usage")
+
+        # Speed row with progress bar
+        speed_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        sp_lbl = gtk.Label(label="Speed", xalign=0)
+        sp_lbl.set_markup("<span font_size='8.5pt' alpha='55%'>Speed</span>")
+        speed_row.append(sp_lbl)
+
+        sp_container = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8, hexpand=True, halign=gtk.Align.END)
+        self._inspector_speed_bar = gtk.ProgressBar()
+        self._inspector_speed_bar.add_css_class("mini-pbar")
+        self._inspector_speed_bar.set_size_request(68, 6)
+        self._inspector_speed_bar.set_fraction(0.75)
+        self._inspector_speed_bar.set_valign(gtk.Align.CENTER)
+        sp_container.append(self._inspector_speed_bar)
+
+        self._inspector_speed_lbl = gtk.Label(label="Fast")
+        self._inspector_speed_lbl.set_markup("<span font_size='8.5pt' font_weight='600'>Fast</span>")
+        sp_container.append(self._inspector_speed_lbl)
+        speed_row.append(sp_container)
+        grid.append(speed_row)
+
+        # Accuracy row with progress bar
+        acc_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        ac_lbl = gtk.Label(label="Accuracy", xalign=0)
+        ac_lbl.set_markup("<span font_size='8.5pt' alpha='55%'>Accuracy</span>")
+        acc_row.append(ac_lbl)
+
+        ac_container = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8, hexpand=True, halign=gtk.Align.END)
+        self._inspector_acc_bar = gtk.ProgressBar()
+        self._inspector_acc_bar.add_css_class("mini-pbar")
+        self._inspector_acc_bar.set_size_request(68, 6)
+        self._inspector_acc_bar.set_fraction(0.90)
+        self._inspector_acc_bar.set_valign(gtk.Align.CENTER)
+        ac_container.append(self._inspector_acc_bar)
+
+        self._inspector_acc_lbl = gtk.Label(label="High")
+        self._inspector_acc_lbl.set_markup("<span font_size='8.5pt' font_weight='600'>High</span>")
+        ac_container.append(self._inspector_acc_lbl)
+        acc_row.append(ac_container)
+        grid.append(acc_row)
+
+        model_card.append(grid)
+        vbox.append(model_card)
+
+        # 2. Push-to-Talk Quick Card
+        hotkey_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
+        hotkey_card.add_css_class("inspector-card")
+
+        hk_head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        hk_head.append(self._make_svg("reticle"))
+        hk_title = gtk.Label(label="Push-to-talk", xalign=0, hexpand=True)
+        hk_title.set_markup("<span font_size='9pt' font_weight='700' color='#ffffff'>Push-to-talk</span>")
+        hk_head.append(hk_title)
+
+        edit_btn = gtk.Button()
+        edit_btn.set_child(self._make_svg("pencil"))
+        edit_btn.add_css_class("btn-edit-pill")
+        edit_btn.connect("clicked", self._start_capture)
+        hk_head.append(edit_btn)
+        hotkey_card.append(hk_head)
+
+        # Keycap Chips
+        self._hotkey_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=5)
+        self._render_hotkey_chips()
+        hotkey_card.append(self._hotkey_box)
+
+        hk_sub = gtk.Label(xalign=0)
+        hk_sub.set_markup("<span font_size='8pt' alpha='50%'>Hold to transcribe while speaking.</span>")
+        hotkey_card.append(hk_sub)
+        vbox.append(hotkey_card)
+
+        # 3. Dictionary Quick Card
+        dict_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
+        dict_card.add_css_class("inspector-card")
+
+        dt_head = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        dt_head.append(self._make_svg("book"))
+        dt_title = gtk.Label(label="Dictionary", xalign=0, hexpand=True)
+        dt_title.set_markup("<span font_size='9pt' font_weight='700' color='#ffffff'>Dictionary</span>")
+        dt_head.append(dt_title)
+
+        edit_dict_btn = gtk.Button(label="✏ Edit")
+        edit_dict_btn.add_css_class("btn-edit-pill")
+        edit_dict_btn.connect("clicked", self._open_dictionary_modal)
+        dt_head.append(edit_dict_btn)
+        dict_card.append(dt_head)
+
+        # Preview list of dictionary items
+        self._dict_preview_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
+        self._render_dict_preview()
+        dict_card.append(self._dict_preview_box)
+
+        vbox.append(dict_card)
+        return vbox
+
+    def _make_spec_row(self, container, label: str, val: str):
+        gtk = self.gtk
+        row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        l = gtk.Label(label=label, xalign=0)
+        l.set_markup(f"<span font_size='8.5pt' alpha='55%'>{pango_esc(label)}</span>")
+        row.append(l)
+
+        v = gtk.Label(label=val, xalign=1, hexpand=True)
+        v.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(val)}</span>")
+        row.append(v)
+        container.append(row)
+        return v
+
+    def _render_hotkey_chips(self) -> None:
+        if self._hotkey_box is None:
+            return
+        gtk = self.gtk
+        while True:
+            c = self._hotkey_box.get_first_child()
+            if c is None:
+                break
+            self._hotkey_box.remove(c)
+
+        for i, key in enumerate(self._hotkey_keys):
+            if i > 0:
+                plus = gtk.Label(label="+")
+                plus.set_opacity(0.4)
+                self._hotkey_box.append(plus)
+            chip = gtk.Label(label=key.capitalize())
+            chip.add_css_class("kbd-chip")
+            self._hotkey_box.append(chip)
+
+    def _render_dict_preview(self) -> None:
+        if self._dict_preview_box is None:
+            return
+        gtk = self.gtk
+        while True:
+            c = self._dict_preview_box.get_first_child()
+            if c is None:
+                break
+            self._dict_preview_box.remove(c)
+
+        shown = self._dictionary_entries_list[:3]
+        for entry in shown:
+            r = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+            cb_img = self._make_svg("checkbox_checked")
+            cb_img.set_valign(gtk.Align.CENTER)
+            r.append(cb_img)
+
+            txt_phrase = gtk.Label(label=entry.phrase, xalign=0)
+            txt_phrase.set_markup(f"<span font_size='8.5pt' color='#ffffff' alpha='70%'>{pango_esc(entry.phrase)}</span>")
+            r.append(txt_phrase)
+
+            txt_repl = gtk.Label(label=entry.replacement, xalign=1, hexpand=True)
+            txt_repl.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#ffffff'>{pango_esc(entry.replacement)}</span>")
+            r.append(txt_repl)
+            self._dict_preview_box.append(r)
+
+    # -------------------------------------------------------------------------
+    # Footer Action Bar
+    # -------------------------------------------------------------------------
+    def _build_footer(self):
+        gtk = self.gtk
+        footer = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+        footer.add_css_class("footer-bar")
+
+        info_img = self._make_svg("footer_info")
+        info_img.set_valign(gtk.Align.CENTER)
+        footer.append(info_img)
+
+        self._status_label.set_hexpand(True)
+        self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>Closing this window leaves WhisperFlow in the dock.</span>")
+        footer.append(self._status_label)
+
+        # Right Actions: Quit & Save
+        quit_btn = gtk.Button(label="Quit")
+        quit_btn.add_css_class("btn-quit")
+        quit_btn.connect("clicked", lambda *_args: self._on_quit() if self._on_quit else self.window.close())
+        footer.append(quit_btn)
+
+        save_btn = gtk.Button(label="Save")
+        save_btn.add_css_class("btn-save-purple")
+        save_btn.connect("clicked", self._save)
+        footer.append(save_btn)
+
+        return footer
+
+    # -------------------------------------------------------------------------
+    # Model Selection & Dynamic Inspector Updates
+    # -------------------------------------------------------------------------
+    def _select_model(self, name: str) -> None:
+        on_disk = {m for m, _ in installed_models()}
+        if name not in on_disk:
+            self._status_label.set_markup(f"<span font_size='8.5pt' alpha='75%'>Please download {pango_esc(name)} first using the arrow button.</span>")
+            self._update_inspector(name)
+            return
+
+        self._selected_model_name = name
+
+        # Update Radio circles and selected class
+        for m_name, row in self._model_row_boxes.items():
+            radio_img = self._radio_indicators.get(m_name)
+            if m_name == name:
+                row.add_css_class("model-card-selected")
+                if radio_img:
+                    self._update_radio_icon(radio_img, True)
+            else:
+                row.remove_css_class("model-card-selected")
+                if radio_img:
+                    self._update_radio_icon(radio_img, False)
+
+        self._update_inspector(name)
+        self._status_label.set_markup(f"<span font_size='8.5pt' alpha='85%'>Selected {pango_esc(name)}. Click Save to apply.</span>")
+
+    def _update_radio_icon(self, img_widget, is_checked: bool) -> None:
+        from gi.repository import Gdk, GLib
+
+        svg_data = SVG_ICONS["radio_on" if is_checked else "radio_off"].encode("utf-8")
+        texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(svg_data))
+        img_widget.set_from_paintable(texture)
+
+    def _update_inspector(self, name: str) -> None:
+        meta = MODEL_METADATA.get(name)
+        if not meta:
+            return
+
+        if self._inspector_model_title:
+            self._inspector_model_title.set_markup(f"<span font_weight='700' font_size='11pt' color='#ffffff'>{pango_esc(name)}</span>")
+        if self._inspector_model_desc:
+            self._inspector_model_desc.set_markup(f"<span font_size='8.5pt' alpha='65%'>{pango_esc(meta['desc'])}</span>")
+        if self._inspector_size:
+            self._inspector_size.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta['size_str'])}</span>")
+        if self._inspector_lang:
+            self._inspector_lang.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta['lang'])}</span>")
+        if self._inspector_best_for:
+            self._inspector_best_for.set_markup(f"<span font_size='8.5pt' font_weight='600' color='#ffffff'>{pango_esc(meta['best_for'])}</span>")
+        if self._inspector_speed_bar:
+            self._inspector_speed_bar.set_fraction(meta["speed_pct"])
+        if self._inspector_speed_lbl:
+            self._inspector_speed_lbl.set_markup(f"<span font_size='8.5pt' font_weight='600'>{pango_esc(meta['speed_label'])}</span>")
+        if self._inspector_acc_bar:
+            self._inspector_acc_bar.set_fraction(meta["acc_pct"])
+        if self._inspector_acc_lbl:
+            self._inspector_acc_lbl.set_markup(f"<span font_size='8.5pt' font_weight='600'>{pango_esc(meta['acc_label'])}</span>")
+
+    # -------------------------------------------------------------------------
+    # Learn More Modal
+    # -------------------------------------------------------------------------
+    def _open_learn_modal(self, *_args) -> None:
+        gtk = self.gtk
+        dlg = gtk.Window(title="Whisper Models Guide")
+        dlg.set_transient_for(self.window)
+        dlg.set_modal(True)
+        dlg.set_default_size(440, 360)
+        dlg.add_css_class("macos-window")
+
+        box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        box.set_margin_top(20)
+        box.set_margin_bottom(20)
+        box.set_margin_start(20)
+        box.set_margin_end(20)
+
+        t = gtk.Label(xalign=0)
+        t.set_markup("<span font_weight='800' font_size='14pt' color='#ffffff'>Choosing the Right Model</span>")
+        box.append(t)
+
+        info_text = (
+            "<b>Distilled Models (Recommended):</b>\n"
+            "• <i>distil-medium.en</i> & <i>distil-small.en</i> provide 6-8x faster inference on Intel Arc GPU while retaining 99% accuracy.\n\n"
+            "<b>Standard OpenAI Models:</b>\n"
+            "• <i>tiny.en</i> / <i>base.en</i>: Lowest CPU/RAM footprint, optimal for simple commands.\n"
+            "• <i>small.en</i> / <i>medium.en</i>: Higher vocabulary depth and accent resilience.\n\n"
+            "<b>Large & Turbo:</b>\n"
+            "• <i>large-v3-turbo-q5_0</i>: State-of-the-art accuracy with 4-layer fast decoding."
+        )
+        body = gtk.Label(xalign=0, wrap=True)
+        body.set_markup(f"<span font_size='9pt' alpha='75%'>{info_text}</span>")
+        box.append(body)
+
+        box.append(gtk.Box(vexpand=True))
+
+        close_btn = gtk.Button(label="Got it")
+        close_btn.add_css_class("btn-save-purple")
+        close_btn.connect("clicked", lambda *_: dlg.close())
+        close_btn.set_halign(gtk.Align.END)
+        box.append(close_btn)
+
+        dlg.set_child(box)
+        dlg.present()
+
+    # -------------------------------------------------------------------------
+    # Model Download Handling
+    # -------------------------------------------------------------------------
     def _start_download(self, _button, name: str) -> None:
-        button = self._download_buttons.get(name)
-        if button is not None:
-            button.set_sensitive(False)
-        self._status.set_text(f"Downloading {name}…")
+        btn = self._download_buttons.get(name)
+        if btn is not None:
+            btn.set_sensitive(False)
+        pbar = self._download_pbar.get(name)
+        if pbar is not None:
+            pbar.set_visible(True)
+            pbar.set_fraction(0.0)
+
+        self._status_label.set_markup(f"<span font_size='8.5pt' alpha='80%'>Downloading {pango_esc(name)}...</span>")
         last = 0.0
 
         def progress(written: int, total: int) -> None:
             nonlocal last
             now = time.monotonic()
-            if written != total and now - last < 0.3:
+            if written != total and now - last < 0.2:
                 return
             last = now
             self._idle(self._download_progress, name, written, total)
@@ -224,106 +1198,191 @@ class SettingsApp:
         threading.Thread(target=work, name=f"whisperflow-download-{name}", daemon=True).start()
 
     def _download_progress(self, name: str, written: int, total: int) -> bool:
+        pbar = self._download_pbar.get(name)
         if total:
-            self._status.set_text(f"Downloading {name}… {written * 100 // total}%")
-        else:
-            self._status.set_text(f"Downloading {name}… {written / (1024 * 1024):.0f} MB")
+            pct = written / total
+            if pbar is not None:
+                pbar.set_fraction(pct)
+            self._status_label.set_markup(f"<span font_size='8.5pt' alpha='80%'>Downloading {pango_esc(name)}... {int(pct * 100)}%</span>")
         return False
 
     def _download_done(self, name: str) -> bool:
-        button = self._model_buttons[name]
-        button.set_label(self._model_label(name))
-        button.set_sensitive(True)
-        button.set_active(True)
-        download = self._download_buttons.get(name)
-        if download is not None:
-            download.set_visible(False)
-        self._status.set_text(f"Downloaded {name}. Save, then restart WhisperFlow to use it.")
+        btn = self._download_buttons.get(name)
+        if btn is not None:
+            btn.set_visible(False)
+        pbar = self._download_pbar.get(name)
+        if pbar is not None:
+            pbar.set_visible(False)
+
+        self._select_model(name)
+        self._status_label.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#34d399'>● Downloaded {pango_esc(name)} successfully! Click Save to apply.</span>")
         return False
 
     def _download_failed(self, name: str, message: str) -> bool:
-        download = self._download_buttons.get(name)
-        if download is not None:
-            download.set_sensitive(True)
-        self._status.set_text(f"Could not download {name}: {message}")
+        btn = self._download_buttons.get(name)
+        if btn is not None:
+            btn.set_sensitive(True)
+        pbar = self._download_pbar.get(name)
+        if pbar is not None:
+            pbar.set_visible(False)
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Could not download {pango_esc(name)}: {pango_esc(message)}</span>")
         return False
+
+    # -------------------------------------------------------------------------
+    # Shortcut Capture Handling
+    # -------------------------------------------------------------------------
+    def _stop_capture(self, *_args) -> bool:
+        self._capture_stop.set()
+        return False
+
+    def _start_capture(self, *_args) -> None:
+        self._capture_stop.set()
+        self._capture_stop = threading.Event()
+        stop = self._capture_stop
+        self._status_label.set_markup("<span font_size='8.5pt' color='#a855f7' font_weight='bold'>● Listening: Press the shortcut keys on your keyboard...</span>")
+
+        def work() -> None:
+            try:
+                keys = capture_chord(stop)
+            except Exception as exc:
+                self._idle(self._shortcut_failed, str(exc))
+                return
+            self._idle(self._shortcut_done, keys)
+
+        threading.Thread(target=work, name="whisperflow-capture", daemon=True).start()
+
+    def _shortcut_done(self, keys: tuple[str, ...]) -> bool:
+        if not keys:
+            self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>No shortcut captured.</span>")
+            return False
+        self._hotkey_keys = keys
+        self._render_hotkey_chips()
+        self._status_label.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#34d399'>● Shortcut updated to {pango_esc(format_chord(keys))}. Click Save to apply.</span>")
+        return False
+
+    def _shortcut_failed(self, message: str) -> bool:
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Shortcut capture failed: {pango_esc(message)}</span>")
+        return False
+
+    # -------------------------------------------------------------------------
+    # Dictionary Modal Window
+    # -------------------------------------------------------------------------
+    def _open_dictionary_modal(self, *_args) -> None:
+        gtk = self.gtk
+        dlg = gtk.Window(title="Edit Dictionary")
+        dlg.set_transient_for(self.window)
+        dlg.set_modal(True)
+        dlg.set_default_size(500, 420)
+        dlg.add_css_class("macos-window")
+
+        box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        box.set_margin_top(18)
+        box.set_margin_bottom(18)
+        box.set_margin_start(18)
+        box.set_margin_end(18)
+
+        title = gtk.Label(label="Custom Dictionary", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='14pt' color='#ffffff'>Custom Dictionary</span>")
+        box.append(title)
+
+        sub = gtk.Label(label="Automatically correct phonetic errors and replace technical terms.", xalign=0)
+        sub.set_markup("<span font_size='8.5pt' alpha='60%'>Automatically correct phonetic errors and replace technical terms.</span>")
+        box.append(sub)
+
+        scroller = gtk.ScrolledWindow(vexpand=True)
+        rows_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
+
+        entry_widgets = []
+        for e in self._dictionary_entries_list:
+            r = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+            cb = gtk.CheckButton(active=e.enabled)
+            p_in = gtk.Entry(text=e.phrase, placeholder_text="Spoken phrase", hexpand=True)
+            p_in.add_css_class("glass-entry")
+            arr = gtk.Label(label="➔")
+            arr.set_opacity(0.4)
+            r_in = gtk.Entry(text=e.replacement, placeholder_text="Replacement", hexpand=True)
+            r_in.add_css_class("glass-entry")
+            del_b = gtk.Button(label="✕")
+            del_b.add_css_class("btn-quit")
+
+            r.append(cb)
+            r.append(p_in)
+            r.append(arr)
+            r.append(r_in)
+            r.append(del_b)
+            rows_box.append(r)
+            entry_widgets.append((cb, p_in, r_in, r))
+            del_b.connect("clicked", lambda *_a, row=r: rows_box.remove(row))
+
+        def add_new(*_):
+            r = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+            cb = gtk.CheckButton(active=True)
+            p_in = gtk.Entry(placeholder_text="Spoken phrase", hexpand=True)
+            p_in.add_css_class("glass-entry")
+            arr = gtk.Label(label="➔")
+            arr.set_opacity(0.4)
+            r_in = gtk.Entry(placeholder_text="Replacement", hexpand=True)
+            r_in.add_css_class("glass-entry")
+            del_b = gtk.Button(label="✕")
+            del_b.add_css_class("btn-quit")
+            r.append(cb)
+            r.append(p_in)
+            r.append(arr)
+            r.append(r_in)
+            r.append(del_b)
+            rows_box.append(r)
+            entry_widgets.append((cb, p_in, r_in, r))
+            del_b.connect("clicked", lambda *_a, row=r: rows_box.remove(row))
+
+        scroller.set_child(rows_box)
+        box.append(scroller)
+
+        btn_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        add_b = gtk.Button(label="+ Add Word")
+        add_b.add_css_class("btn-quit")
+        add_b.connect("clicked", add_new)
+        btn_row.append(add_b)
+
+        btn_row.append(gtk.Box(hexpand=True))
+
+        done_b = gtk.Button(label="Done")
+        done_b.add_css_class("btn-save-purple")
+
+        def save_and_close(*_):
+            new_entries = []
+            for cb, p_in, r_in, r in entry_widgets:
+                if r.get_parent() is not None:
+                    phrase = p_in.get_text().strip()
+                    repl = r_in.get_text().strip()
+                    if phrase:
+                        new_entries.append(DictionaryEntry(phrase, repl, cb.get_active()))
+            self._dictionary_entries_list = new_entries
+            self._render_dict_preview()
+            dlg.close()
+
+        done_b.connect("clicked", save_and_close)
+        btn_row.append(done_b)
+        box.append(btn_row)
+
+        dlg.set_child(box)
+        dlg.present()
+
+    # -------------------------------------------------------------------------
+    # Save Settings
+    # -------------------------------------------------------------------------
+    def _save(self, *_args) -> None:
+        model = self._selected_model_name
+        if not model_path(model).is_file():
+            self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Please download {pango_esc(model)} before saving.</span>")
+            return
+        path = project_root() / "whisperflow.yaml"
+        save_user_settings(path, model, self._dictionary_entries_list, self._hotkey_keys)
+        self._status_label.set_markup("<span font_size='8.5pt' font_weight='700' color='#34d399'>● Settings saved successfully!</span>")
 
     def _idle(self, callback, *args) -> None:
         from gi.repository import GLib
 
         GLib.idle_add(callback, *args)
-
-    def _dictionary_box(self, entries: tuple[DictionaryEntry, ...]):
-        gtk = self.gtk
-        self._rows.set_selection_mode(gtk.SelectionMode.SINGLE)
-        for entry in entries:
-            self._append_row(entry.phrase, entry.replacement, entry.enabled)
-        scrolled = gtk.ScrolledWindow(vexpand=True, min_content_height=180)
-        scrolled.set_child(self._rows)
-        add = gtk.Button(label="Add")
-        remove = gtk.Button(label="Delete")
-        add.connect("clicked", lambda *_: self._append_row("", "", True))
-        remove.connect("clicked", self._delete_selected)
-        buttons = gtk.Box(spacing=8)
-        buttons.append(add)
-        buttons.append(remove)
-        wrap = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=8)
-        wrap.append(scrolled)
-        wrap.append(buttons)
-        return wrap
-
-    def _append_row(self, phrase: str, replacement: str, enabled: bool) -> None:
-        gtk = self.gtk
-        row = gtk.ListBoxRow()
-        box = gtk.Box(spacing=8)
-        box.set_margin_top(4)
-        box.set_margin_bottom(4)
-        box.set_margin_start(4)
-        box.set_margin_end(4)
-        phrase_entry = gtk.Entry(text=phrase, placeholder_text="Spoken phrase", hexpand=True)
-        replacement_entry = gtk.Entry(text=replacement, placeholder_text="Replacement", hexpand=True)
-        enabled_button = gtk.CheckButton(active=enabled)
-        box.append(enabled_button)
-        box.append(phrase_entry)
-        box.append(replacement_entry)
-        row.phrase_entry = phrase_entry
-        row.replacement_entry = replacement_entry
-        row.enabled_button = enabled_button
-        row.set_child(box)
-        self._rows.append(row)
-
-    def _delete_selected(self, *_args) -> None:
-        row = self._rows.get_selected_row()
-        if row is not None:
-            self._rows.remove(row)
-
-    def _selected_model(self) -> str:
-        for name, button in self._model_buttons.items():
-            if button.get_active():
-                return name
-        return DEFAULT_MODEL
-
-    def _dictionary_entries(self) -> list[DictionaryEntry]:
-        entries: list[DictionaryEntry] = []
-        row = self._rows.get_row_at_index(0)
-        index = 0
-        while row is not None:
-            phrase = row.phrase_entry.get_text().strip()
-            replacement = row.replacement_entry.get_text()
-            if phrase:
-                entries.append(DictionaryEntry(phrase, replacement, row.enabled_button.get_active()))
-            index += 1
-            row = self._rows.get_row_at_index(index)
-        return entries
-
-    def _save(self, *_args) -> None:
-        model = self._selected_model()
-        if not model_path(model).is_file():
-            self._status.set_text("Download that model before saving it.")
-            return
-        path = project_root() / "whisperflow.yaml"
-        save_user_settings(path, model, self._dictionary_entries(), self._hotkey_keys)
-        self._status.set_text("Saved. Restart WhisperFlow to use these settings.")
 
 
 if __name__ == "__main__":
