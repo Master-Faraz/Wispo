@@ -7,6 +7,7 @@ models come from the official distil-whisper ggml files.
 
 from __future__ import annotations
 
+import threading
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -92,7 +93,12 @@ def installed_models(root: Path | None = None) -> list[tuple[str, int]]:
     return found
 
 
-def download_model(name: str, root: Path | None = None, progress=None) -> Path:
+def download_model(
+    name: str,
+    root: Path | None = None,
+    progress=None,
+    cancel_event: threading.Event | None = None,
+) -> Path:
     """Download one ggml file. progress(written, total) may be called often."""
     dest = model_path(name, root)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -108,6 +114,8 @@ def download_model(name: str, root: Path | None = None, progress=None) -> Path:
             total = int(response.headers.get("Content-Length") or 0)
             written = 0
             while True:
+                if cancel_event is not None and cancel_event.is_set():
+                    raise InterruptedError("Download cancelled by user")
                 chunk = response.read(256 * 1024)
                 if not chunk:
                     break
@@ -115,6 +123,8 @@ def download_model(name: str, root: Path | None = None, progress=None) -> Path:
                 written += len(chunk)
                 if progress is not None:
                     progress(written, total)
+                if cancel_event is not None and cancel_event.is_set():
+                    raise InterruptedError("Download cancelled by user")
         if written == 0:
             raise RuntimeError(f"download of {name} was empty")
         tmp.replace(dest)

@@ -33,6 +33,16 @@ def pango_esc(text: str) -> str:
     return html.escape(str(text))
 
 
+def _format_bytes(bytes_count: int) -> str:
+    if bytes_count >= 1024 * 1024 * 1024:
+        return f"{bytes_count / (1024 ** 3):.2f} GB"
+    if bytes_count >= 1024 * 1024:
+        return f"{bytes_count / (1024 ** 2):.1f} MB"
+    if bytes_count >= 1024:
+        return f"{bytes_count / 1024:.0f} KB"
+    return f"{bytes_count} B"
+
+
 # Rich metadata verified from whisper.cpp and distil-whisper official benchmarks
 MODEL_METADATA: dict[str, dict] = {
     "tiny.en": {
@@ -198,6 +208,7 @@ SVG_ICONS = {
     "info": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
     "drive": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><rect width="20" height="8" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/></svg>""",
     "download": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>""",
+    "cancel": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>""",
     "radio_off": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="2"/></svg>""",
     "radio_on": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#6366f1" stroke="#818cf8" stroke-width="2"/><circle cx="12" cy="12" r="3.5" fill="#ffffff"/></svg>""",
     "checkbox_checked": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" fill="#6366f1"/><polyline points="6 12 10 16 18 8" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>""",
@@ -398,6 +409,21 @@ button.traffic-green:hover {
 .btn-download-icon:hover {
     background: rgba(99, 102, 241, 0.3);
     border-color: #818cf8;
+}
+
+.btn-cancel-icon {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 8px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    transition: all 150ms ease;
+}
+
+.btn-cancel-icon:hover {
+    background: rgba(239, 68, 68, 0.28);
+    border-color: #f87171;
 }
 
 /* Right Inspector Column */
@@ -904,9 +930,15 @@ class SettingsApp:
         self._gtk_app = None
         self._status_label = gtk.Label(xalign=0)
         self._model_row_boxes: dict[str, object] = {}
+        self._model_name_labels: dict[str, object] = {}
         self._radio_indicators: dict[str, object] = {}
         self._download_buttons: dict[str, object] = {}
+        self._download_cancel_buttons: dict[str, object] = {}
         self._download_pbar: dict[str, object] = {}
+        self._download_pbar_labels: dict[str, object] = {}
+        self._download_pbar_boxes: dict[str, object] = {}
+        self._download_status_labels: dict[str, object] = {}
+        self._download_cancel_events: dict[str, threading.Event] = {}
 
         # Inspector widgets
         self._inspector_model_title = None
@@ -1145,6 +1177,8 @@ class SettingsApp:
 
     def _on_red_clicked(self, *_args) -> None:
         """Quit the application."""
+        for ev in list(self._download_cancel_events.values()):
+            ev.set()
         self._stop_mic_test()
         self._stop_capture()
         if self._on_quit:
@@ -1172,6 +1206,8 @@ class SettingsApp:
         self.window.minimize()
 
     def _on_window_close_request(self, *_args) -> bool:
+        for ev in list(self._download_cancel_events.values()):
+            ev.set()
         self._stop_mic_test()
         self._stop_capture()
         if self._on_quit:
@@ -1285,28 +1321,7 @@ class SettingsApp:
 
             vbox.append(row)
 
-        vbox.append(gtk.Box(vexpand=True))  # Push storage card to bottom
-
-        # Disk Storage Card at bottom of sidebar
-        storage_card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=6)
-        storage_card.add_css_class("storage-card")
-
-        st_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
-        drive_icon = self._make_svg("drive")
-        st_row.append(drive_icon)
-
-        total_mb = sum(size for _, size in installed_models()) / (1024 * 1024)
-        total_gb = total_mb / 1024.0
-        st_lbl = gtk.Label(xalign=0)
-        st_lbl.set_markup(f"<span font_size='8pt' font_weight='600' alpha='75%'>{total_gb:.1f} GB / 12.0 GB</span>")
-        st_row.append(st_lbl)
-        storage_card.append(st_row)
-
-        disk_pbar = gtk.ProgressBar()
-        disk_pbar.add_css_class("mini-pbar")
-        disk_pbar.set_fraction(min(1.0, max(0.05, total_gb / 12.0)))
-        storage_card.append(disk_pbar)
-        vbox.append(storage_card)
+        vbox.append(gtk.Box(vexpand=True))
 
         return vbox
 
@@ -3190,6 +3205,7 @@ class SettingsApp:
             name_alpha = "100%" if present else "50%"
             name_lbl.set_markup(f"<span font_weight='700' font_size='10pt' color='#ffffff' alpha='{name_alpha}'>{pango_esc(name)}</span>")
             top_line.append(name_lbl)
+            self._model_name_labels[name] = name_lbl
 
             size_pill = gtk.Label(label=meta["size_str"])
             size_pill.add_css_class("pill-size")
@@ -3206,12 +3222,22 @@ class SettingsApp:
             sub_lbl.set_markup(f"<span font_size='8.5pt' alpha='50%'>{pango_esc(meta['subtitle'])}</span>")
             card_info.append(sub_lbl)
 
-            # Hidden progress bar for downloading
+            # Hidden progress box for downloading
+            pbar_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+            pbar_box.set_visible(False)
+            self._download_pbar_boxes[name] = pbar_box
+
             pbar = gtk.ProgressBar()
             pbar.add_css_class("mini-pbar")
-            pbar.set_visible(False)
             self._download_pbar[name] = pbar
-            card_info.append(pbar)
+            pbar_box.append(pbar)
+
+            pbar_lbl = gtk.Label(xalign=0)
+            pbar_lbl.set_markup("<span font_size='8pt' color='#a78bfa' font_weight='600'>Starting download...</span>")
+            self._download_pbar_labels[name] = pbar_lbl
+            pbar_box.append(pbar_lbl)
+
+            card_info.append(pbar_box)
 
             row.append(card_info)
 
@@ -3220,15 +3246,27 @@ class SettingsApp:
                 dl_status = gtk.Label(label="Not downloaded")
                 dl_status.set_markup("<span font_size='8.5pt' alpha='40%'>Not downloaded</span>")
                 dl_status.set_valign(gtk.Align.CENTER)
+                self._download_status_labels[name] = dl_status
                 row.append(dl_status)
 
                 dl_btn = gtk.Button()
                 dl_btn.set_child(self._make_svg("download"))
                 dl_btn.add_css_class("btn-download-icon")
                 dl_btn.set_valign(gtk.Align.CENTER)
+                dl_btn.set_tooltip_text(f"Download {name}")
                 dl_btn.connect("clicked", self._start_download, name)
                 self._download_buttons[name] = dl_btn
                 row.append(dl_btn)
+
+                cancel_btn = gtk.Button()
+                cancel_btn.set_child(self._make_svg("cancel"))
+                cancel_btn.add_css_class("btn-cancel-icon")
+                cancel_btn.set_valign(gtk.Align.CENTER)
+                cancel_btn.set_visible(False)
+                cancel_btn.set_tooltip_text(f"Cancel download of {name}")
+                cancel_btn.connect("clicked", self._cancel_download, name)
+                self._download_cancel_buttons[name] = cancel_btn
+                row.append(cancel_btn)
 
             # Click gesture to select model
             click_gesture = gtk.GestureClick()
@@ -3617,13 +3655,33 @@ class SettingsApp:
     # Model Download Handling
     # -------------------------------------------------------------------------
     def _start_download(self, _button, name: str) -> None:
+        cancel_ev = threading.Event()
+        self._download_cancel_events[name] = cancel_ev
+
         btn = self._download_buttons.get(name)
         if btn is not None:
-            btn.set_sensitive(False)
+            btn.set_visible(False)
+
+        c_btn = self._download_cancel_buttons.get(name)
+        if c_btn is not None:
+            c_btn.set_visible(True)
+            c_btn.set_sensitive(True)
+
+        status_lbl = self._download_status_labels.get(name)
+        if status_lbl is not None:
+            status_lbl.set_markup("<span font_size='8.5pt' color='#a78bfa' font_weight='600'>Downloading...</span>")
+
+        pbar_box = self._download_pbar_boxes.get(name)
+        if pbar_box is not None:
+            pbar_box.set_visible(True)
+
         pbar = self._download_pbar.get(name)
         if pbar is not None:
-            pbar.set_visible(True)
             pbar.set_fraction(0.0)
+
+        pbar_lbl = self._download_pbar_labels.get(name)
+        if pbar_lbl is not None:
+            pbar_lbl.set_markup("<span font_size='8pt' color='#a78bfa' font_weight='600'>Starting download...</span>")
 
         self._status_label.set_markup(f"<span font_size='8.5pt' alpha='80%'>Downloading {pango_esc(name)}...</span>")
         last = 0.0
@@ -3631,14 +3689,17 @@ class SettingsApp:
         def progress(written: int, total: int) -> None:
             nonlocal last
             now = time.monotonic()
-            if written != total and now - last < 0.2:
+            if written != total and now - last < 0.15:
                 return
             last = now
             self._idle(self._download_progress, name, written, total)
 
         def work() -> None:
             try:
-                download_model(name, progress=progress)
+                download_model(name, progress=progress, cancel_event=cancel_ev)
+            except InterruptedError:
+                self._idle(self._download_cancelled, name)
+                return
             except Exception as exc:
                 self._idle(self._download_failed, name, str(exc))
                 return
@@ -3646,34 +3707,117 @@ class SettingsApp:
 
         threading.Thread(target=work, name=f"whisperflow-download-{name}", daemon=True).start()
 
+    def _cancel_download(self, _button, name: str) -> None:
+        cancel_ev = self._download_cancel_events.get(name)
+        if cancel_ev is not None:
+            cancel_ev.set()
+
+        c_btn = self._download_cancel_buttons.get(name)
+        if c_btn is not None:
+            c_btn.set_sensitive(False)
+
+        status_lbl = self._download_status_labels.get(name)
+        if status_lbl is not None:
+            status_lbl.set_markup("<span font_size='8.5pt' color='#f87171'>Cancelling...</span>")
+
+        pbar_lbl = self._download_pbar_labels.get(name)
+        if pbar_lbl is not None:
+            pbar_lbl.set_markup("<span font_size='8pt' color='#f87171' font_weight='600'>Cancelling download...</span>")
+
+    def _download_cancelled(self, name: str) -> bool:
+        self._download_cancel_events.pop(name, None)
+
+        pbar_box = self._download_pbar_boxes.get(name)
+        if pbar_box is not None:
+            pbar_box.set_visible(False)
+
+        c_btn = self._download_cancel_buttons.get(name)
+        if c_btn is not None:
+            c_btn.set_visible(False)
+
+        btn = self._download_buttons.get(name)
+        if btn is not None:
+            btn.set_visible(True)
+            btn.set_sensitive(True)
+
+        status_lbl = self._download_status_labels.get(name)
+        if status_lbl is not None:
+            status_lbl.set_markup("<span font_size='8.5pt' alpha='40%'>Not downloaded</span>")
+
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#fbbf24'>Download of {pango_esc(name)} cancelled.</span>")
+        return False
+
     def _download_progress(self, name: str, written: int, total: int) -> bool:
+        if name not in self._download_cancel_events:
+            return False
+
         pbar = self._download_pbar.get(name)
-        if total:
-            pct = written / total
+        pbar_lbl = self._download_pbar_labels.get(name)
+        status_lbl = self._download_status_labels.get(name)
+
+        if total > 0:
+            pct = min(1.0, max(0.0, written / total))
+            pct_int = int(pct * 100)
+            written_str = _format_bytes(written)
+            total_str = _format_bytes(total)
+            progress_str = f"{pct_int}% ({written_str} / {total_str})"
+
             if pbar is not None:
                 pbar.set_fraction(pct)
-            self._status_label.set_markup(f"<span font_size='8.5pt' alpha='80%'>Downloading {pango_esc(name)}... {int(pct * 100)}%</span>")
+            if pbar_lbl is not None:
+                pbar_lbl.set_markup(f"<span font_size='8pt' color='#c4b5fd' font_weight='600'>{pango_esc(progress_str)}</span>")
+            if status_lbl is not None:
+                status_lbl.set_markup(f"<span font_size='8.5pt' color='#a78bfa' font_weight='600'>{pct_int}%</span>")
+            self._status_label.set_markup(f"<span font_size='8.5pt' alpha='80%'>Downloading {pango_esc(name)}... {pango_esc(progress_str)}</span>")
         return False
 
     def _download_done(self, name: str) -> bool:
+        self._download_cancel_events.pop(name, None)
+
+        pbar_box = self._download_pbar_boxes.get(name)
+        if pbar_box is not None:
+            pbar_box.set_visible(False)
+
+        c_btn = self._download_cancel_buttons.get(name)
+        if c_btn is not None:
+            c_btn.set_visible(False)
+
         btn = self._download_buttons.get(name)
         if btn is not None:
             btn.set_visible(False)
-        pbar = self._download_pbar.get(name)
-        if pbar is not None:
-            pbar.set_visible(False)
+
+        status_lbl = self._download_status_labels.get(name)
+        if status_lbl is not None:
+            status_lbl.set_visible(False)
+
+        name_lbl = self._model_name_labels.get(name)
+        if name_lbl is not None:
+            name_lbl.set_markup(f"<span font_weight='700' font_size='10pt' color='#ffffff' alpha='100%'>{pango_esc(name)}</span>")
 
         self._select_model(name)
         self._status_label.set_markup(f"<span font_size='8.5pt' font_weight='700' color='#34d399'>● Downloaded {pango_esc(name)} successfully! Click Save to apply.</span>")
         return False
 
     def _download_failed(self, name: str, message: str) -> bool:
+        self._download_cancel_events.pop(name, None)
+
+        pbar_box = self._download_pbar_boxes.get(name)
+        if pbar_box is not None:
+            pbar_box.set_visible(False)
+
+        c_btn = self._download_cancel_buttons.get(name)
+        if c_btn is not None:
+            c_btn.set_visible(False)
+
         btn = self._download_buttons.get(name)
         if btn is not None:
+            btn.set_visible(True)
             btn.set_sensitive(True)
-        pbar = self._download_pbar.get(name)
-        if pbar is not None:
-            pbar.set_visible(False)
+
+        status_lbl = self._download_status_labels.get(name)
+        if status_lbl is not None:
+            status_lbl.set_markup("<span font_size='8.5pt' alpha='40%'>Not downloaded</span>")
+
         self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Could not download {pango_esc(name)}: {pango_esc(message)}</span>")
         return False
 
