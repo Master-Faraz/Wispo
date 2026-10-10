@@ -41,7 +41,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "An ultra-compact 39M parameter model optimized for minimal memory footprint and fast inference. Best for rapid commands and clean audio on low-power CPUs.",
         "params": "39M",
         "size_str": "75 MB",
-        "ram_str": "~273 MB RAM",
+        "ram_str": "~420 MB idle / ~720 MB active",
         "lang": "English only",
         "best_for": "Quick commands & clean audio",
         "speed_pct": 0.95,
@@ -56,7 +56,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "The standard balanced 74M parameter model. Provides reliable English dictation with near-zero latency and minimal CPU/GPU overhead.",
         "params": "74M",
         "size_str": "142 MB",
-        "ram_str": "~388 MB RAM",
+        "ram_str": "~510 MB idle / ~840 MB active",
         "lang": "English only",
         "best_for": "General usage & everyday speech",
         "speed_pct": 0.85,
@@ -71,7 +71,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "High accuracy 244M parameter model capable of handling diverse regional accents, technical vocabulary, and noisy background environments.",
         "params": "244M",
         "size_str": "466 MB",
-        "ram_str": "~852 MB RAM",
+        "ram_str": "~900 MB idle / ~1.4 GB active",
         "lang": "English only",
         "best_for": "Accents & technical terms",
         "speed_pct": 0.65,
@@ -86,7 +86,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Deep 769M parameter acoustic model with excellent linguistic nuance and low Word Error Rate. Ideal for users with dedicated GPU headroom.",
         "params": "769M",
         "size_str": "1.5 GB",
-        "ram_str": "~2.1 GB RAM",
+        "ram_str": "~2.0 GB idle / ~2.6 GB active",
         "lang": "English only",
         "best_for": "Complex vocabulary & noisy audio",
         "speed_pct": 0.40,
@@ -101,7 +101,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Quantized 5-bit Turbo checkpoint. Delivers state-of-the-art Large-v3 accuracy with 3x faster decoding, low VRAM usage, and 809M parameters.",
         "params": "809M (Q5_0)",
         "size_str": "548 MB",
-        "ram_str": "~1.1 GB RAM",
+        "ram_str": "~850 MB idle / ~1.6 GB active",
         "lang": "Multilingual / English",
         "best_for": "Maximum accuracy with fast speed",
         "speed_pct": 0.62,
@@ -116,7 +116,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "OpenAI's official 4-layer fast decoder model. Uncompromised Large-v3 robustness across technical jargon and acronyms with 8x lower latency.",
         "params": "809M",
         "size_str": "1.5 GB",
-        "ram_str": "~1.8 GB RAM",
+        "ram_str": "~1.8 GB idle / ~2.5 GB active",
         "lang": "Multilingual / English",
         "best_for": "Professional transcription",
         "speed_pct": 0.50,
@@ -131,7 +131,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Knowledge-distilled version of small.en running 6x faster while preserving over 99% accuracy. Ideal for real-time streaming on Intel Arc.",
         "params": "166M",
         "size_str": "321 MB",
-        "ram_str": "~600 MB RAM",
+        "ram_str": "~620 MB idle / ~1.1 GB active",
         "lang": "English only",
         "best_for": "Real-time streaming & coding",
         "speed_pct": 0.88,
@@ -146,7 +146,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Distilled 394M parameter model offering the sweet spot of speed, compact size, and accuracy. 6.8x faster than standard medium.",
         "params": "394M",
         "size_str": "758 MB",
-        "ram_str": "~1.2 GB RAM",
+        "ram_str": "~1.2 GB idle / ~1.7 GB active",
         "lang": "English only",
         "best_for": "General usage & coding",
         "speed_pct": 0.75,
@@ -161,7 +161,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Distilled flagship model providing Large-v3 robustness with 7.5x faster throughput on modern Intel Arc GPUs and 756M parameters.",
         "params": "756M",
         "size_str": "1.5 GB",
-        "ram_str": "~2.1 GB RAM",
+        "ram_str": "~1.8 GB idle / ~2.6 GB active",
         "lang": "English only",
         "best_for": "Heavy prose & technical dictation",
         "speed_pct": 0.58,
@@ -176,7 +176,7 @@ MODEL_METADATA: dict[str, dict] = {
         "desc": "Latest state-of-the-art distilled large checkpoint with enhanced noise robustness, 756M parameters, and specialized technical tokenization.",
         "params": "756M",
         "size_str": "1.45 GB",
-        "ram_str": "~2.1 GB RAM",
+        "ram_str": "~1.8 GB idle / ~2.6 GB active",
         "lang": "English only",
         "best_for": "Coding, punctuation & technical dictation",
         "speed_pct": 0.52,
@@ -2945,7 +2945,7 @@ class SettingsApp:
 
         self._inspector_params = self._make_spec_row(grid, "Parameters", "394M")
         self._inspector_size = self._make_spec_row(grid, "Disk Size", "758 MB")
-        self._inspector_ram = self._make_spec_row(grid, "Approx. RAM", "~1.2 GB RAM")
+        self._inspector_ram = self._make_spec_row(grid, "Approx. RAM", "~1.2 GB idle / ~1.7 GB active")
         self._inspector_lang = self._make_spec_row(grid, "Language", "English only")
         self._inspector_best_for = self._make_spec_row(grid, "Best for", "General usage & coding")
 

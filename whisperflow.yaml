@@ -5,8 +5,8 @@ audio:
   frame_ms: 30
 asr:
   backend: whisper_cpp
-  model: base.en
-  model_path: models/ggml-base.en.bin
+  model: small.en
+  model_path: models/ggml-small.en.bin
   device: auto
   quantization: fp16
   threads: 4
@@ -44,11 +44,11 @@ dictionary:
 - phrase: whisper flow
   replacement: WhisperFlow
   enabled: true
-- phrase: scikit learn
-  replacement: scikit-learn
+- phrase: anti-gravity
+  replacement: Antigravity
   enabled: true
-- phrase: google
-  replacement: GooGle
+- phrase: anti gravity
+  replacement: Antigravity
   enabled: true
 hotkey:
   keys:
