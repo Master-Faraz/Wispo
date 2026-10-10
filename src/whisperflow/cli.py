@@ -122,10 +122,10 @@ def transcribe_main(argv: list[str] | None = None) -> int:
                 text = app.stop_recording()
                 recording = False
                 if keyboard is not None:
-                    _inject_final(keyboard, text, dictionary, auto_capitalize=config.general.auto_capitalize)
+                    _inject_final(keyboard, text, dictionary)
                     print(f"Hold {hold.description} to talk again.")
                 else:
-                    _print_final(text, auto_capitalize=config.general.auto_capitalize)
+                    _print_final(text)
                     print(f"Hold {args.key} to talk again.")
             else:
                 time.sleep(0.02)
@@ -134,9 +134,9 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         if recording:
             text = app.stop_recording()
             if keyboard is not None:
-                _inject_final(keyboard, text, dictionary, auto_capitalize=config.general.auto_capitalize)
+                _inject_final(keyboard, text, dictionary)
             else:
-                _print_final(text, auto_capitalize=config.general.auto_capitalize)
+                _print_final(text)
         return 0
     finally:
         if hold is not None:
@@ -148,19 +148,16 @@ def transcribe_main(argv: list[str] | None = None) -> int:
             keyboard.close()
 
 
-def _print_final(text: str, auto_capitalize: bool = True) -> None:
-    from whisperflow.processing.polish import polish_transcript
-
+def _print_final(text: str) -> None:
     print()
     print("Final:")
-    print(polish_transcript(text, auto_capitalize=auto_capitalize) if text else "(no speech heard)")
+    print(text or "(no speech heard)")
     print()
 
 
-def _inject_final(keyboard, text: str, dictionary, auto_capitalize: bool = True) -> None:
+def _inject_final(keyboard, text: str, dictionary) -> None:
     from whisperflow.injection.keymap import UnsupportedCharacter
     from whisperflow.injection.portal import PortalError
-    from whisperflow.processing.polish import polish_transcript
 
     if not text:
         print()
@@ -168,7 +165,6 @@ def _inject_final(keyboard, text: str, dictionary, auto_capitalize: bool = True)
         print()
         return
     text = dictionary.process(text)
-    text = polish_transcript(text, auto_capitalize=auto_capitalize)
     try:
         keyboard.insert(text)
     except (PortalError, UnsupportedCharacter) as exc:

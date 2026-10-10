@@ -139,23 +139,13 @@ class WhisperCppEngine:
         info = self._lib.wf_system_info()
         return info.decode("utf-8", errors="replace") if info else ""
 
-    def transcribe_chunk(self, audio: np.ndarray, prompt: str | None = None) -> str:
-        return self._transcribe(
-            audio,
-            single_segment=True,
-            initial_prompt=prompt,
-            beam_size=1,
-        )
+    def transcribe_chunk(self, audio: np.ndarray) -> str:
+        return self._transcribe(audio, single_segment=False)
 
-    def finalize(self, audio: np.ndarray, prompt: str | None = None) -> str:
+    def finalize(self, audio: np.ndarray) -> str:
         # A finished phrase may contain more than one sentence. Allow whisper
-        # to split segments here and apply the configured beam_size.
-        return self._transcribe(
-            audio,
-            single_segment=False,
-            initial_prompt=prompt,
-            beam_size=self.beam_size,
-        )
+        # to split segments here.
+        return self._transcribe(audio, single_segment=False)
 
     def stop(self) -> None:
         return None

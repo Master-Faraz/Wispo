@@ -30,26 +30,7 @@ def test_save_stores_the_shortcut(tmp_path):
     assert config.hotkey.keys == ("alt", "space")
 
 
-def test_save_stores_general_settings(tmp_path):
-    path = tmp_path / "whisperflow.yaml"
-    path.write_text("asr:\n  model: base.en\n  model_path: models/ggml-base.en.bin\n", encoding="utf-8")
-    save_user_settings(
-        path,
-        "base.en",
-        [],
-        general_settings={
-            "auto_capitalize": False,
-            "initial_prompt": True,
-            "normalize_audio": True,
-            "silence_guard": True,
-            "final_pass_mode": "accurate",
-        },
-        language="auto",
-    )
-    config = load_config(path)
-    assert config.general.auto_capitalize is False
-    assert config.general.final_pass_mode == "accurate"
-    assert config.asr.language == "auto"
+
 
 
 
