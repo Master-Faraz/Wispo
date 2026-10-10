@@ -24,7 +24,3 @@ def test_committed_and_partial_follow_the_prd_split():
 
     assert acc.finish() == "Create a new function called calculate"
     assert acc.partial == ""
-
-
-
-

@@ -30,10 +30,6 @@ def test_save_stores_the_shortcut(tmp_path):
     assert config.hotkey.keys == ("alt", "space")
 
 
-
-
-
-
 def test_installed_models_are_the_files_on_disk():
     names = [name for name, _size in installed_models()]
     assert "base.en" in names

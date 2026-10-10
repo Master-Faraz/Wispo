@@ -139,8 +139,6 @@ def save_user_settings(
     hotkey: tuple[str, ...] | list[str] | None = None,
     audio_device: str | None = None,
     vad_settings: dict | None = None,
-    general_settings: dict | None = None,
-    language: str | None = None,
 ) -> None:
     """Update the model, dictionary, hotkey, and audio settings in the YAML file.
 
@@ -156,8 +154,6 @@ def save_user_settings(
         raise TypeError("asr must be a mapping")
     asr["model"] = model
     asr["model_path"] = f"models/ggml-{model}.bin"
-    if language is not None:
-        asr["language"] = language
     data["asr"] = asr
     data["dictionary"] = [
         {"phrase": entry.phrase, "replacement": entry.replacement, "enabled": entry.enabled}
@@ -178,7 +174,6 @@ def save_user_settings(
             vad = {}
         vad.update(vad_settings)
         data["vad"] = vad
-    data.pop("general", None)
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 

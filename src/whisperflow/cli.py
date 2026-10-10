@@ -203,7 +203,6 @@ def benchmark_main(argv: list[str] | None = None) -> int:
         use_gpu=device.use_gpu,
         gpu_device=config.asr.gpu_device,
         threads=config.asr.threads,
-        language=config.asr.language,
     )
     load_started = time.perf_counter()
     engine.start()

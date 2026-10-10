@@ -73,10 +73,6 @@ class WhisperCppEngine:
         use_gpu: bool,
         gpu_device: int,
         threads: int,
-        language: str = "en",
-        initial_prompt: str = "",
-        beam_size: int = 1,
-        no_speech_thold: float = 0.6,
         lib_path: Path | None = None,
         backend_dir: Path | None = None,
     ) -> None:
@@ -84,10 +80,6 @@ class WhisperCppEngine:
         self.use_gpu = use_gpu
         self.gpu_device = gpu_device
         self.threads = threads
-        self.language = language
-        self.initial_prompt = initial_prompt
-        self.beam_size = beam_size
-        self.no_speech_thold = no_speech_thold
         self.lib_path = lib_path or (project_root() / "native" / "build" / "libwhisperflow_asr.so")
         self.backend_dir = backend_dir
         self._lib: ctypes.CDLL | None = None
@@ -155,13 +147,7 @@ class WhisperCppEngine:
             self._lib.wf_free()
         self._loaded = False
 
-    def _transcribe(
-        self,
-        audio: np.ndarray,
-        single_segment: bool,
-        initial_prompt: str | None = None,
-        beam_size: int = 1,
-    ) -> str:
+    def _transcribe(self, audio: np.ndarray, single_segment: bool) -> str:
         self.start()
         assert self._lib is not None
         samples = np.ascontiguousarray(audio, dtype=np.float32).reshape(-1)
@@ -169,20 +155,11 @@ class WhisperCppEngine:
             return ""
         out = ctypes.create_string_buffer(_TEXT_CAP)
         started = time.perf_counter()
-
-        lang_bytes = self.language.encode("utf-8") if self.language else None
-        prompt_val = self.initial_prompt if initial_prompt is None else initial_prompt
-        prompt_bytes = prompt_val.encode("utf-8") if prompt_val else None
-
         rc = self._lib.wf_transcribe(
             samples.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
             int(samples.size),
             self.threads,
             1 if single_segment else 0,
-            lang_bytes,
-            prompt_bytes,
-            int(beam_size),
-            ctypes.c_float(self.no_speech_thold),
             out,
             _TEXT_CAP,
         )
@@ -203,10 +180,6 @@ class WhisperCppEngine:
             ctypes.c_int,
             ctypes.c_int,
             ctypes.c_int,
-            ctypes.c_char_p,
-            ctypes.c_char_p,
-            ctypes.c_int,
-            ctypes.c_float,
             ctypes.c_char_p,
             ctypes.c_int,
         ]
