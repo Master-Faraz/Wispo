@@ -53,3 +53,9 @@ dictionary:
 hotkey:
   keys:
   - copilot
+general:
+  auto_capitalize: true
+  initial_prompt: true
+  normalize_audio: true
+  silence_guard: true
+  final_pass_mode: fast

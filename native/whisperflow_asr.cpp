@@ -109,6 +109,10 @@ int wf_transcribe(
     int n_samples,
     int n_threads,
     int single_segment,
+    const char * language,
+    const char * initial_prompt,
+    int beam_size,
+    float no_speech_thold,
     char * out,
     int out_cap) {
     if (g_ctx == nullptr || samples == nullptr || n_samples <= 0) {
@@ -116,7 +120,11 @@ int wf_transcribe(
         return 1;
     }
 
-    whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    enum whisper_sampling_strategy strategy = (beam_size > 1 && single_segment == 0)
+        ? WHISPER_SAMPLING_BEAM_SEARCH
+        : WHISPER_SAMPLING_GREEDY;
+
+    whisper_full_params params = whisper_full_default_params(strategy);
     params.print_progress = false;
     params.print_realtime = false;
     params.print_timestamps = false;
@@ -126,10 +134,26 @@ int wf_transcribe(
     // Each window is transcribed on its own. The Python accumulator is what
     // stitches windows together, so past decoder state would double-count.
     params.no_context = true;
-    params.language = "en";
+
+    if (language != nullptr && language[0] != '\0') {
+        params.language = language;
+    } else {
+        params.language = "en";
+    }
+
+    if (initial_prompt != nullptr && initial_prompt[0] != '\0') {
+        params.initial_prompt = initial_prompt;
+    }
+
     params.n_threads = n_threads > 0 ? n_threads : 4;
     params.suppress_blank = true;
+    params.suppress_nst = true;
+    params.no_speech_thold = no_speech_thold > 0.0f ? no_speech_thold : 0.6f;
     params.temperature_inc = 0.0f;
+
+    if (strategy == WHISPER_SAMPLING_BEAM_SEARCH) {
+        params.beam_search.beam_size = beam_size;
+    }
 
     if (whisper_full(g_ctx, params, samples, n_samples) != 0) {
         copy_out("", out, out_cap);

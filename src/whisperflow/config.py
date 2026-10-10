@@ -86,6 +86,15 @@ class HotkeyConfig:
 
 
 @dataclass(frozen=True)
+class GeneralConfig:
+    auto_capitalize: bool = True
+    initial_prompt: bool = True
+    normalize_audio: bool = True
+    silence_guard: bool = True
+    final_pass_mode: str = "fast"
+
+
+@dataclass(frozen=True)
 class Config:
     audio: AudioConfig = AudioConfig()
     asr: AsrConfig = AsrConfig()
@@ -93,6 +102,7 @@ class Config:
     vad: VadConfig = VadConfig()
     dictionary: tuple[DictionaryEntry, ...] = ()
     hotkey: HotkeyConfig = HotkeyConfig()
+    general: GeneralConfig = GeneralConfig()
 
     def resolve(self, path: str) -> Path:
         candidate = Path(path)
@@ -129,6 +139,7 @@ def load_config(path: Path | None = None) -> Config:
         vad=_section(data, "vad", VadConfig),
         dictionary=_dictionary(data),
         hotkey=_hotkey(data),
+        general=_section(data, "general", GeneralConfig) if "general" in data else GeneralConfig(),
     )
 
 
@@ -139,6 +150,8 @@ def save_user_settings(
     hotkey: tuple[str, ...] | list[str] | None = None,
     audio_device: str | None = None,
     vad_settings: dict | None = None,
+    general_settings: dict | None = None,
+    language: str | None = None,
 ) -> None:
     """Update the model, dictionary, hotkey, and audio settings in the YAML file.
 
@@ -154,6 +167,8 @@ def save_user_settings(
         raise TypeError("asr must be a mapping")
     asr["model"] = model
     asr["model_path"] = f"models/ggml-{model}.bin"
+    if language is not None:
+        asr["language"] = language
     data["asr"] = asr
     data["dictionary"] = [
         {"phrase": entry.phrase, "replacement": entry.replacement, "enabled": entry.enabled}
@@ -174,6 +189,12 @@ def save_user_settings(
             vad = {}
         vad.update(vad_settings)
         data["vad"] = vad
+    if general_settings is not None:
+        general = data.get("general") or {}
+        if not isinstance(general, dict):
+            general = {}
+        general.update(general_settings)
+        data["general"] = general
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 

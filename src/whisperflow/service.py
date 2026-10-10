@@ -177,7 +177,7 @@ def _listen(stop_event: threading.Event, status) -> None:
                         status.set_state("processing")
                     text = app.stop_recording()
                     recording = False
-                    _inject_final(keyboard, text, dictionary)
+                    _inject_final(keyboard, text, dictionary, auto_capitalize=config.general.auto_capitalize)
                     if status is not None:
                         status.set_state("idle")
                 else:

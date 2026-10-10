@@ -24,3 +24,10 @@ def test_committed_and_partial_follow_the_prd_split():
 
     assert acc.finish() == "Create a new function called calculate"
     assert acc.partial == ""
+
+
+def test_fuzzy_overlap_eliminates_stutter():
+    # Inflected word boundary ('like' vs 'liked')
+    merged = merge_transcript("I like to", "liked to build software")
+    assert merged == "I liked to build software"
+

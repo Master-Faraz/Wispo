@@ -31,9 +31,11 @@ from whisperflow.asr.device import DeviceInfo, select_device
 from whisperflow.asr.whisper_cpp import WhisperCppEngine
 from whisperflow.audio.buffer import AudioRing
 from whisperflow.audio.capture import AudioCapture
+from whisperflow.audio.processing import normalize_audio
 from whisperflow.audio.sources import resolve_mic
 from whisperflow.audio.vad import EnergyVad
 from whisperflow.config import Config
+from whisperflow.processing.prompt import build_initial_prompt
 
 # whisper's useful context is 30 seconds. A longer final pass would be cut
 # by the model anyway, so past that we trust the merged windows.
@@ -60,11 +62,25 @@ class TranscriptionApp:
     def __init__(self, config: Config, device: DeviceInfo | None = None) -> None:
         self.config = config
         self.device = device or select_device(config.asr.device)
+        prompt_str = (
+            build_initial_prompt(
+                config.dictionary,
+                include_style=config.general.initial_prompt,
+            )
+            if config.general.initial_prompt
+            else ""
+        )
+        beam_size = 2 if config.general.final_pass_mode == "accurate" else 1
+        no_speech_thold = 0.65 if config.general.silence_guard else 0.0
         self.engine = WhisperCppEngine(
             model_path=config.resolve(config.asr.model_path),
             use_gpu=self.device.use_gpu,
             gpu_device=config.asr.gpu_device,
             threads=config.asr.threads,
+            language=config.asr.language,
+            initial_prompt=prompt_str,
+            beam_size=beam_size,
+            no_speech_thold=no_speech_thold,
         )
         mic = resolve_mic(config.audio.device)
         self.capture = AudioCapture(
@@ -178,7 +194,8 @@ class TranscriptionApp:
         if window is None:
             return None
         self._saw_window = True
-        text = self.engine.transcribe_chunk(window)
+        audio_chunk = normalize_audio(window) if self.config.general.normalize_audio else window
+        text = self.engine.transcribe_chunk(audio_chunk)
         if not text:
             return None
         self.accumulator.merge(text)
@@ -199,12 +216,14 @@ class TranscriptionApp:
             # The phrase no longer fits in one whisper context. The merged
             # windows already cover the older audio, so only close out the tail.
             if leftover is not None and leftover.size:
-                text = self.engine.finalize(leftover)
+                final_leftover = normalize_audio(leftover) if self.config.general.normalize_audio else leftover
+                text = self.engine.finalize(final_leftover)
                 if text:
                     self.accumulator.merge(text)
             phrase = self.accumulator.finish()
         elif audio.size >= int(0.3 * self.config.audio.sample_rate):
-            phrase = self.engine.finalize(audio)
+            final_audio = normalize_audio(audio) if self.config.general.normalize_audio else audio
+            phrase = self.engine.finalize(final_audio)
             self.accumulator.reset()
             if phrase:
                 self.accumulator.merge(phrase)

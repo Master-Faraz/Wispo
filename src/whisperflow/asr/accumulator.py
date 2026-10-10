@@ -22,6 +22,25 @@ def _words(text: str) -> list[str]:
     return [word for word in text.split() if word]
 
 
+def _keys_match(k1: str, k2: str) -> bool:
+    if k1 == k2:
+        return True
+    if len(k1) >= 4 and len(k2) >= 4:
+        if k1.startswith(k2) or k2.startswith(k1):
+            return True
+        if abs(len(k1) - len(k2)) <= 1:
+            diffs = sum(c1 != c2 for c1, c2 in zip(k1, k2)) + abs(len(k1) - len(k2))
+            if diffs <= 1:
+                return True
+    return False
+
+
+def _seq_match(seq1: list[str], seq2: list[str]) -> bool:
+    if len(seq1) != len(seq2):
+        return False
+    return all(_keys_match(w1, w2) for w1, w2 in zip(seq1, seq2))
+
+
 def merge_transcript(previous: str, incoming: str) -> str:
     prev = previous.strip()
     inc = incoming.strip()
@@ -48,13 +67,24 @@ def merge_transcript(previous: str, incoming: str) -> str:
 
     max_k = min(len(prev_words), len(inc_words))
     overlap = 0
+    # 1. Exact suffix-prefix match
     for k in range(max_k, 0, -1):
         if prev_keys[-k:] == inc_keys[:k]:
             overlap = k
             break
-    if overlap == 0:
-        return f"{prev} {inc}"
-    return " ".join(prev_words + inc_words[overlap:])
+    if overlap > 0:
+        return " ".join(prev_words + inc_words[overlap:])
+
+    # 2. Fuzzy suffix-prefix match (handles slight acoustic token variation)
+    fuzzy_overlap = 0
+    for k in range(max_k, 0, -1):
+        if _seq_match(prev_keys[-k:], inc_keys[:k]):
+            fuzzy_overlap = k
+            break
+    if fuzzy_overlap > 0:
+        return " ".join(prev_words[:-fuzzy_overlap] + inc_words)
+
+    return f"{prev} {inc}"
 
 
 class TranscriptAccumulator:
