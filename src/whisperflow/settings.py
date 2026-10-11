@@ -302,28 +302,14 @@ viewport {
     box-shadow: none;
 }
 
-scrollbar {
-    background: transparent;
-    border: none;
-    transition: all 180ms ease;
-}
-
-scrollbar trough {
-    background: transparent;
-    border: none;
-}
-
+scrollbar,
+scrollbar trough,
 scrollbar slider {
-    background: rgba(255, 255, 255, 0.16);
-    border-radius: var(--radius-pill);
-    min-width: 5px;
-    min-height: 5px;
+    background: transparent;
     border: none;
-    margin: 2px;
-}
-
-scrollbar slider:hover {
-    background: rgba(255, 255, 255, 0.3);
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
 }
 
 /* Sidebar (Functional Control / Glass Layer) */
@@ -563,6 +549,7 @@ button.btn-cancel-icon:hover,
     border-radius: 7px;
     min-width: 26px;
     min-height: 26px;
+    padding: 0;
 }
 
 .mini-pbar {
@@ -708,6 +695,7 @@ button.btn-save-purple:active,
     border-radius: 8px;
     min-width: 28px;
     min-height: 28px;
+    padding: 0;
 }
 
 .mic-device-row {
@@ -1175,7 +1163,26 @@ class SettingsApp:
         svg_data = SVG_ICONS[name].encode("utf-8")
         bytes_data = GLib.Bytes.new(svg_data)
         texture = Gdk.Texture.new_from_bytes(bytes_data)
-        return self.gtk.Image.new_from_paintable(texture)
+        img = self.gtk.Image.new_from_paintable(texture)
+        img.set_halign(self.gtk.Align.CENTER)
+        img.set_valign(self.gtk.Align.CENTER)
+        return img
+
+    def _make_badge(self, name: str, css_class: str = "audio-badge", size: int = 28):
+        gtk = self.gtk
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge.add_css_class(css_class)
+        badge.set_size_request(size, size)
+        badge.set_hexpand(False)
+        badge.set_vexpand(False)
+
+        ic = self._make_svg(name)
+        ic.set_halign(gtk.Align.CENTER)
+        ic.set_valign(gtk.Align.CENTER)
+        ic.set_hexpand(True)
+        ic.set_vexpand(True)
+        badge.append(ic)
+        return badge
 
     def _make_brand_icon(self, badge=None):
         from whisperflow.desktop import find_logo_path
@@ -1470,9 +1477,19 @@ class SettingsApp:
             if is_active:
                 row.add_css_class("nav-item-active")
 
+            # Dedicated fixed icon slot for perfect vertical axis and center alignment
+            icon_box = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+            icon_box.set_size_request(24, 24)
+            icon_box.set_hexpand(False)
+            icon_box.set_vexpand(False)
+
             ic = self._make_svg(icon_key)
+            ic.set_halign(gtk.Align.CENTER)
             ic.set_valign(gtk.Align.CENTER)
-            row.append(ic)
+            ic.set_hexpand(True)
+            ic.set_vexpand(True)
+            icon_box.append(ic)
+            row.append(icon_box)
 
             text_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=1)
             t = gtk.Label(label=item_name, xalign=0)
@@ -1554,7 +1571,7 @@ class SettingsApp:
         gtk = self.gtk
 
         scroller = gtk.ScrolledWindow()
-        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.EXTERNAL)
         scroller.set_hexpand(True)
         scroller.set_vexpand(True)
 
@@ -1603,9 +1620,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("microphone"))
+        badge = self._make_badge("microphone", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -1680,16 +1695,14 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("wave"))
+        badge = self._make_badge("wave", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
         t = gtk.Label(label="Input Device", xalign=0)
         t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Input Device</span>")
-        s = gtk.Label(label="Select the audio capture source used by WhisperFlow.", xalign=0)
-        s.set_markup("<span font_size='8.5pt' alpha='55%'>Select the audio capture source used by WhisperFlow.</span>")
+        s = gtk.Label(label="Select the audio capture source used by Wispo.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Select the audio capture source used by Wispo.</span>")
         t_col.append(t)
         t_col.append(s)
         hdr.append(t_col)
@@ -1833,9 +1846,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("sliders"))
+        badge = self._make_badge("sliders", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -1949,9 +1960,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("chip"))
+        badge = self._make_badge("chip", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -2146,7 +2155,7 @@ class SettingsApp:
         gtk = self.gtk
 
         scroller = gtk.ScrolledWindow()
-        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.EXTERNAL)
         scroller.set_hexpand(True)
         scroller.set_vexpand(True)
 
@@ -2196,9 +2205,7 @@ class SettingsApp:
 
         # Header
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("keyboard"))
+        badge = self._make_badge("keyboard", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -2261,9 +2268,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("zap"))
+        badge = self._make_badge("zap", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -2386,9 +2391,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("reticle"))
+        badge = self._make_badge("reticle", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -2481,9 +2484,7 @@ class SettingsApp:
         card.add_css_class("audio-card")
 
         hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("audio-badge")
-        badge.append(self._make_svg("shield_check"))
+        badge = self._make_badge("shield_check", "audio-badge", 28)
         hdr.append(badge)
 
         t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
@@ -2550,7 +2551,7 @@ class SettingsApp:
     def _build_dictionary_panel(self):
         gtk = self.gtk
         scroller = gtk.ScrolledWindow()
-        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.EXTERNAL)
         scroller.set_hexpand(True)
         scroller.set_vexpand(True)
 
@@ -2993,17 +2994,12 @@ class SettingsApp:
         head_text.append(sub)
         top_row.append(head_text)
 
-        learn_btn = gtk.Button(label="? Learn more")
-        learn_btn.add_css_class("btn-learn")
-        learn_btn.set_valign(gtk.Align.CENTER)
-        learn_btn.connect("clicked", self._open_learn_modal)
-        top_row.append(learn_btn)
         vbox.append(top_row)
 
         # Scrolled Model Card List
         scroller = gtk.ScrolledWindow(vexpand=True)
         scroller.set_hexpand(True)
-        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.EXTERNAL)
         list_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
         list_box.set_hexpand(True)
 
@@ -3146,9 +3142,7 @@ class SettingsApp:
         model_card.append(card_heading)
 
         title_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
-        badge.add_css_class("inspector-badge")
-        badge.append(self._make_svg("cube_badge"))
+        badge = self._make_badge("cube_badge", "inspector-badge", 26)
         title_box.append(badge)
 
         self._inspector_model_title = gtk.Label(xalign=0)

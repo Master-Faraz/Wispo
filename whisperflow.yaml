@@ -5,8 +5,8 @@ audio:
   frame_ms: 30
 asr:
   backend: whisper_cpp
-  model: small.en
-  model_path: models/ggml-small.en.bin
+  model: base.en
+  model_path: models/ggml-base.en.bin
   device: auto
   quantization: fp16
   threads: 4
