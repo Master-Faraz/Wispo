@@ -140,7 +140,8 @@ class StatusIcon:
                 ),
             )
         )
-        urgent = state != "idle"
+        # Dock bouncing is disabled for better UX; the floating pill HUD provides visual feedback.
+        urgent = False
         self._conn.send(
             new_signal(
                 DBusAddress(_LAUNCHER_PATH, interface=_LAUNCHER),

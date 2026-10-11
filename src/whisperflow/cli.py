@@ -157,19 +157,21 @@ def _print_final(text: str) -> None:
 
 
 def _inject_final(keyboard, text: str, dictionary) -> None:
+    import logging
     from whisperflow.injection.keymap import UnsupportedCharacter
     from whisperflow.injection.portal import PortalError
 
     if not text:
-        print("\n(no speech heard)\n", flush=True)
+        logging.info("no speech heard to inject")
         return
     text = dictionary.process(text)
     try:
+        logging.info("injecting text: %r", text)
         keyboard.insert(text)
+        logging.info("text injected successfully")
     except (PortalError, UnsupportedCharacter) as exc:
-        print(f"\nCould not type the sentence: {exc}\n", file=sys.stderr, flush=True)
+        logging.exception("could not type the sentence: %s", exc)
         return
-    print("\nInserted.\n", flush=True)
 
 
 def benchmark_main(argv: list[str] | None = None) -> int:

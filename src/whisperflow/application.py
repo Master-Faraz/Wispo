@@ -94,6 +94,7 @@ class TranscriptionApp:
         self._in_speech = False
         self._utterance = np.zeros(0, dtype=np.float32)
         self._saw_window = False
+        self.last_audio_level: float = 0.0
 
     def load_model(self, warmup: bool = True) -> None:
         self.engine.start()
@@ -103,6 +104,7 @@ class TranscriptionApp:
     def start_recording(self) -> None:
         self.load_model(warmup=True)
         self._reset_utterance()
+        self.last_audio_level = 0.0
         self.capture.start()
         self._recording = True
 
@@ -135,11 +137,13 @@ class TranscriptionApp:
             raise RuntimeError("start_recording() before read_once()")
         frame = self.capture.read()
         extra_frames = self.capture.drain()
+        combined = np.concatenate([frame, *extra_frames]) if extra_frames else frame
+        if combined.size:
+            self.last_audio_level = float(np.sqrt(np.mean(combined ** 2)))
         if force_speech:
             opening = not self._in_speech
             if opening:
                 self._begin_utterance()
-            combined = np.concatenate([frame, *extra_frames]) if extra_frames else frame
             return self._on_speech(combined, opening=opening)
         frames = [frame, *extra_frames] if extra_frames else [frame]
         result: Partial | Final | None = None

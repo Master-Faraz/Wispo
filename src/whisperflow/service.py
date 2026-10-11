@@ -84,8 +84,11 @@ def _run() -> int:
         status.stop()
         status = None
 
+    from whisperflow.hud import FloatingPillHUD
+
     application = gtk.Application(application_id=APP_ID)
     settings = SettingsApp(gtk, on_quit=request_quit)
+    hud = FloatingPillHUD(gtk)
 
     def on_activate(app) -> None:
         window = settings.build(app)
@@ -104,7 +107,7 @@ def _run() -> int:
     application.connect("activate", on_activate)
     worker = threading.Thread(
         target=_listen,
-        args=(stop_event, status),
+        args=(stop_event, status, hud),
         name="whisperflow-listen",
     )
     worker.start()
@@ -115,10 +118,12 @@ def _run() -> int:
         worker.join(timeout=5)
         if status is not None:
             status.stop()
+        if hud is not None:
+            hud.close()
     return 0
 
 
-def _listen(stop_event: threading.Event, status) -> None:
+def _listen(stop_event: threading.Event, status, hud=None) -> None:
     from gi.repository import GLib
 
     from whisperflow.application import TranscriptionApp
@@ -173,17 +178,25 @@ def _listen(stop_event: threading.Event, status) -> None:
                         recording = True
                         if status is not None:
                             status.set_state("recording")
+                        if hud is not None:
+                            hud.start_listening()
                     app.read_once(force_speech=True)
+                    if hud is not None:
+                        hud.set_audio_level(app.last_audio_level)
                 elif recording:
                     logging.info("hotkey up: stopping recording and finalizing")
                     if status is not None:
                         status.set_state("processing")
+                    if hud is not None:
+                        hud.start_processing()
                     text = app.stop_recording()
                     recording = False
                     logging.info("transcribed text: %r", text)
-                    _inject_final(keyboard, text, dictionary)
                     if status is not None:
                         status.set_state("idle")
+                    if hud is not None:
+                        hud.finish()
+                    _inject_final(keyboard, text, dictionary)
                 else:
                     time.sleep(0.02)
             except Exception:
@@ -196,6 +209,8 @@ def _listen(stop_event: threading.Event, status) -> None:
                     recording = False
                 if status is not None:
                     status.set_state("idle")
+                if hud is not None:
+                    hud.finish()
                 time.sleep(0.2)
     except PortalError:
         logging.exception("input session failed")
@@ -204,6 +219,8 @@ def _listen(stop_event: threading.Event, status) -> None:
     finally:
         if recording:
             app.stop_recording()
+        if hud is not None:
+            hud.finish()
         if hold is not None:
             hold.stop()
         app.capture.stop()
