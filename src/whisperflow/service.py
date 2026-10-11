@@ -140,7 +140,8 @@ def _listen(stop_event: threading.Event, status) -> None:
     try:
         logging.info("opening the input session")
         keyboard.open()
-        if "super" in config.hotkey.keys:
+        hotkey_keys = {k.lower() for k in config.hotkey.keys}
+        if "super" in hotkey_keys or "copilot" in hotkey_keys:
             try:
                 overview.start()
             except (OSError, subprocess.CalledProcessError):
@@ -150,8 +151,8 @@ def _listen(stop_event: threading.Event, status) -> None:
             overview = None
         if status is not None:
             status.set_state("processing")
-        logging.info("loading the model")
-        app.load_model()
+        logging.info("loading and warming up the model")
+        app.load_model(warmup=True)
         logging.info(
             "model %s on %s (%s)",
             config.asr.model,
@@ -167,16 +168,19 @@ def _listen(stop_event: threading.Event, status) -> None:
             try:
                 if hold.held.is_set():
                     if not recording:
+                        logging.info("hotkey down: recording started")
                         app.start_recording()
                         recording = True
                         if status is not None:
                             status.set_state("recording")
                     app.read_once(force_speech=True)
                 elif recording:
+                    logging.info("hotkey up: stopping recording and finalizing")
                     if status is not None:
                         status.set_state("processing")
                     text = app.stop_recording()
                     recording = False
+                    logging.info("transcribed text: %r", text)
                     _inject_final(keyboard, text, dictionary)
                     if status is not None:
                         status.set_state("idle")

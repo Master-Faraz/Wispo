@@ -84,12 +84,17 @@ class WhisperCppEngine:
         self.backend_dir = backend_dir
         self._lib: ctypes.CDLL | None = None
         self._loaded = False
+        self._warmed = False
         self.last_audio_seconds = 0.0
         self.last_infer_seconds = 0.0
 
     @property
     def loaded(self) -> bool:
         return self._loaded
+
+    @property
+    def warmed(self) -> bool:
+        return self._warmed
 
     def start(self) -> None:
         if self._loaded:
@@ -139,6 +144,23 @@ class WhisperCppEngine:
         # to split segments here.
         return self._transcribe(audio, single_segment=False)
 
+    def warmup(self) -> None:
+        """Prime the inference pipeline by running a silent forward pass.
+
+        On GPU/SYCL backends, the first inference JIT-compiles device kernels and
+        allocates scratch buffers (taking 7–16s). Running a dummy pass during
+        startup ensures that the user's first spoken sentence experiences full
+        inference speed without latency or dropped audio.
+        """
+        if self._warmed:
+            return
+        self.start()
+        dummy = np.zeros(8000, dtype=np.float32)
+        self._transcribe(dummy, single_segment=False)
+        self.last_audio_seconds = 0.0
+        self.last_infer_seconds = 0.0
+        self._warmed = True
+
     def stop(self) -> None:
         return None
 
@@ -146,6 +168,7 @@ class WhisperCppEngine:
         if self._lib is not None and self._loaded:
             self._lib.wf_free()
         self._loaded = False
+        self._warmed = False
 
     def _transcribe(self, audio: np.ndarray, single_segment: bool) -> str:
         self.start()

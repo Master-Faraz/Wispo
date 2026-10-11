@@ -95,11 +95,13 @@ class TranscriptionApp:
         self._utterance = np.zeros(0, dtype=np.float32)
         self._saw_window = False
 
-    def load_model(self) -> None:
+    def load_model(self, warmup: bool = True) -> None:
         self.engine.start()
+        if warmup:
+            self.engine.warmup()
 
     def start_recording(self) -> None:
-        self.load_model()
+        self.load_model(warmup=True)
         self._reset_utterance()
         self.capture.start()
         self._recording = True
@@ -204,11 +206,13 @@ class TranscriptionApp:
                     self.accumulator.merge(text)
             phrase = self.accumulator.finish()
         elif audio.size >= int(0.3 * self.config.audio.sample_rate):
-            phrase = self.engine.finalize(audio)
-            self.accumulator.reset()
-            if phrase:
-                self.accumulator.merge(phrase)
-                self.accumulator.finish()
+            final_phrase = self.engine.finalize(audio)
+            if final_phrase:
+                self.accumulator.reset()
+                self.accumulator.merge(final_phrase)
+                phrase = self.accumulator.finish()
+            else:
+                phrase = self.accumulator.finish()
         else:
             phrase = self.accumulator.finish() if self._saw_window else ""
         self._reset_utterance()

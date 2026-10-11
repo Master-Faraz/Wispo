@@ -77,7 +77,8 @@ def transcribe_main(argv: list[str] | None = None) -> int:
             return 1
         print("Input session ready. The finished sentence is typed into the focused window.")
         print()
-        if "super" in config.hotkey.keys:
+        hotkey_keys = {k.lower() for k in config.hotkey.keys}
+        if "super" in hotkey_keys or "copilot" in hotkey_keys:
             overview = OverviewKey()
             try:
                 overview.start()
@@ -87,9 +88,9 @@ def transcribe_main(argv: list[str] | None = None) -> int:
     hold = None
     recording = False
     try:
-        print("Loading model...")
+        print("Loading and warming up model...")
         started = time.perf_counter()
-        app.load_model()
+        app.load_model(warmup=True)
         print(f"Model ready in {time.perf_counter() - started:.2f}s")
         print(app.engine.system_info().strip())
         print()
@@ -160,21 +161,15 @@ def _inject_final(keyboard, text: str, dictionary) -> None:
     from whisperflow.injection.portal import PortalError
 
     if not text:
-        print()
-        print("(no speech heard)")
-        print()
+        print("\n(no speech heard)\n", flush=True)
         return
     text = dictionary.process(text)
     try:
         keyboard.insert(text)
     except (PortalError, UnsupportedCharacter) as exc:
-        print()
-        print(f"Could not type the sentence: {exc}")
-        print()
+        print(f"\nCould not type the sentence: {exc}\n", file=sys.stderr, flush=True)
         return
-    print()
-    print("Inserted.")
-    print()
+    print("\nInserted.\n", flush=True)
 
 
 def benchmark_main(argv: list[str] | None = None) -> int:
