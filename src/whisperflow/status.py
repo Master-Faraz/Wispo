@@ -30,9 +30,9 @@ ICON_NAMES = {
     "processing": "system-run-symbolic",
 }
 TITLES = {
-    "idle": "WhisperFlow",
-    "recording": "WhisperFlow — listening",
-    "processing": "WhisperFlow — writing",
+    "idle": "Wispo",
+    "recording": "Wispo — listening",
+    "processing": "Wispo — writing",
 }
 
 
@@ -79,7 +79,7 @@ class StatusIcon:
                 timeout=5,
             )
             if claimed.body[0] != 1:
-                self._error = RuntimeError("WhisperFlow is already running")
+                self._error = RuntimeError("Wispo is already running")
                 return
             self._register()
         except Exception as exc:

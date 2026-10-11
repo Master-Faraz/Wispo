@@ -6,7 +6,7 @@ def test_desktop_entry_starts_the_background_service():
     text = desktop_entry_text("/home/faraz/.venv/bin/python", "/home/faraz/Documents/Codes/my-wisper")
     assert "Exec=/home/faraz/.venv/bin/python -m whisperflow.service" in text
     assert "Terminal=false" in text
-    assert "Name=WhisperFlow" in text
+    assert "Name=Wispo" in text
     assert "StartupWMClass=com.whisperflow.WhisperFlow" in text
 
 

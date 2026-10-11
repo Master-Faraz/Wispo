@@ -201,24 +201,23 @@ MODEL_METADATA: dict[str, dict] = {
 SVG_ICONS = {
     "cube": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>""",
     "cube_badge": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>""",
-    "microphone": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>""",
-    "keyboard": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2.5"/><line x1="6" x2="6.01" y1="9" y2="9" stroke-width="2.5"/><line x1="10" x2="10.01" y1="9" y2="9" stroke-width="2.5"/><line x1="14" x2="14.01" y1="9" y2="9" stroke-width="2.5"/><line x1="18" x2="18.01" y1="9" y2="9" stroke-width="2.5"/><line x1="7" x2="17" y1="14" y2="14"/></svg>""",
-    "book": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>""",
-    "cog": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>""",
-    "info": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
-    "drive": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><rect width="20" height="8" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/></svg>""",
-    "download": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>""",
+    "microphone": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>""",
+    "keyboard": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2.5"/><line x1="6" x2="6.01" y1="9" y2="9" stroke-width="2.5"/><line x1="10" x2="10.01" y1="9" y2="9" stroke-width="2.5"/><line x1="14" x2="14.01" y1="9" y2="9" stroke-width="2.5"/><line x1="18" x2="18.01" y1="9" y2="9" stroke-width="2.5"/><line x1="7" x2="17" y1="14" y2="14"/></svg>""",
+    "book": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>""",
+    "cog": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>""",
+    "info": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
+    "drive": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/><rect width="20" height="8" x="2" y="4" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/></svg>""",
+    "download": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>""",
     "cancel": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>""",
-    "radio_off": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255, 255, 255, 0.28)" stroke-width="2"/></svg>""",
-    "radio_on": """<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#6366f1" stroke="#818cf8" stroke-width="2"/><circle cx="12" cy="12" r="3.5" fill="#ffffff"/></svg>""",
-    "checkbox_checked": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" fill="#6366f1"/><polyline points="6 12 10 16 18 8" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>""",
-    "pencil": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>""",
-    "reticle": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>""",
-    "footer_info": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
-    # Traffic light hover icons - compact (4.8px), razor-sharp, high-contrast Windows/macOS design
-    "traffic_close": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.6 4.6L9.4 9.4M9.4 4.6L4.6 9.4" stroke="#000000" stroke-width="1.25" stroke-linecap="round"/></svg>""",
-    "traffic_max": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4.5" y="4.5" width="5" height="5" stroke="#000000" stroke-width="1.25" stroke-linejoin="miter"/></svg>""",
-    "traffic_min": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="4.3" y1="7" x2="9.7" y2="7" stroke="#000000" stroke-width="1.3" stroke-linecap="round"/></svg>""",
+    "radio_off": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="1.5"/></svg>""",
+    "radio_on": """<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#8b75ff" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1"/><circle cx="12" cy="12" r="3.6" fill="#ffffff"/></svg>""",
+    "checkbox_checked": """<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" fill="#8b75ff" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1"/><polyline points="6.5 12 10.5 16 17.5 8.5" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>""",
+    "pencil": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>""",
+    "reticle": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>""",
+    "footer_info": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8" stroke-width="2.5"/></svg>""",
+    "traffic_close": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 4.5L9.5 9.5M9.5 4.5L4.5 9.5" stroke="#4c0000" stroke-width="1.3" stroke-linecap="round"/></svg>""",
+    "traffic_max": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4.5 9.5L9.5 4.5M4.5 4.5H9.5V9.5" stroke="#004d00" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>""",
+    "traffic_min": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="3.8" y1="7" x2="10.2" y2="7" stroke="#664400" stroke-width="1.3" stroke-linecap="round"/></svg>""",
     "wave": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v4"/><path d="M6 6v12"/><path d="M10 3v18"/><path d="M14 8v8"/><path d="M18 5v14"/><path d="M22 10v4"/></svg>""",
     "sliders": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/></svg>""",
     "refresh": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>""",
@@ -231,39 +230,122 @@ SVG_ICONS = {
 }
 
 _MACOS_LIQUID_GLASS_CSS = """
-/* Liquid Glass Apple Window Theme */
-window.macos-window {
-    background: radial-gradient(ellipse at 85% 15%, rgba(139, 92, 246, 0.14) 0%, transparent 60%),
-                radial-gradient(ellipse at 15% 85%, rgba(249, 115, 22, 0.08) 0%, transparent 55%),
-                linear-gradient(135deg, #151722 0%, #0d0f17 100%);
-    color: #f8fafc;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
+/* =========================================================================
+   Apple macOS Liquid Glass Design System
+   Specification: docs/SKILL-liquid-glass-ui.md
+   ========================================================================= */
+
+:root {
+    --surface-canvas: #171922;
+    --surface-content: #20232d;
+    --surface-elevated: #282b37;
+    --text-primary: #f5f5fa;
+    --text-secondary: #b8bdcc;
+    --text-tertiary: #858da2;
+    --accent: #8b75ff;
+    --accent-hover: #a091ff;
+    --accent-pressed: #7358e8;
+    --accent-subtle: rgba(139, 117, 255, 0.14);
+    --accent-border: rgba(139, 117, 255, 0.45);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-glass: rgba(255, 255, 255, 0.14);
+    --glass-tint: rgba(27, 29, 39, 0.72);
+    --focus-ring: rgba(157, 137, 255, 0.92);
+    --radius-window: 20px;
+    --radius-panel: 14px;
+    --radius-control: 11px;
+    --radius-pill: 999px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
 }
 
-/* Maximized / Full Screen: square corners to seamlessly fill screen without showing background */
+/* Base Window Container */
+window {
+    background: transparent;
+}
+
+window.macos-window {
+    background-color: var(--surface-canvas);
+    color: var(--text-primary);
+    border-radius: var(--radius-window);
+    border: 1px solid var(--border-glass);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* Maximized / Full Screen */
 window.macos-window.window-maximized {
     border-radius: 0;
     border: none;
     box-shadow: none;
 }
 
-/* Sidebar Column */
-.sidebar-panel {
-    background: rgba(255, 255, 255, 0.018);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 16px 14px 14px 14px;
+window.macos-window.window-maximized .sidebar-panel {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
-button.traffic-light {
-    border-radius: 50%;
-    min-width: 14px;
-    min-height: 14px;
-    padding: 0;
-    margin: 0;
+window.macos-window.window-maximized .footer-bar {
+    border-bottom-right-radius: 0;
+}
+
+/* Scrolled Windows & Viewports */
+scrolledwindow,
+scrolledwindow viewport,
+viewport {
+    background: transparent;
     border: none;
     box-shadow: none;
+}
+
+scrollbar {
+    background: transparent;
+    border: none;
+    transition: all 180ms ease;
+}
+
+scrollbar trough {
+    background: transparent;
+    border: none;
+}
+
+scrollbar slider {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-pill);
+    min-width: 5px;
+    min-height: 5px;
+    border: none;
+    margin: 2px;
+}
+
+scrollbar slider:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Sidebar (Functional Control / Glass Layer) */
+.sidebar-panel {
+    background-color: var(--glass-tint);
+    border-right: 1px solid var(--border-subtle);
+    padding: 16px 14px 14px 14px;
+    border-top-left-radius: var(--radius-window);
+    border-bottom-left-radius: var(--radius-window);
+    min-width: 215px;
+}
+
+/* Apple Traffic Light Controls */
+button.traffic-light {
+    border-radius: 50%;
+    min-width: 12px;
+    min-height: 12px;
+    padding: 0;
+    margin: 0;
+    border: 0.5px solid rgba(0, 0, 0, 0.25);
+    background-image: none;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
     transition: all 120ms ease;
 }
 
@@ -274,624 +356,697 @@ button.traffic-light image {
 
 .traffic-box:hover button.traffic-light image,
 button.traffic-light:hover image {
-    opacity: 1;
+    opacity: 0.85;
 }
 
-button.traffic-red {
+button.traffic-red,
+button.traffic-light.traffic-red {
     background: #ff5f57;
-    border: 0.5px solid rgba(0, 0, 0, 0.18);
+    background-color: #ff5f57;
+    background-image: none;
 }
-button.traffic-red:hover {
-    background: #ff453a;
+button.traffic-red:hover,
+button.traffic-light.traffic-red:hover {
+    background: #ff6e67;
+    background-color: #ff6e67;
 }
 
-button.traffic-yellow {
+button.traffic-yellow,
+button.traffic-light.traffic-yellow {
     background: #febc2e;
-    border: 0.5px solid rgba(0, 0, 0, 0.18);
+    background-color: #febc2e;
+    background-image: none;
 }
-button.traffic-yellow:hover {
-    background: #ffcc00;
+button.traffic-yellow:hover,
+button.traffic-light.traffic-yellow:hover {
+    background: #ffc848;
+    background-color: #ffc848;
 }
 
-button.traffic-green {
+button.traffic-green,
+button.traffic-light.traffic-green {
     background: #28c840;
-    border: 0.5px solid rgba(0, 0, 0, 0.18);
+    background-color: #28c840;
+    background-image: none;
 }
-button.traffic-green:hover {
-    background: #34c759;
+button.traffic-green:hover,
+button.traffic-light.traffic-green:hover {
+    background: #34d74c;
+    background-color: #34d74c;
 }
 
+/* App Brand Header */
 .app-brand-badge {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 10px;
-    min-width: 34px;
-    min-height: 34px;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    background: transparent;
+    border-radius: 8px;
+    min-width: 32px;
+    min-height: 32px;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+.app-brand-badge.is-fallback {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
-/* Sidebar Nav Items */
+/* Navigation Items */
 .nav-item {
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 11px;
-    padding: 7px 10px;
+    border-radius: var(--radius-control);
+    padding: 8px 10px;
     margin-bottom: 3px;
-    transition: all 160ms ease;
+    transition: all 140ms ease;
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.06);
 }
 
 .nav-item-active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.26) 0%, rgba(139, 92, 246, 0.14) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.45);
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    background-color: var(--accent-subtle);
+    border: 1px solid var(--accent-border);
 }
 
-.storage-card {
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    padding: 8px 10px;
-}
-
-/* Center Panel (Models List) */
+/* Center Panel (Content Layer) */
 .center-panel {
-    padding: 22px 26px 14px 26px;
+    background-color: var(--surface-canvas);
+    padding: 22px 24px 14px 24px;
 }
 
+button.btn-learn,
 .btn-learn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-control);
+    color: var(--text-secondary);
     font-size: 11px;
-    font-weight: 500;
-    padding: 4px 12px;
-    transition: all 150ms ease;
+    font-weight: 600;
+    padding: 5px 12px;
+    transition: all 140ms ease;
 }
 
+button.btn-learn:hover,
 .btn-learn:hover {
-    background: rgba(255, 255, 255, 0.09);
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
+/* Model Row Items */
 .model-card-row {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    border-radius: 12px;
-    padding: 6px 12px;
-    margin-bottom: 4px;
-    transition: all 160ms ease;
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
+    padding: 9px 13px;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 140ms ease;
 }
 
 .model-card-row:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.13);
+    background-color: var(--surface-elevated);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .model-card-selected {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border: 1.5px solid rgba(129, 140, 248, 0.85);
-    box-shadow: 0 0 18px rgba(99, 102, 241, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    background-color: var(--accent-subtle);
+    border: 1.5px solid var(--accent-border);
 }
 
 .pill-size {
-    background: rgba(255, 255, 255, 0.07);
-    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
     padding: 2px 7px;
     font-size: 10px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--text-secondary);
 }
 
 .pill-recommended {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.38);
-    border-radius: 5px;
+    background-color: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    border-radius: 6px;
     padding: 2px 7px;
     font-size: 9.5px;
     font-weight: 700;
-    color: #34d399;
+    color: #6ee7b7;
 }
 
+button.btn-download-icon,
 .btn-download-icon {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     min-width: 30px;
     min-height: 30px;
     padding: 0;
-    transition: all 150ms ease;
+    transition: all 140ms ease;
 }
 
+button.btn-download-icon:hover,
 .btn-download-icon:hover {
-    background: rgba(99, 102, 241, 0.3);
-    border-color: #818cf8;
+    background: var(--accent-subtle);
+    background-color: var(--accent-subtle);
+    border-color: var(--accent-border);
 }
 
+button.btn-cancel-icon,
 .btn-cancel-icon {
-    background: rgba(239, 68, 68, 0.12);
+    background: rgba(239, 68, 68, 0.14);
+    background-color: rgba(239, 68, 68, 0.14);
+    background-image: none;
     border: 1px solid rgba(239, 68, 68, 0.35);
     border-radius: 8px;
     min-width: 30px;
     min-height: 30px;
     padding: 0;
-    transition: all 150ms ease;
+    transition: all 140ms ease;
 }
 
+button.btn-cancel-icon:hover,
 .btn-cancel-icon:hover {
-    background: rgba(239, 68, 68, 0.28);
+    background: rgba(239, 68, 68, 0.25);
+    background-color: rgba(239, 68, 68, 0.25);
     border-color: #f87171;
 }
 
-/* Right Inspector Column */
+/* Right Inspector Panel (Contextual Layer) */
 .inspector-panel {
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 22px 20px 14px 20px;
-    background: rgba(255, 255, 255, 0.012);
+    background-color: var(--surface-canvas);
+    border-left: 1px solid var(--border-subtle);
+    padding: 22px 18px 14px 18px;
     min-width: 320px;
 }
 
 .inspector-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 15px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 15px 16px;
+    margin-bottom: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .inspector-badge {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 7px;
-    min-width: 24px;
-    min-height: 24px;
-}
-
-.kbd-chip {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.04) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.26);
-    border-radius: 7px;
-    padding: 4px 10px;
-    font-weight: 700;
-    font-size: 11px;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    min-width: 26px;
+    min-height: 26px;
 }
 
 .mini-pbar {
     min-height: 6px;
-    border-radius: 3px;
+    border-radius: var(--radius-pill);
 }
 
 .mini-pbar trough {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: var(--radius-pill);
     min-height: 6px;
 }
 
 .mini-pbar progress {
-    background: linear-gradient(90deg, #6366f1, #a855f7);
-    border-radius: 3px;
+    background-color: var(--accent);
+    border-radius: var(--radius-pill);
     min-height: 6px;
 }
 
-/* Footer Bottom Bar */
-.footer-bar {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(14, 16, 23, 0.95);
-    padding: 12px 24px;
-}
-
-.btn-quit {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.85);
-    border-radius: 10px;
-    padding: 6px 18px;
-    font-weight: 600;
-    font-size: 12px;
-    transition: all 140ms ease;
-}
-
-.btn-quit:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-.btn-save-purple {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 10px;
-    color: #ffffff;
+.kbd-chip {
+    background-color: var(--surface-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.24);
+    border-radius: 7px;
+    padding: 4px 10px;
     font-weight: 700;
-    font-size: 12px;
-    padding: 6px 26px;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transition: all 140ms ease;
-}
-
-.btn-save-purple:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.6);
-}
-
-.btn-edit-pill {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 0.7);
     font-size: 11px;
-    padding: 2px 7px;
+    color: var(--text-primary);
+}
+
+button.btn-edit-pill,
+.btn-edit-pill {
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
     transition: all 120ms ease;
 }
 
+button.btn-edit-pill:hover,
 .btn-edit-pill:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-.glass-entry {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    color: #ffffff;
-    padding: 6px 10px;
-}
-
-/* Audio Section Styling */
-.audio-panel {
-    padding: 22px 28px 18px 28px;
-}
-
-.audio-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.audio-badge {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 8px;
-    min-width: 28px;
-    min-height: 28px;
-    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
-}
-
-.mic-device-row {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    border-radius: 11px;
-    padding: 9px 13px;
-    margin-bottom: 5px;
-    transition: all 160ms ease;
-}
-
-.mic-device-row:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.mic-device-selected {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border: 1.5px solid rgba(129, 140, 248, 0.85);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-
-.vu-meter-bar {
-    min-height: 12px;
-    border-radius: 6px;
-}
-
-.vu-meter-bar trough {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-    min-height: 12px;
-}
-
-.vu-meter-bar progress {
-    background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 40%, #8b5cf6 70%, #ec4899 90%, #ef4444 100%);
-    border-radius: 6px;
-    min-height: 12px;
-}
-
-.btn-test-mic {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 9px;
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 11.5px;
-    padding: 5px 14px;
-    transition: all 150ms ease;
-}
-
-.btn-test-mic:hover {
-    background: rgba(99, 102, 241, 0.25);
-    border-color: #818cf8;
-}
-
-.btn-test-mic-active {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 9px;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 11.5px;
-    padding: 5px 14px;
-    box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
-}
-
-.btn-test-mic-active:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-}
-
-.preset-pill {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 12px;
-    transition: all 140ms ease;
-}
-
-.preset-pill:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.preset-pill-active {
-    background: rgba(99, 102, 241, 0.25);
-    border: 1px solid rgba(129, 140, 248, 0.6);
-    color: #c7d2fe;
+/* Footer Bottom Dock */
+.footer-bar {
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--surface-canvas);
+    padding: 12px 22px;
+    border-bottom-right-radius: var(--radius-window);
+}
+
+button.btn-quit,
+.btn-quit {
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: 9px;
+    padding: 7px 20px;
     font-weight: 600;
+    font-size: 11.5px;
+    transition: all 130ms ease;
+}
+
+button.btn-quit:hover,
+.btn-quit:hover {
+    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+button.btn-save-purple,
+.btn-save-purple {
+    background: #8b75ff;
+    background-color: #8b75ff;
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 9px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 7px 28px;
+    box-shadow: 0 2px 10px rgba(139, 117, 255, 0.35);
+    transition: all 130ms ease;
+}
+
+button.btn-save-purple:hover,
+.btn-save-purple:hover {
+    background: #a091ff;
+    background-color: #a091ff;
+    box-shadow: 0 3px 12px rgba(139, 117, 255, 0.5);
+}
+
+button.btn-save-purple:active,
+.btn-save-purple:active {
+    background: #7358e8;
+    background-color: #7358e8;
+}
+
+/* Inputs / Glass Entry */
+.glass-entry {
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 7px 11px;
+}
+
+.glass-entry:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Audio Section */
+.audio-panel {
+    background-color: var(--surface-canvas);
+    padding: 22px 26px 16px 26px;
+}
+
+.audio-card {
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.audio-badge {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 8px;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.mic-device-row {
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
+    padding: 9px 12px;
+    margin-bottom: 5px;
+    transition: all 140ms ease;
+}
+
+.mic-device-row:hover {
+    background-color: var(--surface-elevated);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.mic-device-selected {
+    background-color: var(--accent-subtle);
+    border: 1.5px solid var(--accent-border);
+}
+
+.vu-meter-bar {
+    min-height: 10px;
+    border-radius: var(--radius-pill);
+}
+
+.vu-meter-bar trough {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: var(--radius-pill);
+    min-height: 10px;
+}
+
+.vu-meter-bar progress {
+    background: linear-gradient(90deg, #10b981 0%, #3b82f6 60%, #8b5cf6 85%, #ef4444 100%);
+    border-radius: var(--radius-pill);
+    min-height: 10px;
+}
+
+button.btn-test-mic,
+.btn-test-mic {
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 11.5px;
+    padding: 6px 16px;
+    transition: all 140ms ease;
+}
+
+button.btn-test-mic:hover,
+.btn-test-mic:hover {
+    background: var(--accent-subtle);
+    background-color: var(--accent-subtle);
+    border-color: var(--accent-border);
+}
+
+button.btn-test-mic-active,
+.btn-test-mic-active {
+    background: #ef4444;
+    background-color: #ef4444;
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-control);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 6px 16px;
+}
+
+button.preset-pill,
+.preset-pill {
+    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 14px;
+    transition: all 130ms ease;
+}
+
+button.preset-pill:hover,
+.preset-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+button.preset-pill-active,
+.preset-pill-active {
+    background: var(--accent-subtle);
+    background-color: var(--accent-subtle);
+    background-image: none;
+    border: 1px solid var(--accent-border);
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .badge-speech-detected {
-    background: rgba(16, 185, 129, 0.18);
-    border: 1px solid rgba(16, 185, 129, 0.45);
+    background-color: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(52, 211, 153, 0.4);
     border-radius: 6px;
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 700;
-    color: #34d399;
+    color: #6ee7b7;
 }
 
 .badge-speech-idle {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
     border-radius: 6px;
     padding: 3px 8px;
     font-size: 10px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-tertiary);
 }
 
 .diag-metric-box {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
     border-radius: 9px;
     padding: 8px 12px;
 }
 
 scale.glass-scale trough {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: var(--radius-pill);
     min-height: 5px;
 }
 
 scale.glass-scale highlight {
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    border-radius: 4px;
+    background-color: var(--accent);
+    border-radius: var(--radius-pill);
     min-height: 5px;
 }
 
 scale.glass-scale slider {
-    background: #ffffff;
+    background-color: #ffffff;
     border-radius: 50%;
-    min-width: 14px;
-    min-height: 14px;
+    min-width: 15px;
+    min-height: 15px;
     margin: -5px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
-/* Push-to-talk Studio Styling */
+/* Push-to-talk Studio */
 .kbd-chip-large {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+    background-color: var(--surface-elevated);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     padding: 8px 18px;
     font-weight: 800;
     font-size: 14px;
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    letter-spacing: 0.5px;
+    color: var(--text-primary);
 }
 
 .kbd-chip-modifier {
-    background: linear-gradient(180deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.18) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.45);
-    border-bottom: 3px solid rgba(139, 92, 246, 0.65);
+    background-color: var(--accent-subtle);
+    border: 1px solid var(--accent-border);
+    border-bottom: 3px solid var(--accent);
     border-radius: 10px;
     padding: 8px 18px;
     font-weight: 800;
     font-size: 14px;
-    color: #e0e7ff;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    letter-spacing: 0.5px;
+    color: var(--text-primary);
 }
 
+button.btn-record-chord,
 .btn-record-chord {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.55);
-    border-radius: 10px;
+    background: #8b75ff;
+    background-color: #8b75ff;
+    background-image: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-control);
     color: #ffffff;
     font-weight: 700;
     font-size: 12px;
     padding: 7px 20px;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-    transition: all 150ms ease;
+    box-shadow: 0 2px 10px rgba(139, 117, 255, 0.35);
+    transition: all 140ms ease;
 }
 
+button.btn-record-chord:hover,
 .btn-record-chord:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5) 0%, rgba(139, 92, 246, 0.35) 100%);
-    border-color: #a78bfa;
-    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+    background: var(--accent-hover);
+    background-color: var(--accent-hover);
 }
 
+button.btn-record-active,
 .btn-record-active {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: #ef4444;
+    background-color: #ef4444;
+    background-image: none;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
+    border-radius: var(--radius-control);
     color: #ffffff;
     font-weight: 700;
     font-size: 12px;
     padding: 7px 20px;
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
 }
 
-.btn-record-active:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-}
-
-.preset-card-row {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    border-radius: 11px;
-    padding: 9px 13px;
-    margin-bottom: 5px;
-    transition: all 160ms ease;
-}
-
-.preset-card-row:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.14);
-}
-
-.preset-card-selected {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border: 1.5px solid rgba(129, 140, 248, 0.85);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-
+.preset-card-row,
 .mode-card-row {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.055);
-    border-radius: 11px;
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
     padding: 10px 14px;
-    margin-bottom: 6px;
-    transition: all 160ms ease;
+    margin-bottom: 5px;
+    transition: all 140ms ease;
 }
 
+.preset-card-row:hover,
 .mode-card-row:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.14);
+    background-color: var(--surface-elevated);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
+.preset-card-selected,
 .mode-card-selected {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border: 1.5px solid rgba(129, 140, 248, 0.85);
-    box-shadow: 0 0 16px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    background-color: var(--accent-subtle);
+    border: 1.5px solid var(--accent-border);
 }
 
-/* Dictionary Studio Styling */
+/* Dictionary Studio */
 .dict-panel {
-    padding: 22px 28px 24px 28px;
+    background-color: var(--surface-canvas);
+    padding: 22px 26px 20px 26px;
 }
 
 .dict-card {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.012) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 14px;
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
     padding: 16px 18px;
     margin-bottom: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .dict-badge {
-    background: linear-gradient(135deg, #059669, #10b981);
-    color: #ffffff;
+    background-color: rgba(16, 185, 129, 0.16);
+    color: #6ee7b7;
+    border: 1px solid rgba(52, 211, 153, 0.35);
     border-radius: 6px;
-    padding: 3px 8px;
+    padding: 2px 8px;
     font-size: 10px;
     font-weight: 700;
 }
 
 .dict-rule-row {
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin-bottom: 6px;
-    transition: all 150ms ease;
+    background-color: var(--surface-content);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
+    padding: 9px 13px;
+    margin-bottom: 5px;
+    transition: all 140ms ease;
 }
 
 .dict-rule-row:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background-color: var(--surface-elevated);
     border-color: rgba(255, 255, 255, 0.12);
 }
 
 .dict-chip-spoken {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
     border-radius: 7px;
-    padding: 5px 12px;
+    padding: 4px 11px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-primary);
 }
 
 .dict-chip-repl {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.12) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    background-color: var(--accent-subtle);
+    border: 1px solid var(--accent-border);
     border-radius: 7px;
-    padding: 5px 12px;
+    padding: 4px 11px;
     font-weight: 700;
     color: #ffffff;
 }
 
+button.dict-btn-del,
 .dict-btn-del {
-    border: none;
-    background: rgba(244, 63, 94, 0.09);
+    background: rgba(244, 63, 94, 0.12);
+    background-color: rgba(244, 63, 94, 0.12);
+    background-image: none;
+    border: 1px solid rgba(244, 63, 94, 0.25);
     color: #fb7185;
     border-radius: 7px;
-    padding: 5px 10px;
+    padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    transition: all 140ms ease;
+    transition: all 130ms ease;
 }
 
+button.dict-btn-del:hover,
 .dict-btn-del:hover {
-    background: rgba(244, 63, 94, 0.24);
+    background: rgba(244, 63, 94, 0.22);
+    background-color: rgba(244, 63, 94, 0.22);
+    border-color: rgba(244, 63, 94, 0.45);
     color: #fda4af;
 }
 
 .dict-preset-chip {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
     border-radius: 10px;
-    padding: 12px 14px;
-    color: #cbd5e1;
-    transition: all 150ms ease;
+    padding: 10px 14px;
+    color: var(--text-secondary);
+    transition: all 140ms ease;
 }
 
 .dict-preset-chip:hover {
-    background: rgba(255, 255, 255, 0.055);
-    border-color: rgba(129, 140, 248, 0.35);
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+.dict-preview-row {
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.dict-preview-row:hover {
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
 .dict-test-box {
-    background: rgba(0, 0, 0, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--surface-canvas);
+    border: 1px solid var(--border-subtle);
     border-radius: 10px;
     padding: 12px 14px;
 }
@@ -1022,6 +1177,31 @@ class SettingsApp:
         texture = Gdk.Texture.new_from_bytes(bytes_data)
         return self.gtk.Image.new_from_paintable(texture)
 
+    def _make_brand_icon(self, badge=None):
+        from whisperflow.desktop import find_logo_path
+
+        logo_path = find_logo_path()
+        if logo_path and logo_path.is_file():
+            try:
+                from gi.repository import GdkPixbuf, Gdk, GLib
+
+                # Render at 64x64 for crisp 2x retina display and strictly lock widget to 32px
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(logo_path), 64, 64, True)
+                success, buffer = pixbuf.save_to_bufferv("png", [], [])
+                if success:
+                    bytes_data = GLib.Bytes.new(buffer)
+                    texture = Gdk.Texture.new_from_bytes(bytes_data)
+                    img = self.gtk.Image.new_from_paintable(texture)
+                    img.set_pixel_size(32)
+                    img.set_hexpand(False)
+                    img.set_vexpand(False)
+                    return img
+            except Exception:
+                pass
+        if badge is not None:
+            badge.add_css_class("is-fallback")
+        return self._make_svg("cube")
+
     def run(self, argv: list[str] | None) -> int:
         app = self.gtk.Application(application_id="com.whisperflow.Settings")
         app.connect("activate", self._activate)
@@ -1049,7 +1229,8 @@ class SettingsApp:
         self._gtk_app = app
         self._apply_css()
 
-        window = gtk.ApplicationWindow(application=app, title="WhisperFlow")
+        window = gtk.ApplicationWindow(application=app, title="Wispo")
+        window.set_icon_name("com.whisperflow.WhisperFlow")
         window.set_default_size(1040, 720)
         window.set_size_request(850, 560)  # Responsive minimum size
         window.set_resizable(True)
@@ -1062,9 +1243,10 @@ class SettingsApp:
         root_hbox.set_hexpand(True)
         root_hbox.set_vexpand(True)
 
-        # 1. Left Sidebar (Full height)
+        # 1. Left Sidebar (Full height, fixed width)
         sidebar = self._build_sidebar()
         sidebar.set_size_request(215, -1)
+        sidebar.set_hexpand(False)
         sidebar.set_vexpand(True)
         root_hbox.append(sidebar)
 
@@ -1115,7 +1297,7 @@ class SettingsApp:
 
         # 5. Placeholders for other sidebar sections
         placeholders = [
-            ("about", "About WhisperFlow", "System diagnostics, version info, and credits."),
+            ("about", "About Wispo", "System diagnostics, version info, and credits."),
         ]
         for p_name, p_title, p_sub in placeholders:
             self._main_stack.add_named(self._build_placeholder_panel(p_title, p_sub), p_name)
@@ -1173,6 +1355,12 @@ class SettingsApp:
             self._gtk_app.quit()
 
     def _on_yellow_clicked(self, *_args) -> None:
+        """Minimize the application window."""
+        if not self.window:
+            return
+        self.window.minimize()
+
+    def _on_green_clicked(self, *_args) -> None:
         """Maximize or restore the application window."""
         if not self.window:
             return
@@ -1182,12 +1370,6 @@ class SettingsApp:
         else:
             self.window.maximize()
             self._update_maximized_state(True)
-
-    def _on_green_clicked(self, *_args) -> None:
-        """Minimize the application window."""
-        if not self.window:
-            return
-        self.window.minimize()
 
     def _on_window_close_request(self, *_args) -> bool:
         for ev in list(self._download_cancel_events.values()):
@@ -1222,23 +1404,23 @@ class SettingsApp:
         r.set_cursor_from_name("pointer")
         r.connect("clicked", self._on_red_clicked)
 
-        # Yellow = Maximize / Full Screen (Windows/macOS square icon on hover)
+        # Yellow = Minimize (Minus icon on hover)
         y = gtk.Button()
         y.add_css_class("traffic-light")
         y.add_css_class("traffic-yellow")
         y.set_size_request(14, 14)
         y.set_valign(gtk.Align.CENTER)
-        y.set_child(self._make_svg("traffic_max"))
+        y.set_child(self._make_svg("traffic_min"))
         y.set_cursor_from_name("pointer")
         y.connect("clicked", self._on_yellow_clicked)
 
-        # Green = Minimize (Minus icon on hover)
+        # Green = Maximize / Full Screen (Windows/macOS square icon on hover)
         g = gtk.Button()
         g.add_css_class("traffic-light")
         g.add_css_class("traffic-green")
         g.set_size_request(14, 14)
         g.set_valign(gtk.Align.CENTER)
-        g.set_child(self._make_svg("traffic_min"))
+        g.set_child(self._make_svg("traffic_max"))
         g.set_cursor_from_name("pointer")
         g.connect("clicked", self._on_green_clicked)
 
@@ -1250,16 +1432,21 @@ class SettingsApp:
         # App Brand Header
         brand_box = gtk.Box(spacing=10, orientation=gtk.Orientation.HORIZONTAL)
         brand_box.set_margin_bottom(14)
+        brand_box.set_hexpand(False)
 
-        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        badge = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.START)
+        badge.set_hexpand(False)
+        badge.set_vexpand(False)
+        badge.set_size_request(32, 32)
         badge.add_css_class("app-brand-badge")
-        cube_img = self._make_svg("cube")
-        badge.append(cube_img)
+        brand_icon = self._make_brand_icon(badge)
+        badge.append(brand_icon)
         brand_box.append(badge)
 
         brand_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=1)
-        title = gtk.Label(label="WhisperFlow", xalign=0)
-        title.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>WhisperFlow</span>")
+        brand_text.set_hexpand(False)
+        title = gtk.Label(label="Wispo", xalign=0)
+        title.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Wispo</span>")
         sub = gtk.Label(label="Transcribe. Anywhere.", xalign=0)
         sub.set_markup("<span font_size='8.5pt' alpha='55%'>Transcribe. Anywhere.</span>")
         brand_text.append(title)
@@ -3075,8 +3262,14 @@ class SettingsApp:
         dt_title.set_markup("<span font_size='9pt' font_weight='700' color='#ffffff'>Dictionary</span>")
         dt_head.append(dt_title)
 
-        edit_dict_btn = gtk.Button(label="✏ Edit")
+        edit_dict_btn = gtk.Button()
         edit_dict_btn.add_css_class("btn-edit-pill")
+        ed_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=4)
+        ed_box.append(self._make_svg("pencil"))
+        ed_lbl = gtk.Label(label="Edit")
+        ed_lbl.set_markup("<span font_size='8pt' font_weight='600'>Edit</span>")
+        ed_box.append(ed_lbl)
+        edit_dict_btn.set_child(ed_box)
         edit_dict_btn.connect("clicked", lambda *_: self._switch_section("dictionary"))
         dt_head.append(edit_dict_btn)
         dict_card.append(dt_head)
@@ -3161,6 +3354,7 @@ class SettingsApp:
         shown = self._dictionary_entries_list[:3]
         for entry in shown:
             r = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+            r.add_css_class("dict-preview-row")
             cb_img = self._make_svg("checkbox_checked")
             cb_img.set_valign(gtk.Align.CENTER)
             r.append(cb_img)
@@ -3187,7 +3381,7 @@ class SettingsApp:
         footer.append(info_img)
 
         self._status_label.set_hexpand(True)
-        self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>Closing this window leaves WhisperFlow in the dock.</span>")
+        self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>Closing this window leaves Wispo in the dock.</span>")
         footer.append(self._status_label)
 
         # Right Actions: Quit & Save
