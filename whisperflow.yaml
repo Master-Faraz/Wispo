@@ -29,18 +29,6 @@ dictionary:
 - phrase: javascript
   replacement: JavaScript
   enabled: true
-- phrase: open pull request
-  replacement: Open Pull Request
-  enabled: true
-- phrase: pie torch
-  replacement: PyTorch
-  enabled: true
-- phrase: tensor flow
-  replacement: TensorFlow
-  enabled: true
-- phrase: hugging face
-  replacement: Hugging Face
-  enabled: true
 - phrase: whisper flow
   replacement: WhisperFlow
   enabled: true
@@ -49,6 +37,9 @@ dictionary:
   enabled: true
 - phrase: anti gravity
   replacement: Antigravity
+  enabled: true
+- phrase: tensor flow
+  replacement: TensorFlow
   enabled: true
 hotkey:
   keys:

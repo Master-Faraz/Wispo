@@ -28,6 +28,7 @@ class EnergyVad:
         highpass_hz: float,
     ) -> None:
         self.sample_rate = sample_rate
+        self.frame_ms = frame_ms
         self.rms_threshold = rms_threshold
         self.noise_multiplier = noise_multiplier
         self.highpass_hz = highpass_hz
@@ -38,6 +39,18 @@ class EnergyVad:
         self._filter_y = 0.0
         self._filter_prev = 0.0
         self._filter_ready = False
+
+    def update_settings(
+        self,
+        rms_threshold: float,
+        noise_multiplier: float,
+        hangover_ms: int,
+        highpass_hz: float,
+    ) -> None:
+        self.rms_threshold = rms_threshold
+        self.noise_multiplier = noise_multiplier
+        self.highpass_hz = highpass_hz
+        self._hangover_frames = max(1, int(math.ceil(hangover_ms / self.frame_ms)))
 
     @property
     def speech(self) -> bool:

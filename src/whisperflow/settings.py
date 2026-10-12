@@ -1124,9 +1124,10 @@ def _load_gtk():
 
 
 class SettingsApp:
-    def __init__(self, gtk, on_quit=None) -> None:
+    def __init__(self, gtk, on_quit=None, on_save_config=None) -> None:
         self.gtk = gtk
         self._on_quit = on_quit
+        self._on_save_config = on_save_config
         self._config = load_config()
         self._device = select_device(self._config.asr.device)
         self._selected_model_name = self._config.asr.model
@@ -1735,6 +1736,12 @@ class SettingsApp:
 
             if self._engine_stack.get_visible_child_name() != "ready":
                 self._engine_stack.set_visible_child_name("ready")
+            if hasattr(self, "_status_label") and self._status_label is not None:
+                current_text = self._status_label.get_text() or ""
+                if "Reloading model" in current_text:
+                    self._status_label.set_markup(
+                        "<span font_size='8.5pt' font_weight='700' color='#34d399'>● Model loaded and ready!</span>"
+                    )
             return False
 
         GLib.idle_add(_update)
@@ -4101,7 +4108,22 @@ class SettingsApp:
             audio_device=self._selected_audio_device,
             vad_settings=vad_data,
         )
-        self._status_label.set_markup("<span font_size='8.5pt' font_weight='700' color='#34d399'>● Settings saved successfully!</span>")
+        new_config = load_config(path)
+        old_model = self._config.asr.model
+        self._config = new_config
+
+        if self._on_save_config is not None:
+            self._on_save_config(new_config)
+
+        if old_model != model:
+            self.set_loading_progress(10, "Reloading Model...", f"Switching to {model}")
+            self._status_label.set_markup(
+                "<span font_size='8.5pt' font_weight='700' color='#a5b4fc'>● Settings saved. Reloading model...</span>"
+            )
+        else:
+            self._status_label.set_markup(
+                "<span font_size='8.5pt' font_weight='700' color='#34d399'>● Settings saved & applied!</span>"
+            )
 
     def _idle(self, callback, *args) -> None:
         from gi.repository import GLib

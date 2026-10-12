@@ -22,6 +22,8 @@ this file knows about a keyboard shortcut. That is Stage 2.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable
 
 import numpy as np
 
@@ -114,6 +116,77 @@ class TranscriptionApp:
                     self._audio_warmed = True
                 except Exception:
                     pass
+
+    def reload_model(
+        self,
+        model_name: str,
+        model_path: Path,
+        on_progress: Callable[[int, str, str], None] | None = None,
+    ) -> None:
+        """Safely release current engine, load a new whisper model, and prime pipeline."""
+        if on_progress:
+            on_progress(15, "Unloading Model...", "Releasing existing context")
+        self.engine.close()
+
+        self.engine = WhisperCppEngine(
+            model_path=model_path,
+            use_gpu=self.device.use_gpu,
+            gpu_device=self.config.asr.gpu_device,
+            threads=self.config.asr.threads,
+        )
+
+        if on_progress:
+            on_progress(35, "Loading Model...", f"Reading {model_name} into memory")
+        self.engine.start()
+
+        if on_progress:
+            on_progress(65, "Compiling GPU Shaders...", "Initializing inference kernels")
+        self.engine.warmup()
+
+        if on_progress:
+            on_progress(90, "Priming Audio Pipeline...", "Testing microphone capture")
+        if not getattr(self, "_audio_warmed", False):
+            try:
+                self.capture.start()
+                self.capture.read(timeout=0.1)
+                self.capture.stop()
+                self._audio_warmed = True
+            except Exception:
+                pass
+
+        if on_progress:
+            on_progress(100, "Engine Ready", f"{self.device.name} • {model_name}")
+
+    def update_audio_device(self, device_name: str) -> None:
+        """Switch audio capture device on the fly."""
+        try:
+            self.capture.stop()
+        except Exception:
+            pass
+        mic = resolve_mic(device_name)
+        self.capture = AudioCapture(
+            device=mic.alsa_device,
+            sample_rate=self.config.audio.sample_rate,
+            frame_ms=self.config.audio.frame_ms,
+            pipewire_target=mic.pipewire_target,
+            description=mic.description,
+        )
+        self._audio_warmed = False
+
+    def update_vad(
+        self,
+        rms_threshold: float,
+        noise_multiplier: float,
+        hangover_ms: int,
+        highpass_hz: float,
+    ) -> None:
+        """Update VAD parameters in-place without restarting."""
+        self.vad.update_settings(
+            rms_threshold=rms_threshold,
+            noise_multiplier=noise_multiplier,
+            hangover_ms=hangover_ms,
+            highpass_hz=highpass_hz,
+        )
 
     def start_recording(self) -> None:
         self.load_model(warmup=True)

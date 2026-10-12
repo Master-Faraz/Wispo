@@ -16,6 +16,7 @@ a second listener.
 from __future__ import annotations
 
 import logging
+import queue
 import subprocess
 import sys
 import threading
@@ -57,6 +58,7 @@ def _run() -> int:
 
     GLib.set_prgname(APP_ID)
     stop_event = threading.Event()
+    reload_queue: queue.Queue = queue.Queue()
     ui: dict = {}
 
     def request_quit() -> None:
@@ -87,7 +89,7 @@ def _run() -> int:
     from whisperflow.hud import FloatingPillHUD
 
     application = gtk.Application(application_id=APP_ID)
-    settings = SettingsApp(gtk, on_quit=request_quit)
+    settings = SettingsApp(gtk, on_quit=request_quit, on_save_config=reload_queue.put)
     hud = FloatingPillHUD(gtk)
 
     def on_activate(app) -> None:
@@ -107,7 +109,7 @@ def _run() -> int:
     application.connect("activate", on_activate)
     worker = threading.Thread(
         target=_listen,
-        args=(stop_event, status, hud, settings),
+        args=(stop_event, status, hud, settings, reload_queue),
         name="whisperflow-listen",
     )
     worker.start()
@@ -123,7 +125,13 @@ def _run() -> int:
     return 0
 
 
-def _listen(stop_event: threading.Event, status, hud=None, settings=None) -> None:
+def _listen(
+    stop_event: threading.Event,
+    status,
+    hud=None,
+    settings=None,
+    reload_queue: queue.Queue | None = None,
+) -> None:
     from gi.repository import GLib
 
     from whisperflow.application import TranscriptionApp
@@ -210,6 +218,103 @@ def _listen(stop_event: threading.Event, status, hud=None, settings=None) -> Non
         logging.info("ready")
         while not stop_event.is_set():
             try:
+                if reload_queue is not None and not recording and not reload_queue.empty():
+                    pending_cfg = None
+                    while not reload_queue.empty():
+                        try:
+                            pending_cfg = reload_queue.get_nowait()
+                        except queue.Empty:
+                            break
+                    if pending_cfg is not None:
+                        new_config = pending_cfg
+
+                        # 1. Dictionary update
+                        if new_config.dictionary != config.dictionary:
+                            dictionary = DictionaryProcessor(new_config.dictionary)
+                            logging.info("dictionary updated (%d entries)", len(new_config.dictionary))
+
+                        # 2. VAD update
+                        if new_config.vad != config.vad:
+                            app.update_vad(
+                                rms_threshold=new_config.vad.rms_threshold,
+                                noise_multiplier=new_config.vad.noise_multiplier,
+                                hangover_ms=new_config.vad.hangover_ms,
+                                highpass_hz=new_config.vad.highpass_hz,
+                            )
+                            logging.info("VAD parameters updated")
+
+                        # 3. Audio device update
+                        if new_config.audio.device != config.audio.device:
+                            try:
+                                app.update_audio_device(new_config.audio.device)
+                                logging.info("audio input device updated to %s", new_config.audio.device)
+                            except Exception:
+                                logging.exception("failed to update audio input device")
+
+                        # 4. Hotkey update
+                        new_chord = tuple(k.lower() for k in new_config.hotkey.keys)
+                        old_chord = tuple(k.lower() for k in config.hotkey.keys)
+                        if new_chord != old_chord:
+                            try:
+                                if hold is not None:
+                                    hold.stop()
+                                new_hotkey_keys = set(new_chord)
+                                old_hotkey_keys = set(old_chord)
+                                needs_overview = "super" in new_hotkey_keys or "copilot" in new_hotkey_keys
+                                had_overview = "super" in old_hotkey_keys or "copilot" in old_hotkey_keys
+                                if needs_overview and not had_overview:
+                                    if overview is None:
+                                        overview = OverviewKey()
+                                    try:
+                                        overview.start()
+                                    except Exception:
+                                        overview = None
+                                elif not needs_overview and had_overview:
+                                    if overview is not None:
+                                        try:
+                                            overview.stop()
+                                        except Exception:
+                                            pass
+                                        overview = None
+                                hold = HoldChord(new_config.hotkey.keys)
+                                hold.start()
+                                logging.info("hotkey updated to %s", new_config.hotkey.keys)
+                            except Exception:
+                                logging.exception("failed to update hotkey chord")
+
+                        # 5. Model update
+                        if (
+                            new_config.asr.model != config.asr.model
+                            or new_config.asr.model_path != config.asr.model_path
+                        ):
+                            if status is not None:
+                                status.set_state("processing")
+                            try:
+                                def _report_progress(pct: int, title: str, subtitle: str) -> None:
+                                    if settings is not None:
+                                        settings.set_loading_progress(pct, title, subtitle)
+
+                                app.reload_model(
+                                    model_name=new_config.asr.model,
+                                    model_path=new_config.resolve(new_config.asr.model_path),
+                                    on_progress=_report_progress,
+                                )
+                                if settings is not None:
+                                    settings.set_model_loaded(f"{app.device.name} • {new_config.asr.model}")
+                                logging.info("model reloaded: %s", new_config.asr.model)
+                            except Exception as exc:
+                                logging.exception("failed to reload model %s", new_config.asr.model)
+                                if settings is not None:
+                                    settings._idle(
+                                        settings._status_label.set_markup,
+                                        f"<span font_size='8.5pt' color='#f87171'>● Failed to load model: {exc}</span>",
+                                    )
+                                    settings.set_model_loaded(f"{app.device.name} • {config.asr.model}")
+                            finally:
+                                if status is not None:
+                                    status.set_state("idle")
+
+                        config = new_config
                 if hold.held.is_set():
                     if not recording:
                         logging.info("hotkey down: recording started")
