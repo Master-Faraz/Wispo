@@ -144,6 +144,7 @@ class FloatingPillHUD:
 
         # Make entire window click-through via empty input region
         self._window.connect("realize", self._on_realize)
+        self._window.realize()
 
     def _on_realize(self, win: Gtk.Window) -> None:
         surface = win.get_surface()

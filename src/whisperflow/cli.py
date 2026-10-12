@@ -161,7 +161,7 @@ def _inject_final(keyboard, text: str, dictionary) -> None:
     from whisperflow.injection.keymap import UnsupportedCharacter
     from whisperflow.injection.portal import PortalError
 
-    if not text:
+    if not text or text.strip() in ("[BLANK_AUDIO]", "[blank_audio]"):
         logging.info("no speech heard to inject")
         return
     text = dictionary.process(text)

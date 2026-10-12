@@ -100,6 +100,14 @@ class TranscriptionApp:
         self.engine.start()
         if warmup:
             self.engine.warmup()
+            if not getattr(self, "_audio_warmed", False):
+                try:
+                    self.capture.start()
+                    self.capture.read(timeout=0.1)
+                    self.capture.stop()
+                    self._audio_warmed = True
+                except Exception:
+                    pass
 
     def start_recording(self) -> None:
         self.load_model(warmup=True)
