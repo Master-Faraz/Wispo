@@ -139,8 +139,13 @@ def save_user_settings(
     hotkey: tuple[str, ...] | list[str] | None = None,
     audio_device: str | None = None,
     vad_settings: dict | None = None,
+    threads: int | None = None,
+    device: str | None = None,
+    gpu_device: int | None = None,
+    language: str | None = None,
+    streaming_settings: dict | None = None,
 ) -> None:
-    """Update the model, dictionary, hotkey, and audio settings in the YAML file.
+    """Update the model, dictionary, hotkey, audio, and hardware settings in the YAML file.
 
     Other sections stay as they are. Comments in the file are not kept,
     because PyYAML rewrites the mapping. The running transcription process
@@ -154,6 +159,14 @@ def save_user_settings(
         raise TypeError("asr must be a mapping")
     asr["model"] = model
     asr["model_path"] = f"models/ggml-{model}.bin"
+    if threads is not None:
+        asr["threads"] = int(threads)
+    if device is not None:
+        asr["device"] = str(device)
+    if gpu_device is not None:
+        asr["gpu_device"] = int(gpu_device)
+    if language is not None:
+        asr["language"] = str(language)
     data["asr"] = asr
     data["dictionary"] = [
         {"phrase": entry.phrase, "replacement": entry.replacement, "enabled": entry.enabled}
@@ -174,6 +187,12 @@ def save_user_settings(
             vad = {}
         vad.update(vad_settings)
         data["vad"] = vad
+    if streaming_settings is not None:
+        streaming = data.get("streaming") or {}
+        if not isinstance(streaming, dict):
+            streaming = {}
+        streaming.update(streaming_settings)
+        data["streaming"] = streaming
     path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
 
 

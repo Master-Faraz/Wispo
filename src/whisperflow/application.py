@@ -67,6 +67,7 @@ class TranscriptionApp:
             use_gpu=self.device.use_gpu,
             gpu_device=config.asr.gpu_device,
             threads=config.asr.threads,
+            language=config.asr.language,
         )
         mic = resolve_mic(config.audio.device)
         self.capture = AudioCapture(
@@ -133,6 +134,7 @@ class TranscriptionApp:
             use_gpu=self.device.use_gpu,
             gpu_device=self.config.asr.gpu_device,
             threads=self.config.asr.threads,
+            language=self.config.asr.language,
         )
 
         if on_progress:

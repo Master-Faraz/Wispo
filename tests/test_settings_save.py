@@ -40,3 +40,25 @@ def test_installed_models_are_the_files_on_disk():
     assert "distil-medium.en" in model_names()
     assert "distil-large-v3" in model_names()
     assert "distil-large-v3.5" in model_names()
+
+
+def test_save_hardware_and_streaming_settings(tmp_path):
+    path = tmp_path / "whisperflow.yaml"
+    path.write_text("asr:\n  model: base.en\n  model_path: models/ggml-base.en.bin\n", encoding="utf-8")
+    save_user_settings(
+        path=path,
+        model="base.en",
+        entries=[],
+        threads=8,
+        device="cpu",
+        gpu_device=1,
+        language="es",
+        streaming_settings={"chunk_ms": 500, "length_ms": 3000},
+    )
+    config = load_config(path)
+    assert config.asr.threads == 8
+    assert config.asr.device == "cpu"
+    assert config.asr.gpu_device == 1
+    assert config.asr.language == "es"
+    assert config.streaming.chunk_ms == 500
+    assert config.streaming.length_ms == 3000

@@ -739,6 +739,27 @@ button.btn-save-purple:active,
     box-shadow: 0 0 0 1px var(--accent);
 }
 
+dropdown,
+.glass-dropdown {
+    background-color: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+dropdown:hover,
+.glass-dropdown:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+dropdown:focus,
+.glass-dropdown:focus {
+    border-color: var(--accent);
+}
+
 /* Audio Section */
 .audio-panel {
     background-color: var(--surface-canvas);
@@ -1206,6 +1227,24 @@ class SettingsApp:
         self._dict_test_input = None
         self._dict_test_output = None
 
+        # Hardware & Compute state
+        self._hardware_threads = int(self._config.asr.threads)
+        self._hardware_device = str(self._config.asr.device)
+        self._hardware_gpu_device = int(self._config.asr.gpu_device)
+        self._hardware_chunk_ms = int(self._config.streaming.chunk_ms)
+        self._hardware_length_ms = int(self._config.streaming.length_ms)
+        self._hardware_language = str(self._config.asr.language)
+
+        # Hardware widgets
+        self._hw_threads_scale = None
+        self._hw_threads_val_lbl = None
+        self._hw_device_rows: dict[str, object] = {}
+        self._hw_device_radio_imgs: dict[str, object] = {}
+        self._hw_latency_pills: dict[str, object] = {}
+        self._hw_latency_val_lbl = None
+        self._hw_lang_drop_down = None
+        self._language_options: list[tuple[str, str]] = []
+
         # Navigation state
         self._main_stack = None
         self._sidebar_nav_rows: dict[str, object] = {}
@@ -1369,7 +1408,11 @@ class SettingsApp:
         dict_panel = self._build_dictionary_panel()
         self._main_stack.add_named(dict_panel, "dictionary")
 
-        # 5. Placeholders for other sidebar sections
+        # 5. Hardware Section (Full width)
+        hardware_panel = self._build_hardware_panel()
+        self._main_stack.add_named(hardware_panel, "hardware")
+
+        # 6. Placeholders for other sidebar sections
         placeholders = [
             ("about", "About Wispo", "System diagnostics, version info, and credits."),
         ]
@@ -1534,6 +1577,7 @@ class SettingsApp:
             ("Audio", "Microphone & detection", "microphone", False, "audio"),
             ("Push-to-talk", "Keyboard shortcut", "keyboard", False, "push_to_talk"),
             ("Dictionary", "Custom word corrections", "book", False, "dictionary"),
+            ("Hardware", "Processor, GPU & latency", "chip", False, "hardware"),
             ("About", "Version & updates", "info", False, "about"),
         ]
 
@@ -2970,6 +3014,362 @@ class SettingsApp:
         self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● {pango_esc(msg)}. Click Save to apply.</span>")
 
     # -------------------------------------------------------------------------
+    # Hardware & Performance View: CPU Threads, GPU Device, Latency & Language
+    # -------------------------------------------------------------------------
+    def _build_hardware_panel(self):
+        gtk = self.gtk
+
+        scroller = gtk.ScrolledWindow()
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.EXTERNAL)
+        scroller.set_hexpand(True)
+        scroller.set_vexpand(True)
+
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        vbox.add_css_class("audio-panel")
+        vbox.set_hexpand(True)
+
+        # 1. Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="Hardware", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>Hardware</span>")
+        sub = gtk.Label(label="Configure CPU multi-threading, GPU compute acceleration, latency profiles, and language.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>Configure CPU multi-threading, GPU compute acceleration, latency profiles, and language.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+        vbox.append(top_row)
+
+        # 2. Card: Processor & CPU Threads
+        vbox.append(self._build_hw_threads_card())
+
+        # 3. Card: Compute Device & GPU Acceleration
+        vbox.append(self._build_hw_device_card())
+
+        # 4. Card: Performance & Latency Profiles
+        vbox.append(self._build_hw_latency_card())
+
+        # 5. Card: Spoken Language Selection
+        vbox.append(self._build_hw_language_card())
+
+        scroller.set_child(vbox)
+        return scroller
+
+    def _build_hw_threads_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("chip", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Processor & CPU Threads", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Processor &amp; CPU Threads</span>")
+        s = gtk.Label(label="Adjust parallel compute threads used for Whisper matrix inference.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Adjust parallel compute threads used for Whisper matrix inference.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        auto_btn = gtk.Button(label="⚡ Auto Recommend")
+        auto_btn.add_css_class("btn-learn")
+        auto_btn.set_cursor_from_name("pointer")
+        auto_btn.connect("clicked", lambda *_: self._apply_auto_threads())
+        hdr.append(auto_btn)
+        card.append(hdr)
+
+        num_cores = os.cpu_count() or 4
+        max_threads = max(1, num_cores)
+
+        thread_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4)
+        top_line = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
+        lbl = gtk.Label(xalign=0, hexpand=True)
+        lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>Inference CPU Threads</span>")
+        self._hw_threads_val_lbl = gtk.Label(xalign=1)
+        self._hw_threads_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{self._hardware_threads} Threads</span>")
+        top_line.append(lbl)
+        top_line.append(self._hw_threads_val_lbl)
+        thread_box.append(top_line)
+
+        scale = gtk.Scale.new_with_range(gtk.Orientation.HORIZONTAL, 1, max_threads, 1)
+        scale.add_css_class("glass-scale")
+        scale.set_value(float(self._hardware_threads))
+        scale.set_draw_value(False)
+        scale.set_hexpand(True)
+        scale.connect("value-changed", self._on_hw_threads_changed)
+        self._hw_threads_scale = scale
+        thread_box.append(scale)
+
+        help_lbl = gtk.Label(xalign=0, wrap=True)
+        help_lbl.set_markup(
+            f"<span font_size='8pt' alpha='50%'>Specifies how many CPU cores Whisper uses for parallel matrix computation. For best responsiveness without freezing your system, we recommend setting this to 2 less than your total logical cores. Detected on your PC: {num_cores} logical cores.</span>"
+        )
+        thread_box.append(help_lbl)
+        card.append(thread_box)
+
+        return card
+
+    def _apply_auto_threads(self) -> None:
+        num_cores = os.cpu_count() or 4
+        recommended = max(1, num_cores - 2) if num_cores > 2 else 1
+        self._hardware_threads = recommended
+        if self._hw_threads_scale:
+            self._hw_threads_scale.set_value(float(recommended))
+        if self._hw_threads_val_lbl:
+            self._hw_threads_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{recommended} Threads</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Set CPU threads to recommended ({recommended} threads). Click Save to apply.</span>")
+
+    def _on_hw_threads_changed(self, scale) -> None:
+        val = int(scale.get_value())
+        self._hardware_threads = val
+        if self._hw_threads_val_lbl:
+            self._hw_threads_val_lbl.set_markup(f"<span font_weight='700' font_size='9.5pt' color='#a5b4fc'>{val} Threads</span>")
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● CPU threads changed to {val}. Click Save to apply.</span>")
+
+    def _build_hw_device_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("zap", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Compute Device & Acceleration", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Compute Device &amp; Acceleration</span>")
+        s = gtk.Label(label="Choose between automatic device selection, dedicated GPU offloading, or safe CPU fallback.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Choose between automatic device selection, dedicated GPU offloading, or safe CPU fallback.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        device_options = [
+            ("auto", "Auto-Detect (Recommended)", "Probes Level Zero / Intel SYCL GPU, falling back to CPU safely."),
+            ("sycl", "GPU Acceleration (Intel SYCL)", "Forces inference execution onto the GPU Level Zero accelerator."),
+            ("cpu", "CPU Only (Safe Fallback)", "Bypasses graphics hardware entirely. Useful if GPU VRAM is low or drivers fail."),
+        ]
+
+        self._hw_device_rows.clear()
+        self._hw_device_radio_imgs.clear()
+
+        for dev_key, dev_title, dev_desc in device_options:
+            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+            row.add_css_class("mic-device-row")
+            is_active = (self._hardware_device.lower() == dev_key)
+            if is_active:
+                row.add_css_class("mic-device-selected")
+
+            radio_img = self._make_svg("radio_on" if is_active else "radio_off")
+            radio_img.set_valign(gtk.Align.CENTER)
+            row.append(radio_img)
+            self._hw_device_radio_imgs[dev_key] = radio_img
+
+            text_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+            r_title = gtk.Label(label=dev_title, xalign=0)
+            r_title.set_markup(f"<span font_weight='600' font_size='9.5pt' color='#ffffff'>{pango_esc(dev_title)}</span>")
+            r_desc = gtk.Label(label=dev_desc, xalign=0)
+            r_desc.set_markup(f"<span font_size='8.5pt' alpha='50%'>{pango_esc(dev_desc)}</span>")
+            text_col.append(r_title)
+            text_col.append(r_desc)
+            row.append(text_col)
+
+            row.set_cursor_from_name("pointer")
+            click = gtk.GestureClick()
+            click.connect("released", lambda _g, _n, _x, _y, k=dev_key: self._select_hw_device(k))
+            row.add_controller(click)
+
+            self._hw_device_rows[dev_key] = row
+            card.append(row)
+
+        # GPU Index Selector
+        gpu_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        gpu_box.set_margin_top(4)
+        gpu_lbl = gtk.Label(xalign=0, hexpand=True)
+        gpu_lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>GPU Device Index (0 = primary, 1 = secondary)</span>")
+        gpu_box.append(gpu_lbl)
+
+        gpu_scale = gtk.Scale.new_with_range(gtk.Orientation.HORIZONTAL, 0, 3, 1)
+        gpu_scale.add_css_class("glass-scale")
+        gpu_scale.set_size_request(120, -1)
+        gpu_scale.set_value(float(self._hardware_gpu_device))
+        gpu_scale.set_draw_value(True)
+        gpu_scale.connect("value-changed", self._on_gpu_device_changed)
+        gpu_box.append(gpu_scale)
+        card.append(gpu_box)
+
+        help_lbl = gtk.Label(xalign=0, wrap=True)
+        help_lbl.set_markup(
+            "<span font_size='8pt' alpha='50%'>Select whether transcription runs on your graphics card (GPU) or central processor (CPU). If your GPU encounters memory pressure or driver errors, switch to CPU Only.</span>"
+        )
+        card.append(help_lbl)
+
+        return card
+
+    def _select_hw_device(self, key: str) -> None:
+        self._hardware_device = key
+        for k, row in self._hw_device_rows.items():
+            if k == key:
+                row.add_css_class("mic-device-selected")
+                img = self._hw_device_radio_imgs.get(k)
+                if img:
+                    img.set_from_paintable(self._make_svg("radio_on").get_paintable())
+            else:
+                row.remove_css_class("mic-device-selected")
+                img = self._hw_device_radio_imgs.get(k)
+                if img:
+                    img.set_from_paintable(self._make_svg("radio_off").get_paintable())
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Compute device set to {key.upper()}. Click Save to apply.</span>")
+
+    def _on_gpu_device_changed(self, scale) -> None:
+        val = int(scale.get_value())
+        self._hardware_gpu_device = val
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Target GPU device index set to {val}. Click Save to apply.</span>")
+
+    def _build_hw_latency_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("sliders", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Performance & Latency Profile", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Performance &amp; Latency Profile</span>")
+        s = gtk.Label(label="Tune audio chunk dispatch frequency for snappy feedback or reduced CPU usage.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Tune audio chunk dispatch frequency for snappy feedback or reduced CPU usage.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+
+        presets_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        presets_box.set_valign(gtk.Align.CENTER)
+        profiles = [
+            ("Snappy", 500, 3000),
+            ("Balanced", 1000, 5000),
+            ("Power Saver", 2000, 7000),
+        ]
+        self._hw_latency_pills.clear()
+        for pname, c_ms, l_ms in profiles:
+            btn = gtk.Button(label=pname)
+            btn.add_css_class("preset-pill")
+            if abs(self._hardware_chunk_ms - c_ms) < 100:
+                btn.add_css_class("preset-pill-active")
+            btn.set_cursor_from_name("pointer")
+            btn.connect("clicked", lambda *_, n=pname, c=c_ms, l=l_ms: self._apply_latency_preset(c, l, n))
+            self._hw_latency_pills[pname] = btn
+            presets_box.append(btn)
+
+        hdr.append(presets_box)
+        card.append(hdr)
+
+        self._hw_latency_val_lbl = gtk.Label(xalign=0)
+        self._hw_latency_val_lbl.set_markup(
+            f"<span font_size='9pt' color='#ffffff'>Active chunk interval: <b>{self._hardware_chunk_ms} ms</b> • Rolling buffer: <b>{self._hardware_length_ms} ms</b></span>"
+        )
+        card.append(self._hw_latency_val_lbl)
+
+        help_lbl = gtk.Label(xalign=0, wrap=True)
+        help_lbl.set_markup(
+            "<span font_size='8pt' alpha='50%'>Controls how frequently audio chunks are dispatched to the transcription engine. Shorter intervals give faster typing feedback but require a faster processor.</span>"
+        )
+        card.append(help_lbl)
+
+        return card
+
+    def _apply_latency_preset(self, chunk_ms: int, length_ms: int, profile_name: str) -> None:
+        self._hardware_chunk_ms = chunk_ms
+        self._hardware_length_ms = length_ms
+        for name, btn in self._hw_latency_pills.items():
+            if name == profile_name:
+                btn.add_css_class("preset-pill-active")
+            else:
+                btn.remove_css_class("preset-pill-active")
+        if self._hw_latency_val_lbl:
+            self._hw_latency_val_lbl.set_markup(
+                f"<span font_size='9pt' color='#ffffff'>Active chunk interval: <b>{chunk_ms} ms</b> • Rolling buffer: <b>{length_ms} ms</b></span>"
+            )
+        self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Latency profile set to {profile_name} ({chunk_ms}ms). Click Save to apply.</span>")
+
+    def _build_hw_language_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("book", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Spoken Language", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Spoken Language</span>")
+        s = gtk.Label(label="Select the primary language spoken during dictation.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Select the primary language spoken during dictation.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        languages = [
+            ("en", "English (en)"),
+            ("auto", "Auto-Detect Language"),
+            ("es", "Spanish (es)"),
+            ("fr", "French (fr)"),
+            ("de", "German (de)"),
+            ("hi", "Hindi (hi)"),
+            ("zh", "Chinese (zh)"),
+            ("ja", "Japanese (ja)"),
+            ("it", "Italian (it)"),
+            ("pt", "Portuguese (pt)"),
+            ("ru", "Russian (ru)"),
+            ("ko", "Korean (ko)"),
+        ]
+        self._language_options = languages
+
+        lang_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
+        lang_lbl = gtk.Label(label="Transcription Language:", xalign=0, hexpand=True)
+        lang_lbl.set_markup("<span font_weight='600' font_size='9pt' color='#ffffff'>Transcription Language:</span>")
+        lang_box.append(lang_lbl)
+
+        display_strings = [display for _, display in languages]
+        drop_down = gtk.DropDown.new_from_strings(display_strings)
+        drop_down.add_css_class("glass-dropdown")
+        drop_down.set_size_request(220, -1)
+
+        # Find current selected index
+        cur_lang = (self._hardware_language or "en").lower()
+        selected_idx = 0
+        for idx, (code, _) in enumerate(languages):
+            if code == cur_lang:
+                selected_idx = idx
+                break
+        drop_down.set_selected(selected_idx)
+        drop_down.connect("notify::selected", self._on_language_selected)
+        self._hw_lang_drop_down = drop_down
+        lang_box.append(drop_down)
+        card.append(lang_box)
+
+        help_lbl = gtk.Label(xalign=0, wrap=True)
+        help_lbl.set_markup(
+            "<span font_size='8pt' alpha='50%'>Select your spoken language. Note: If you choose a non-English language, ensure you have selected a multilingual model (e.g., large-v3-turbo or non-.en models) in the Model tab.</span>"
+        )
+        card.append(help_lbl)
+
+        return card
+
+    def _on_language_selected(self, drop_down, _pspec) -> None:
+        idx = drop_down.get_selected()
+        if 0 <= idx < len(self._language_options):
+            code, name = self._language_options[idx]
+            self._hardware_language = code
+            self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Language set to {pango_esc(name)}. Click Save to apply.</span>")
+
+    # -------------------------------------------------------------------------
     # Column 2: Center Model Selection List
     # -------------------------------------------------------------------------
     def _build_center_panel(self):
@@ -3860,6 +4260,14 @@ class SettingsApp:
             hotkey=self._hotkey_keys,
             audio_device=self._selected_audio_device,
             vad_settings=vad_data,
+            threads=self._hardware_threads,
+            device=self._hardware_device,
+            gpu_device=self._hardware_gpu_device,
+            language=self._hardware_language,
+            streaming_settings={
+                "chunk_ms": self._hardware_chunk_ms,
+                "length_ms": self._hardware_length_ms,
+            },
         )
         new_config = load_config(path)
         old_model = self._config.asr.model

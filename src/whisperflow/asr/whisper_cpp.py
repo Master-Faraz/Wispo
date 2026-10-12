@@ -75,11 +75,13 @@ class WhisperCppEngine:
         threads: int,
         lib_path: Path | None = None,
         backend_dir: Path | None = None,
+        language: str = "en",
     ) -> None:
         self.model_path = model_path
         self.use_gpu = use_gpu
         self.gpu_device = gpu_device
         self.threads = threads
+        self.language = language or "en"
         self.lib_path = lib_path or (project_root() / "native" / "build" / "libwhisperflow_asr.so")
         self.backend_dir = backend_dir
         self._lib: ctypes.CDLL | None = None
@@ -95,6 +97,11 @@ class WhisperCppEngine:
     @property
     def warmed(self) -> bool:
         return self._warmed
+
+    def set_language(self, language: str) -> None:
+        self.language = language or "en"
+        if self._lib is not None and hasattr(self._lib, "wf_set_language"):
+            self._lib.wf_set_language(self.language.encode("utf-8"))
 
     def start(self) -> None:
         if self._loaded:
@@ -119,6 +126,8 @@ class WhisperCppEngine:
             os.environ["GGML_SYCL_DEVICE"] = str(self.gpu_device)
         self._lib = ctypes.CDLL(str(self.lib_path))
         self._bind()
+        if hasattr(self._lib, "wf_set_language"):
+            self._lib.wf_set_language(self.language.encode("utf-8"))
         backend_arg = str(backend).encode() if backend is not None else None
         rc = self._lib.wf_load(
             str(self.model_path).encode(),
@@ -209,6 +218,9 @@ class WhisperCppEngine:
         self._lib.wf_transcribe.restype = ctypes.c_int
         self._lib.wf_free.argtypes = []
         self._lib.wf_free.restype = None
+        if hasattr(self._lib, "wf_set_language"):
+            self._lib.wf_set_language.argtypes = [ctypes.c_char_p]
+            self._lib.wf_set_language.restype = ctypes.c_int
 
 
 def _find_backend_dir() -> Path | None:
