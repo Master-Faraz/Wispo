@@ -92,9 +92,15 @@ class TranscriptionApp:
         self.accumulator = TranscriptAccumulator()
         self._recording = False
         self._in_speech = False
-        self._utterance = np.zeros(0, dtype=np.float32)
+        self._utterance_frames: list[np.ndarray] = []
         self._saw_window = False
         self.last_audio_level: float = 0.0
+
+    @property
+    def _utterance(self) -> np.ndarray:
+        if not self._utterance_frames:
+            return np.zeros(0, dtype=np.float32)
+        return np.concatenate(self._utterance_frames)
 
     def load_model(self, warmup: bool = True) -> None:
         self.engine.start()
@@ -122,8 +128,8 @@ class TranscriptionApp:
         if self._recording:
             leftovers = self.capture.drain()
             if leftovers:
+                self._utterance_frames.extend(leftovers)
                 tail = np.concatenate(leftovers)
-                self._utterance = np.concatenate((self._utterance, tail))
                 if self._saw_window or self._in_speech:
                     self.chunker.push(tail)
         if self._recording and self._in_speech:
@@ -182,7 +188,7 @@ class TranscriptionApp:
         self._saw_window = False
         self.accumulator.reset()
         self.chunker.reset()
-        self._utterance = np.zeros(0, dtype=np.float32)
+        self._utterance_frames.clear()
 
     def _on_speech(
         self,
@@ -197,7 +203,7 @@ class TranscriptionApp:
             self.preroll.clear()
             if pre.size:
                 frame = np.concatenate((pre, frame))
-        self._utterance = np.concatenate((self._utterance, frame))
+        self._utterance_frames.append(frame)
         if not transcribe:
             return None
         window = self.chunker.push(frame)
@@ -219,7 +225,11 @@ class TranscriptionApp:
     def _finish_utterance(self) -> Final | None:
         self._in_speech = False
         leftover = self.chunker.flush()
-        audio = self._utterance
+        audio = (
+            np.concatenate(self._utterance_frames)
+            if self._utterance_frames
+            else np.zeros(0, dtype=np.float32)
+        )
         max_samples = _MAX_FINAL_SECONDS * self.config.audio.sample_rate
         if audio.size > max_samples:
             if self._saw_window and leftover is not None and leftover.size:
@@ -257,7 +267,7 @@ class TranscriptionApp:
     def _reset_utterance(self) -> None:
         self._in_speech = False
         self._saw_window = False
-        self._utterance = np.zeros(0, dtype=np.float32)
+        self._utterance_frames.clear()
         self.chunker.reset()
         self.accumulator.reset()
         self.vad.reset()
