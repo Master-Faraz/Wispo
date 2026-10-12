@@ -12,7 +12,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from whisperflow.config import project_root
+from wispo.config import project_root
 
 _WHISPER_CPP = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
 
@@ -107,7 +107,7 @@ def download_model(
     tmp = dest.with_name(dest.name + ".partial")
     request = urllib.request.Request(
         _spec(name).url,
-        headers={"User-Agent": "whisperflow"},
+        headers={"User-Agent": "wispo"},
     )
     try:
         with urllib.request.urlopen(request, timeout=60) as response, tmp.open("wb") as out:

@@ -87,10 +87,11 @@ icpx -fsycl -fPIC -shared \
   -I "$SRC/include" \
   -I "$SRC/ggml/include" \
   "$ROOT/native/whisperflow_asr.cpp" \
-  -o "$WRAPPER_OUT/libwhisperflow_asr.so" \
+  -o "$WRAPPER_OUT/libwispo_asr.so" \
   "${LINK_DIRS[@]}" \
   -lwhisper \
   -Wl,-rpath,"$RPATH"
+ln -sf libwispo_asr.so "$WRAPPER_OUT/libwhisperflow_asr.so"
 
 echo "SYCL whisper-cli: $BUILD/bin/whisper-cli"
-echo "Python wrapper:   $WRAPPER_OUT/libwhisperflow_asr.so"
+echo "Python wrapper:   $WRAPPER_OUT/libwispo_asr.so"

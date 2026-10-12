@@ -1,4 +1,4 @@
-from whisperflow.asr.accumulator import TranscriptAccumulator, merge_transcript
+from wispo.asr.accumulator import TranscriptAccumulator, merge_transcript
 
 
 def test_growing_hypothesis_replaces_the_shorter_one():

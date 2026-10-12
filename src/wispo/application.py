@@ -27,15 +27,15 @@ from typing import Callable
 
 import numpy as np
 
-from whisperflow.asr.accumulator import TranscriptAccumulator
-from whisperflow.asr.chunker import SlidingChunker
-from whisperflow.asr.device import DeviceInfo, select_device
-from whisperflow.asr.whisper_cpp import WhisperCppEngine
-from whisperflow.audio.buffer import AudioRing
-from whisperflow.audio.capture import AudioCapture
-from whisperflow.audio.sources import resolve_mic
-from whisperflow.audio.vad import EnergyVad
-from whisperflow.config import Config
+from wispo.asr.accumulator import TranscriptAccumulator
+from wispo.asr.chunker import SlidingChunker
+from wispo.asr.device import DeviceInfo, select_device
+from wispo.asr.whisper_cpp import WhisperCppEngine
+from wispo.audio.buffer import AudioRing
+from wispo.audio.capture import AudioCapture
+from wispo.audio.sources import resolve_mic
+from wispo.audio.vad import EnergyVad
+from wispo.config import Config
 
 # whisper's useful context is 30 seconds. A longer final pass would be cut
 # by the model anyway, so past that we trust the merged windows.

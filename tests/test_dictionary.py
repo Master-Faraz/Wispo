@@ -1,5 +1,5 @@
-from whisperflow.config import DictionaryEntry
-from whisperflow.processing.dictionary import DictionaryProcessor
+from wispo.config import DictionaryEntry
+from wispo.processing.dictionary import DictionaryProcessor
 
 
 def _processor(*rows: tuple[str, str] | tuple[str, str, bool]) -> DictionaryProcessor:

@@ -1,5 +1,5 @@
-from whisperflow.audio.sources import choose_source, parse_wpctl_sources
-from whisperflow.hotkey.linux import _parse_key_bits
+from wispo.audio.sources import choose_source, parse_wpctl_sources
+from wispo.hotkey.linux import _parse_key_bits
 
 STATUS = """
 Audio

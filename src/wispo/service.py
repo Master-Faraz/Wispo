@@ -1,12 +1,12 @@
-"""Background WhisperFlow.
+"""Background Wispo.
 
-    uv run python -m whisperflow.service
+    uv run python -m wispo.service
 
 Hold Ctrl+Super, speak, and release. The finished sentence is typed into
 the focused window. The app icon stays in the dock. This machine hides the
 top bar, so there is no system tray to put an icon in.
 
-Closing the window leaves WhisperFlow running. Click the dock icon to open
+Closing the window leaves Wispo running. Click the dock icon to open
 it again. Quit stops it.
 
 Starting this again while it is already running opens the window instead of
@@ -27,13 +27,13 @@ from jeepney import DBusAddress, new_method_call
 from jeepney.bus_messages import message_bus
 from jeepney.io.blocking import open_dbus_connection
 
-from whisperflow.config import load_config, project_root
-from whisperflow.desktop import install_desktop_entry
-from whisperflow.injection.portal import PortalError, _checked
+from wispo.config import load_config, project_root
+from wispo.desktop import install_desktop_entry
+from wispo.injection.portal import PortalError, _checked
 
-_BUS_NAME = "org.whisperflow.Service"
-_SERVICE_PATH = "/org/whisperflow/Service"
-_SERVICE = "org.whisperflow.Service"
+_BUS_NAME = "org.wispo.Service"
+_SERVICE_PATH = "/org/wispo/Service"
+_SERVICE = "org.wispo.Service"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,9 +49,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run() -> int:
-    from whisperflow.desktop import APP_ID
-    from whisperflow.settings import SettingsApp, _load_gtk
-    from whisperflow.status import StatusIcon
+    from wispo.desktop import APP_ID
+    from wispo.settings import SettingsApp, _load_gtk
+    from wispo.status import StatusIcon
 
     gtk = _load_gtk()
     from gi.repository import GLib
@@ -86,7 +86,7 @@ def _run() -> int:
         status.stop()
         status = None
 
-    from whisperflow.hud import FloatingPillHUD
+    from wispo.hud import FloatingPillHUD
 
     application = gtk.Application(application_id=APP_ID)
     settings = SettingsApp(gtk, on_quit=request_quit, on_save_config=reload_queue.put)
@@ -110,7 +110,7 @@ def _run() -> int:
     worker = threading.Thread(
         target=_listen,
         args=(stop_event, status, hud, settings, reload_queue),
-        name="whisperflow-listen",
+        name="wispo-listen",
     )
     worker.start()
     try:
@@ -134,11 +134,11 @@ def _listen(
 ) -> None:
     from gi.repository import GLib
 
-    from whisperflow.application import TranscriptionApp
-    from whisperflow.cli import _inject_final
-    from whisperflow.hotkey.linux import HoldChord, OverviewKey
-    from whisperflow.injection.portal import PortalKeyboard
-    from whisperflow.processing.dictionary import DictionaryProcessor
+    from wispo.application import TranscriptionApp
+    from wispo.cli import _inject_final
+    from wispo.hotkey.linux import HoldChord, OverviewKey
+    from wispo.injection.portal import PortalKeyboard
+    from wispo.processing.dictionary import DictionaryProcessor
 
     def finish() -> None:
         GLib.idle_add(_quit_gtk)
@@ -400,14 +400,14 @@ def _call(method: str) -> bool:
         _checked(conn, new_method_call(address, method), timeout=2)
         return True
     except PortalError:
-        logging.error("WhisperFlow is not running")
+        logging.error("Wispo is not running")
         return False
     finally:
         conn.close()
 
 
 def _configure_log() -> None:
-    folder = Path.home() / ".local" / "state" / "whisperflow"
+    folder = Path.home() / ".local" / "state" / "wispo"
     folder.mkdir(parents=True, exist_ok=True)
     handlers: list[logging.Handler] = [logging.FileHandler(folder / "service.log")]
     if sys.stderr.isatty():

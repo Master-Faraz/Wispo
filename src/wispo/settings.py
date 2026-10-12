@@ -1,6 +1,6 @@
 """Settings window. Apple-inspired Liquid Glass modern aesthetic matching macOS Sonoma design.
 
-    uv run python -m whisperflow.settings
+    uv run python -m wispo.settings
 
 The transcription command keeps the model it loaded at startup. Restart it
 after saving to use a new model or dictionary.
@@ -20,13 +20,13 @@ from pathlib import Path
 
 import numpy as np
 
-from whisperflow.asr.device import select_device
-from whisperflow.audio.capture import AudioCapture
-from whisperflow.audio.sources import _node_name, parse_wpctl_sources, resolve_mic
-from whisperflow.config import DictionaryEntry, load_config, project_root, save_user_settings
-from whisperflow.hotkey.linux import capture_chord, format_chord
-from whisperflow.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
-from whisperflow.processing.dictionary import DictionaryProcessor
+from wispo.asr.device import select_device
+from wispo.audio.capture import AudioCapture
+from wispo.audio.sources import _node_name, parse_wpctl_sources, resolve_mic
+from wispo.config import DictionaryEntry, load_config, project_root, save_user_settings
+from wispo.hotkey.linux import capture_chord, format_chord
+from wispo.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
+from wispo.processing.dictionary import DictionaryProcessor
 
 # Helper to escape any text for Pango markup
 def pango_esc(text: str) -> str:
@@ -1291,7 +1291,7 @@ class SettingsApp:
         return badge
 
     def _make_brand_icon(self, badge=None):
-        from whisperflow.desktop import find_logo_path
+        from wispo.desktop import find_logo_path
 
         logo_path = find_logo_path()
         if logo_path and logo_path.is_file():
@@ -1316,7 +1316,7 @@ class SettingsApp:
         return self._make_svg("cube")
 
     def run(self, argv: list[str] | None) -> int:
-        app = self.gtk.Application(application_id="com.whisperflow.Settings")
+        app = self.gtk.Application(application_id="com.wispo.Settings")
         app.connect("activate", self._activate)
         return app.run(None if argv is None else argv)
 
@@ -1343,7 +1343,7 @@ class SettingsApp:
         self._apply_css()
 
         window = gtk.ApplicationWindow(application=app, title="Wispo")
-        window.set_icon_name("com.whisperflow.WhisperFlow")
+        window.set_icon_name("com.wispo.Wispo")
         window.set_default_size(1040, 720)
         window.set_size_request(850, 560)  # Responsive minimum size
         window.set_resizable(True)
@@ -1830,7 +1830,7 @@ class SettingsApp:
         card.append(c_title)
 
         desc = gtk.Label(xalign=0)
-        desc.set_markup("<span font_size='9pt' alpha='65%'>Settings for this section are managed in <span font_family='monospace'>whisperflow.yaml</span> and can also be adjusted directly from the Model Inspector.</span>")
+        desc.set_markup("<span font_size='9pt' alpha='65%'>Settings for this section are managed in <span font_family='monospace'>wispo.yaml</span> and can also be adjusted directly from the Model Inspector.</span>")
         card.append(desc)
         vbox.append(card)
 
@@ -2942,12 +2942,13 @@ class SettingsApp:
         packs = [
             (
                 "AI & Machine Learning",
-                "PyTorch, TensorFlow, Hugging Face, WhisperFlow, scikit-learn",
+                "PyTorch, TensorFlow, Hugging Face, Wispo, scikit-learn",
                 [
                     ("pie torch", "PyTorch"),
                     ("tensor flow", "TensorFlow"),
                     ("hugging face", "Hugging Face"),
-                    ("whisper flow", "WhisperFlow"),
+                    ("whisper flow", "Wispo"),
+                    ("wispo", "Wispo"),
                     ("scikit learn", "scikit-learn"),
                 ],
             ),
@@ -3946,7 +3947,7 @@ class SettingsApp:
                 return
             self._idle(self._download_done, name)
 
-        threading.Thread(target=work, name=f"whisperflow-download-{name}", daemon=True).start()
+        threading.Thread(target=work, name=f"wispo-download-{name}", daemon=True).start()
 
     def _cancel_download(self, _button, name: str) -> None:
         cancel_ev = self._download_cancel_events.get(name)
@@ -4101,7 +4102,7 @@ class SettingsApp:
                 return
             self._idle(self._shortcut_done, keys)
 
-        threading.Thread(target=work, name="whisperflow-capture", daemon=True).start()
+        threading.Thread(target=work, name="wispo-capture", daemon=True).start()
 
     def _shortcut_done(self, keys: tuple[str, ...]) -> bool:
         self._is_capturing_shortcut = False
@@ -4246,7 +4247,7 @@ class SettingsApp:
         if not model_path(model).is_file():
             self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Please download {pango_esc(model)} before saving.</span>")
             return
-        path = project_root() / "whisperflow.yaml"
+        path = project_root() / "wispo.yaml"
         vad_data = {
             "rms_threshold": round(float(self._vad_rms_threshold), 4),
             "noise_multiplier": round(float(self._vad_noise_mult), 2),

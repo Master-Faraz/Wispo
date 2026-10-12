@@ -1,7 +1,7 @@
 """Launcher entry for the background process.
 
 The path is this machine's project and virtualenv, written into the user's
-local applications directory so Ubuntu's launcher can start WhisperFlow
+local applications directory so Ubuntu's launcher can start Wispo
 without a terminal.
 """
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 # GNOME matches a running window to this file name. The dock icon and the
 # recording badge both use it.
-DESKTOP_ID = "com.whisperflow.WhisperFlow.desktop"
-APP_ID = "com.whisperflow.WhisperFlow"
+DESKTOP_ID = "com.wispo.Wispo.desktop"
+APP_ID = "com.wispo.Wispo"
 ICON_SIZES = (512, 256, 128, 64, 48, 32, 16)
 
 
@@ -21,7 +21,7 @@ def find_logo_path(root: Path | str | None = None) -> Path | None:
     if root:
         r = Path(root)
         candidates.extend([
-            r / "src" / "whisperflow" / "assets" / "logo.png",
+            r / "src" / "wispo" / "assets" / "logo.png",
             r / "logo.png",
         ])
     here = Path(__file__).resolve().parent
@@ -41,7 +41,7 @@ def install_icons(root: Path | str | None = None, icons_base: Path | None = None
         return []
     base = icons_base or (Path.home() / ".local" / "share" / "icons" / "hicolor")
     installed: list[Path] = []
-    app_names = (APP_ID, "com.whisperflow.Settings")
+    app_names = (APP_ID, "com.wispo.Settings")
 
     try:
         from PIL import Image
@@ -80,7 +80,7 @@ def desktop_entry_text(python: str, root: str, icon_name: str = APP_ID, name: st
         "[Desktop Entry]\n"
         f"Name={name}\n"
         "Comment=Hold Ctrl+Super to transcribe into the focused window\n"
-        f"Exec={python} -m whisperflow.service\n"
+        f"Exec={python} -m wispo.service\n"
         f"Path={root}\n"
         f"Icon={icon_name}\n"
         "Terminal=false\n"
@@ -99,8 +99,34 @@ def install_desktop_entry(python: str, root: str, directory: Path | None = None)
     except Exception:
         pass
     path = folder / DESKTOP_ID
-    path.write_text(desktop_entry_text(python, root), encoding="utf-8")
-    previous = folder / "whisperflow.desktop"
+    entry_text = desktop_entry_text(python, root)
+    path.write_text(entry_text, encoding="utf-8")
+
+    # Update legacy desktop file so old pinned dock shortcuts don't break
+    legacy_path = folder / "com.whisperflow.WhisperFlow.desktop"
+    if legacy_path.is_file():
+        legacy_path.write_text(entry_text, encoding="utf-8")
+
+    previous = folder / "wispo.desktop"
     if previous != path and previous.is_file():
         previous.unlink()
+
+    # Migrate GNOME shell favorite-apps dock pin if present
+    try:
+        import subprocess
+
+        res = subprocess.run(
+            ["gsettings", "get", "org.gnome.shell", "favorite-apps"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=2,
+        )
+        if "com.whisperflow.WhisperFlow.desktop" in res.stdout:
+            new_favs = res.stdout.strip().replace("com.whisperflow.WhisperFlow.desktop", DESKTOP_ID)
+            subprocess.run(["gsettings", "set", "org.gnome.shell", "favorite-apps", new_favs], check=False, timeout=2)
+    except Exception:
+        pass
+
     return path
+

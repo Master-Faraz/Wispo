@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from whisperflow.config import project_root
+from wispo.config import project_root
 
 _TEXT_CAP = 16384
 
@@ -82,7 +82,12 @@ class WhisperCppEngine:
         self.gpu_device = gpu_device
         self.threads = threads
         self.language = language or "en"
-        self.lib_path = lib_path or (project_root() / "native" / "build" / "libwhisperflow_asr.so")
+        def _default_lib() -> Path:
+            wispo_lib = project_root() / "native" / "build" / "libwispo_asr.so"
+            whisperflow_lib = project_root() / "native" / "build" / "libwhisperflow_asr.so"
+            return wispo_lib if wispo_lib.is_file() else whisperflow_lib
+
+        self.lib_path = lib_path or _default_lib()
         self.backend_dir = backend_dir
         self._lib: ctypes.CDLL | None = None
         self._loaded = False

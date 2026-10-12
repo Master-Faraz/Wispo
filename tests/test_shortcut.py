@@ -1,4 +1,4 @@
-from whisperflow.hotkey.linux import (
+from wispo.hotkey.linux import (
     CTRL_CODES,
     META_CODES,
     chord_from_codes,
@@ -6,7 +6,7 @@ from whisperflow.hotkey.linux import (
     codes_for,
     format_chord,
 )
-from whisperflow.hotkey.portal import describe_binding
+from wispo.hotkey.portal import describe_binding
 
 
 def test_ctrl_and_super_must_both_be_down():

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import re
 
-from whisperflow.config import DictionaryEntry
-from whisperflow.processing.base import TextProcessor
+from wispo.config import DictionaryEntry
+from wispo.processing.base import TextProcessor
 
 _TOKEN = re.compile(r"\w+|\W+")
 _WORD = re.compile(r"\w+\Z")

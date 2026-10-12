@@ -118,7 +118,7 @@ class HoldKey:
         self.code = KEY_CODES[name]
         self.held = threading.Event()
         self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._loop, name="whisperflow-hotkey", daemon=True)
+        self._thread = threading.Thread(target=self._loop, name="wispo-hotkey", daemon=True)
         self._fds: list[int] = []
 
     def start(self) -> None:
@@ -198,7 +198,7 @@ class HoldChord:
         self.description = format_chord(self.keys)
         self.held = threading.Event()
         self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._loop, name="whisperflow-chord", daemon=True)
+        self._thread = threading.Thread(target=self._loop, name="wispo-chord", daemon=True)
         self._fds: list[int] = []
         self._down: set[int] = set()
 

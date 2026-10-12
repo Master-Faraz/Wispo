@@ -19,7 +19,7 @@ from jeepney import HeaderFields, MatchRule
 from jeepney.bus_messages import message_bus
 from jeepney.io.blocking import open_dbus_connection
 
-from whisperflow.injection.portal import (
+from wispo.injection.portal import (
     PortalError,
     _checked,
     _token,
@@ -42,7 +42,7 @@ class PortalShortcut:
         self._ready = threading.Event()
         self._stop = threading.Event()
         self._error: BaseException | None = None
-        self._thread = threading.Thread(target=self._run, name="whisperflow-shortcut", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="wispo-shortcut", daemon=True)
         self._conn = None
         self._session: str | None = None
 

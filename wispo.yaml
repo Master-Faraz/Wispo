@@ -30,7 +30,10 @@ dictionary:
   replacement: JavaScript
   enabled: true
 - phrase: whisper flow
-  replacement: WhisperFlow
+  replacement: Wispo
+  enabled: true
+- phrase: wispo
+  replacement: Wispo
   enabled: true
 - phrase: anti-gravity
   replacement: Antigravity

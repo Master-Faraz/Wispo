@@ -11,11 +11,11 @@ import threading
 
 from jeepney import DBusAddress, HeaderFields, MessageType, new_error, new_method_return, new_signal
 
-from whisperflow.desktop import DESKTOP_ID
+from wispo.desktop import DESKTOP_ID
 from jeepney.bus_messages import message_bus
 from jeepney.io.blocking import open_dbus_connection
 
-_BUS_NAME = "org.whisperflow.Service"
+_BUS_NAME = "org.wispo.Service"
 _ITEM_PATH = "/StatusNotifierItem"
 _MENU_PATH = "/Menu"
 _ITEM = "org.kde.StatusNotifierItem"
@@ -46,7 +46,7 @@ class StatusIcon:
         self._stop = threading.Event()
         self._ready = threading.Event()
         self._error: BaseException | None = None
-        self._thread = threading.Thread(target=self._run, name="whisperflow-status", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="wispo-status", daemon=True)
         self._conn = None
 
     def start(self) -> None:
@@ -167,11 +167,11 @@ class StatusIcon:
         if member == "Introspect":
             self._reply(message, "s", (_INTROSPECT,))
             return
-        if path == "/org/whisperflow/Service" and member == "OpenSettings":
+        if path == "/org/wispo/Service" and member == "OpenSettings":
             self._reply(message)
             self._on_settings()
             return
-        if path == "/org/whisperflow/Service" and member == "Quit":
+        if path == "/org/wispo/Service" and member == "Quit":
             self._reply(message)
             self._on_quit()
             return
@@ -222,7 +222,7 @@ class StatusIcon:
             return {"Status": ("s", "normal"), "TextDirection": ("s", "ltr"), "Version": ("u", 3)}
         return {
             "Category": ("s", "ApplicationStatus"),
-            "Id": ("s", "whisperflow"),
+            "Id": ("s", "wispo"),
             "Title": ("s", TITLES.get(_state, TITLES["idle"])),
             "Status": ("s", "Active"),
             "WindowId": ("i", 0),
@@ -289,7 +289,7 @@ _INTROSPECT = """<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introsp
     </method>
     <method name="AboutToShow"><arg type="i" direction="in"/><arg type="b" direction="out"/></method>
   </interface>
-  <interface name="org.whisperflow.Service">
+  <interface name="org.wispo.Service">
     <method name="OpenSettings"/>
     <method name="Quit"/>
   </interface>

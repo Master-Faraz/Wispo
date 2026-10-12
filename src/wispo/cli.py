@@ -1,7 +1,7 @@
 """Command line for the Stage 1 engine.
 
-`python -m whisperflow.transcribe` listens until Ctrl+C.
-`python -m whisperflow.benchmark` times one file and prints the measurements
+`python -m wispo.transcribe` listens until Ctrl+C.
+`python -m wispo.benchmark` times one file and prints the measurements
 the model choice will be based on.
 """
 
@@ -17,11 +17,11 @@ from pathlib import Path
 import numpy as np
 import psutil
 
-from whisperflow.application import Final, Partial, TranscriptionApp
-from whisperflow.asr.device import select_device
-from whisperflow.asr.whisper_cpp import WhisperCppEngine
-from whisperflow.config import load_config
-from whisperflow.metrics import (
+from wispo.application import Final, Partial, TranscriptionApp
+from wispo.asr.device import select_device
+from wispo.asr.whisper_cpp import WhisperCppEngine
+from wispo.config import load_config
+from wispo.metrics import (
     cpu_model,
     gpu_busy_percent,
     peak_rss_mb,
@@ -50,7 +50,7 @@ def transcribe_main(argv: list[str] | None = None) -> int:
     if args.device:
         config = _with_device(config, args.device)
 
-    from whisperflow.hotkey.linux import HoldChord, HoldKey, OverviewKey
+    from wispo.hotkey.linux import HoldChord, HoldKey, OverviewKey
 
     app = TranscriptionApp(config)
     keyboard = None
@@ -64,8 +64,8 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         print("Inference: whisper.cpp CPU.")
     print()
     if args.inject:
-        from whisperflow.injection.portal import PortalError, PortalKeyboard
-        from whisperflow.processing.dictionary import DictionaryProcessor
+        from wispo.injection.portal import PortalError, PortalKeyboard
+        from wispo.processing.dictionary import DictionaryProcessor
 
         keyboard = PortalKeyboard()
         dictionary = DictionaryProcessor(config.dictionary)
@@ -158,8 +158,8 @@ def _print_final(text: str) -> None:
 
 def _inject_final(keyboard, text: str, dictionary) -> None:
     import logging
-    from whisperflow.injection.keymap import UnsupportedCharacter
-    from whisperflow.injection.portal import PortalError
+    from wispo.injection.keymap import UnsupportedCharacter
+    from wispo.injection.portal import PortalError
 
     if not text or text.strip() in ("[BLANK_AUDIO]", "[blank_audio]"):
         logging.info("no speech heard to inject")
@@ -219,7 +219,7 @@ def benchmark_main(argv: list[str] | None = None) -> int:
     audio_seconds = audio.size / config.audio.sample_rate
     rtf = infer_seconds / audio_seconds if audio_seconds else 0.0
 
-    print("WhisperFlow Benchmark")
+    print("Wispo Benchmark")
     print("──────────────────────────────")
     print()
     print("Hardware")
@@ -275,7 +275,7 @@ def read_wav(path: Path) -> np.ndarray:
 
 
 def _print_banner(app: TranscriptionApp) -> None:
-    print("WhisperFlow Transcription Engine")
+    print("Wispo Transcription Engine")
     print()
     print(f"Backend: {app.device.label}")
     print(f"Device: {app.device.name}")
@@ -291,7 +291,7 @@ def _with_device(config, device: str):
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="whisperflow")
+    parser = argparse.ArgumentParser(prog="wispo")
     parser.add_argument("command", choices=("transcribe", "benchmark"))
     parser.add_argument("rest", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)

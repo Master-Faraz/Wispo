@@ -1,9 +1,9 @@
-from whisperflow.config import DictionaryEntry, load_config, save_user_settings
-from whisperflow.models import installed_models, model_names
+from wispo.config import DictionaryEntry, load_config, save_user_settings
+from wispo.models import installed_models, model_names
 
 
 def test_save_updates_model_and_dictionary_and_keeps_audio(tmp_path):
-    path = tmp_path / "whisperflow.yaml"
+    path = tmp_path / "wispo.yaml"
     path.write_text(
         "audio:\n  sample_rate: 16000\n  device: auto\nasr:\n  model: tiny.en\n  model_path: models/ggml-tiny.en.bin\n",
         encoding="utf-8",
@@ -23,7 +23,7 @@ def test_save_updates_model_and_dictionary_and_keeps_audio(tmp_path):
 
 
 def test_save_stores_the_shortcut(tmp_path):
-    path = tmp_path / "whisperflow.yaml"
+    path = tmp_path / "wispo.yaml"
     path.write_text("asr:\n  model: base.en\n  model_path: models/ggml-base.en.bin\n", encoding="utf-8")
     save_user_settings(path, "base.en", [], ("alt", "space"))
     config = load_config(path)
@@ -43,7 +43,7 @@ def test_installed_models_are_the_files_on_disk():
 
 
 def test_save_hardware_and_streaming_settings(tmp_path):
-    path = tmp_path / "whisperflow.yaml"
+    path = tmp_path / "wispo.yaml"
     path.write_text("asr:\n  model: base.en\n  model_path: models/ggml-base.en.bin\n", encoding="utf-8")
     save_user_settings(
         path=path,

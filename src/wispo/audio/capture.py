@@ -108,7 +108,7 @@ class AudioCapture:
                 break
         self._thread = threading.Thread(
             target=self._capture_loop,
-            name="whisperflow-capture",
+            name="wispo-capture",
             daemon=True,
         )
         self._thread.start()

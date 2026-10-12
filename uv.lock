@@ -291,7 +291,7 @@ wheels = [
 ]
 
 [[package]]
-name = "whisperflow"
+name = "wispo"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

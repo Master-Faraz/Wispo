@@ -115,7 +115,7 @@ class FloatingPillHUD:
         self._window.set_focusable(False)
         self._window.set_can_focus(False)
         self._window.set_focus_on_click(False)
-        self._window.set_title("WhisperFlow HUD")
+        self._window.set_title("Wispo HUD")
 
         # Get screen geometry for centering
         monitor_w, monitor_h = 1440, 900

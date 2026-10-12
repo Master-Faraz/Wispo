@@ -20,8 +20,8 @@ from jeepney import DBusAddress, HeaderFields, MessageType, new_method_call
 from jeepney.bus_messages import MatchRule, message_bus
 from jeepney.io.blocking import open_dbus_connection
 
-from whisperflow.injection.base import TextInjector
-from whisperflow.injection.keymap import KEY_LEFTSHIFT, key_events
+from wispo.injection.base import TextInjector
+from wispo.injection.keymap import KEY_LEFTSHIFT, key_events
 
 _BUS = "org.freedesktop.portal.Desktop"
 _PATH = "/org/freedesktop/portal/desktop"
@@ -36,7 +36,7 @@ class PortalError(RuntimeError):
 
 
 def _state_dir() -> Path:
-    root = Path.home() / ".local" / "state" / "whisperflow"
+    root = Path.home() / ".local" / "state" / "wispo"
     root.mkdir(parents=True, exist_ok=True)
     return root
 

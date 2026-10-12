@@ -115,8 +115,14 @@ def _section(data: dict, name: str, cls):
 
 def load_config(path: Path | None = None) -> Config:
     if path is None:
-        default = project_root() / "whisperflow.yaml"
-        path = default if default.is_file() else None
+        wispo_default = project_root() / "wispo.yaml"
+        whisperflow_default = project_root() / "whisperflow.yaml"
+        if wispo_default.is_file():
+            path = wispo_default
+        elif whisperflow_default.is_file():
+            path = whisperflow_default
+        else:
+            path = None
     if path is None:
         return Config()
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -211,7 +217,7 @@ def _hotkey(data: dict) -> HotkeyConfig:
     if not isinstance(keys, list) or not keys:
         raise TypeError("hotkey.keys must be a list of key names")
     names = tuple(str(key).lower() for key in keys)
-    from whisperflow.hotkey.linux import codes_for
+    from wispo.hotkey.linux import codes_for
 
     for name in names:
         codes_for(name)
