@@ -113,7 +113,7 @@ def transcribe_main(argv: list[str] | None = None) -> int:
                     recording = True
                     print()
                     print("Recording...")
-                event = app.read_once(force_speech=True)
+                event = app.read_once(force_speech=True, transcribe=(keyboard is None))
                 # Partials are how the live GPU path stays current. They are
                 # printed in the terminal tool only. --inject types the final
                 # sentence and nothing earlier.

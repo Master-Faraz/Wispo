@@ -135,11 +135,16 @@ class TranscriptionApp:
         self._reset_utterance()
         return text
 
-    def read_once(self, force_speech: bool = False) -> Partial | Final | None:
+    def read_once(
+        self,
+        force_speech: bool = False,
+        transcribe: bool = True,
+    ) -> Partial | Final | None:
         """Pull one microphone frame and maybe return a new partial or a final phrase.
 
         force_speech is for hold-to-talk. The key already means "this audio
         matters", so the voice detector must not drop the phrase.
+        transcribe controls whether intermediate chunk inference is executed.
         """
         if not self._recording:
             raise RuntimeError("start_recording() before read_once()")
@@ -152,7 +157,7 @@ class TranscriptionApp:
             opening = not self._in_speech
             if opening:
                 self._begin_utterance()
-            return self._on_speech(combined, opening=opening)
+            return self._on_speech(combined, opening=opening, transcribe=transcribe)
         frames = [frame, *extra_frames] if extra_frames else [frame]
         result: Partial | Final | None = None
         for f in frames:
@@ -161,7 +166,7 @@ class TranscriptionApp:
             if is_speech and not was_speech:
                 self._begin_utterance()
             if is_speech:
-                partial = self._on_speech(f, opening=not was_speech)
+                partial = self._on_speech(f, opening=not was_speech, transcribe=transcribe)
                 if partial is not None:
                     result = partial
             elif was_speech:
@@ -179,7 +184,12 @@ class TranscriptionApp:
         self.chunker.reset()
         self._utterance = np.zeros(0, dtype=np.float32)
 
-    def _on_speech(self, frame: np.ndarray, opening: bool) -> Partial | None:
+    def _on_speech(
+        self,
+        frame: np.ndarray,
+        opening: bool,
+        transcribe: bool = True,
+    ) -> Partial | None:
         # The preroll is the audio from just before the detector flipped.
         # It is sent once, ahead of the frame that crossed the threshold.
         if opening:
@@ -188,6 +198,8 @@ class TranscriptionApp:
             if pre.size:
                 frame = np.concatenate((pre, frame))
         self._utterance = np.concatenate((self._utterance, frame))
+        if not transcribe:
+            return None
         window = self.chunker.push(frame)
         if window is None:
             return None
@@ -210,13 +222,19 @@ class TranscriptionApp:
         audio = self._utterance
         max_samples = _MAX_FINAL_SECONDS * self.config.audio.sample_rate
         if audio.size > max_samples:
-            # The phrase no longer fits in one whisper context. The merged
-            # windows already cover the older audio, so only close out the tail.
-            if leftover is not None and leftover.size:
+            if self._saw_window and leftover is not None and leftover.size:
                 text = self.engine.finalize(leftover)
                 if text:
                     self.accumulator.merge(text)
-            phrase = self.accumulator.finish()
+                phrase = self.accumulator.finish()
+            else:
+                final_phrase = self.engine.finalize(audio)
+                if final_phrase:
+                    self.accumulator.reset()
+                    self.accumulator.merge(final_phrase)
+                    phrase = self.accumulator.finish()
+                else:
+                    phrase = self.accumulator.finish()
         elif audio.size >= int(0.3 * self.config.audio.sample_rate):
             final_phrase = self.engine.finalize(audio)
             if final_phrase:
