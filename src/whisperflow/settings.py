@@ -884,12 +884,6 @@ button.preset-pill-active,
     color: var(--text-tertiary);
 }
 
-.diag-metric-box {
-    background-color: var(--surface-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: 9px;
-    padding: 8px 12px;
-}
 
 scale.glass-scale trough {
     background-color: rgba(255, 255, 255, 0.08);
@@ -972,8 +966,7 @@ button.btn-record-active,
     box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
 }
 
-.preset-card-row,
-.mode-card-row {
+.preset-card-row {
     background-color: var(--surface-content);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-control);
@@ -982,14 +975,12 @@ button.btn-record-active,
     transition: all 140ms ease;
 }
 
-.preset-card-row:hover,
-.mode-card-row:hover {
+.preset-card-row:hover {
     background-color: var(--surface-elevated);
     border-color: rgba(255, 255, 255, 0.12);
 }
 
-.preset-card-selected,
-.mode-card-selected {
+.preset-card-selected {
     background-color: var(--accent-subtle);
     border: 1.5px solid var(--accent-border);
 }
@@ -1169,15 +1160,11 @@ class SettingsApp:
 
         # Push-to-talk Studio state
         self._is_capturing_shortcut = False
-        self._ptt_trigger_mode = "hold"
-        self._audio_feedback_enabled = True
         self._ptt_hotkey_box = None
         self._ptt_record_btn = None
         self._ptt_status_lbl = None
         self._ptt_preset_rows: dict[str, object] = {}
         self._ptt_preset_radio_imgs: dict[str, object] = {}
-        self._ptt_mode_rows: dict[str, object] = {}
-        self._ptt_mode_radio_imgs: dict[str, object] = {}
 
         # Audio & Mic state
         self._selected_audio_device = self._config.audio.device
@@ -1831,13 +1818,6 @@ class SettingsApp:
         head_text.append(sub)
         top_row.append(head_text)
 
-        status_pill = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
-        status_pill.add_css_class("pill-size")
-        status_pill.set_valign(gtk.Align.CENTER)
-        status_lbl = gtk.Label()
-        status_lbl.set_markup("<span font_weight='600' font_size='8.5pt' color='#a5b4fc'>PipeWire Native • 16 kHz</span>")
-        status_pill.append(status_lbl)
-        top_row.append(status_pill)
         vbox.append(top_row)
 
         # 2. Card: Live VU Meter
@@ -1848,9 +1828,6 @@ class SettingsApp:
 
         # 4. Card: VAD Sensitivity & Sliders
         vbox.append(self._build_vad_sensitivity_card())
-
-        # 5. Card: Audio Hardware Pipeline Diagnostics
-        vbox.append(self._build_audio_diagnostics_card())
 
         scroller.set_child(vbox)
         return scroller
@@ -2195,58 +2172,6 @@ class SettingsApp:
 
         return card
 
-    def _build_audio_diagnostics_card(self):
-        gtk = self.gtk
-        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
-        card.add_css_class("audio-card")
-
-        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = self._make_badge("chip", "audio-badge", 28)
-        hdr.append(badge)
-
-        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
-        t = gtk.Label(label="Audio Pipeline Diagnostics", xalign=0)
-        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Audio Pipeline Diagnostics</span>")
-        s = gtk.Label(label="Low-level audio driver specifications and whisper.cpp buffer contract.", xalign=0)
-        s.set_markup("<span font_size='8.5pt' alpha='55%'>Low-level audio driver specifications and whisper.cpp buffer contract.</span>")
-        t_col.append(t)
-        t_col.append(s)
-        hdr.append(t_col)
-        card.append(hdr)
-
-        grid = gtk.Grid()
-        grid.set_column_spacing(12)
-        grid.set_row_spacing(8)
-        grid.set_hexpand(True)
-
-        metrics = [
-            ("Sample Rate", "16,000 Hz (16 kHz)", "Whisper acoustic requirement", 0, 0),
-            ("Channels", "1 (Mono Channel)", "Single-channel capture", 1, 0),
-            ("Data Format", "Float32 [-1.0, 1.0]", "Native 32-bit floating point", 2, 0),
-            ("Driver ABI", "ALSA + PipeWire Native", "Direct libasound.so.2 link", 0, 1),
-            ("Frame Buffer", "480 Samples (30 ms)", "Real-time low-latency slices", 1, 1),
-            ("Ring Buffer", "1,500 ms Latency", "Anti-underrun safety buffer", 2, 1),
-        ]
-
-        for m_title, m_val, m_desc, col, row in metrics:
-            b = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2)
-            b.add_css_class("diag-metric-box")
-            b.set_hexpand(True)
-
-            l1 = gtk.Label(xalign=0)
-            l1.set_markup(f"<span font_size='7.5pt' alpha='50%'>{m_title}</span>")
-            l2 = gtk.Label(xalign=0)
-            l2.set_markup(f"<span font_weight='700' font_size='9pt' color='#ffffff'>{m_val}</span>")
-            l3 = gtk.Label(xalign=0)
-            l3.set_markup(f"<span font_size='7.5pt' alpha='40%'>{m_desc}</span>")
-
-            b.append(l1)
-            b.append(l2)
-            b.append(l3)
-            grid.attach(b, col, row, 1, 1)
-
-        card.append(grid)
-        return card
 
     def _on_rms_scale_changed(self, scale) -> None:
         val = scale.get_value()
@@ -2415,13 +2340,6 @@ class SettingsApp:
         head_text.append(sub)
         top_row.append(head_text)
 
-        status_pill = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
-        status_pill.add_css_class("pill-size")
-        status_pill.set_valign(gtk.Align.CENTER)
-        status_lbl = gtk.Label()
-        status_lbl.set_markup("<span font_weight='600' font_size='8.5pt' color='#a5b4fc'>Kernel evdev • Zero Latency</span>")
-        status_pill.append(status_lbl)
-        top_row.append(status_pill)
         vbox.append(top_row)
 
         # 2. Card 1: Shortcut Studio (Keycaps + Live Recorder)
@@ -2429,12 +2347,6 @@ class SettingsApp:
 
         # 3. Card 2: Recommended Hardware Presets
         vbox.append(self._build_ptt_presets_card())
-
-        # 4. Card 3: Activation Mode & Cues
-        vbox.append(self._build_ptt_behavior_card())
-
-        # 5. Card 4: Linux Input Subsystem Diagnostics
-        vbox.append(self._build_ptt_diagnostics_card())
 
         scroller.set_child(vbox)
         return scroller
@@ -2626,165 +2538,6 @@ class SettingsApp:
                 tex = Gdk.Texture.new_from_bytes(bytes_data)
                 self._ptt_preset_radio_imgs[p_id].set_from_paintable(tex)
 
-    def _build_ptt_behavior_card(self):
-        gtk = self.gtk
-        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
-        card.add_css_class("audio-card")
-
-        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = self._make_badge("reticle", "audio-badge", 28)
-        hdr.append(badge)
-
-        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
-        t = gtk.Label(label="Activation Mode & Cues", xalign=0)
-        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Activation Mode &amp; Cues</span>")
-        s = gtk.Label(label="Choose how the hotkey activates audio streaming and feedback cues.", xalign=0)
-        s.set_markup("<span font_size='8.5pt' alpha='55%'>Choose how the hotkey activates audio streaming and feedback cues.</span>")
-        t_col.append(t)
-        t_col.append(s)
-        hdr.append(t_col)
-        card.append(hdr)
-
-        modes = [
-            (
-                "hold",
-                "Hold-to-Talk (Push-to-Talk)",
-                "Audio is captured exclusively while physical keys are pressed down. Releases trigger instant transcription.",
-                "Recommended",
-            ),
-            (
-                "toggle",
-                "Toggle Mode (Hands-Free Dictation)",
-                "Press shortcut once to start recording; press again or let pause silence trigger end of utterance.",
-                "Hands-Free",
-            ),
-        ]
-
-        self._ptt_mode_rows.clear()
-        self._ptt_mode_radio_imgs.clear()
-
-        for m_id, m_title, m_desc, m_tag in modes:
-            is_active = (self._ptt_trigger_mode == m_id)
-
-            row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12)
-            row.add_css_class("mode-card-row")
-            if is_active:
-                row.add_css_class("mode-card-selected")
-
-            radio_img = self._make_svg("radio_on" if is_active else "radio_off")
-            radio_img.set_valign(gtk.Align.CENTER)
-            row.append(radio_img)
-            self._ptt_mode_radio_imgs[m_id] = radio_img
-
-            info_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
-            l1 = gtk.Label(xalign=0)
-            l1.set_markup(f"<span font_weight='600' font_size='9.5pt' color='#ffffff'>{pango_esc(m_title)}</span>")
-            l2 = gtk.Label(xalign=0)
-            l2.set_markup(f"<span font_size='8pt' alpha='50%'>{pango_esc(m_desc)}</span>")
-            info_col.append(l1)
-            info_col.append(l2)
-            row.append(info_col)
-
-            tag_lbl = gtk.Label()
-            tag_lbl.add_css_class("pill-recommended" if m_id == "hold" else "pill-size")
-            tag_lbl.set_markup(f"<span font_weight='700' font_size='8pt'>{pango_esc(m_tag)}</span>")
-            tag_lbl.set_valign(gtk.Align.CENTER)
-            row.append(tag_lbl)
-
-            click = gtk.GestureClick()
-            click.connect("released", lambda _g, _n, _x, _y, mid=m_id: self._select_ptt_mode(mid))
-            row.add_controller(click)
-            row.set_cursor_from_name("pointer")
-
-            self._ptt_mode_rows[m_id] = row
-            card.append(row)
-
-        return card
-
-    def _select_ptt_mode(self, mode_id: str) -> None:
-        from gi.repository import Gdk, GLib
-
-        self._ptt_trigger_mode = mode_id
-        for mid, row in self._ptt_mode_rows.items():
-            is_sel = (mid == mode_id)
-            if is_sel:
-                row.add_css_class("mode-card-selected")
-            else:
-                row.remove_css_class("mode-card-selected")
-            if mid in self._ptt_mode_radio_imgs:
-                svg_data = SVG_ICONS["radio_on" if is_sel else "radio_off"].encode("utf-8")
-                bytes_data = GLib.Bytes.new(svg_data)
-                tex = Gdk.Texture.new_from_bytes(bytes_data)
-                self._ptt_mode_radio_imgs[mid].set_from_paintable(tex)
-
-        self._status_label.set_markup(f"<span font_size='8.5pt' color='#a5b4fc'>Activation mode set to {'Hold-to-Talk' if mode_id == 'hold' else 'Toggle Mode'}. Click Save to apply.</span>")
-
-    def _build_ptt_diagnostics_card(self):
-        gtk = self.gtk
-        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=10)
-        card.add_css_class("audio-card")
-
-        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
-        badge = self._make_badge("shield_check", "audio-badge", 28)
-        hdr.append(badge)
-
-        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
-        t = gtk.Label(label="Linux Kernel Input Diagnostics", xalign=0)
-        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Linux Kernel Input Diagnostics</span>")
-        s = gtk.Label(label="Kernel-level event monitoring verifying input group permissions and edge latency.", xalign=0)
-        s.set_markup("<span font_size='8.5pt' alpha='55%'>Kernel-level event monitoring verifying input group permissions and edge latency.</span>")
-        t_col.append(t)
-        t_col.append(s)
-        hdr.append(t_col)
-        card.append(hdr)
-
-        can_read = False
-        try:
-            from whisperflow.hotkey.linux import CTRL_CODES, KEY_CODES, META_CODES, _open_keyboards
-
-            fds = _open_keyboards(CTRL_CODES | META_CODES | {KEY_CODES["space"], 193})
-            can_read = len(fds) > 0
-            for fd in fds:
-                os.close(fd)
-        except Exception:
-            can_read = False
-
-        perm_str = "● Access Active (input group OK)" if can_read else "⚠ Permission Required"
-
-        grid = gtk.Grid()
-        grid.set_column_spacing(12)
-        grid.set_row_spacing(8)
-        grid.set_hexpand(True)
-
-        metrics = [
-            ("Driver Subsystem", "Linux evdev (/dev/input)", "Direct character device link", 0, 0),
-            ("Permissions", perm_str, "User in 'input' system group", 1, 0),
-            ("Edge Detection", "Native Key-Up (EV_KEY)", "Zero-latency chord release", 2, 0),
-            ("Polling Latency", "< 5 ms Hardware Interrupt", "Kernel interrupt buffer", 0, 1),
-            ("Display Server", "Wayland & X11 Transparent", "Global kernel-level shortcut", 1, 1),
-            ("Injection Target", "Active Focus Window", "Direct keyboard simulation", 2, 1),
-        ]
-
-        for m_title, m_val, m_desc, col, row in metrics:
-            b = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2)
-            b.add_css_class("diag-metric-box")
-            b.set_hexpand(True)
-
-            l1 = gtk.Label(xalign=0)
-            l1.set_markup(f"<span font_size='7.5pt' alpha='50%'>{pango_esc(m_title)}</span>")
-            l2 = gtk.Label(xalign=0)
-            color = "#34d399" if "Access Active" in m_val else "#ffffff"
-            l2.set_markup(f"<span font_weight='700' font_size='9pt' color='{color}'>{pango_esc(m_val)}</span>")
-            l3 = gtk.Label(xalign=0)
-            l3.set_markup(f"<span font_size='7.5pt' alpha='40%'>{pango_esc(m_desc)}</span>")
-
-            b.append(l1)
-            b.append(l2)
-            b.append(l3)
-            grid.attach(b, col, row, 1, 1)
-
-        card.append(grid)
-        return card
 
     # -------------------------------------------------------------------------
     # Dedicated Section: Full Dictionary View & Vocabulary Rules
