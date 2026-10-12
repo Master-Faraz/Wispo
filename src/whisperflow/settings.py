@@ -417,6 +417,70 @@ button.traffic-light.traffic-green:hover {
     border: 1px solid var(--accent-border);
 }
 
+/* Engine Status Card (Sidebar Bottom) */
+.engine-status-card {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    transition: all 180ms ease;
+}
+
+.engine-status-card:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.status-dot {
+    min-width: 9px;
+    min-height: 9px;
+    border-radius: 50%;
+    transition: all 250ms ease;
+}
+
+.status-dot-initializing {
+    background-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
+}
+
+.status-dot-ready {
+    background-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.65), 0 0 3px rgba(16, 185, 129, 0.9);
+}
+
+.status-dot-recording {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.75);
+}
+
+.status-dot-processing {
+    background-color: #a855f7;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.75);
+}
+
+.sidebar-loading-bar {
+    min-height: 4px;
+    padding: 0;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.sidebar-loading-bar trough {
+    background-color: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 3px;
+    min-height: 4px;
+}
+
+.sidebar-loading-bar progress {
+    background-color: #8b75ff;
+    border-radius: 3px;
+    min-height: 4px;
+    box-shadow: 0 0 6px rgba(139, 117, 255, 0.5);
+}
+
 /* Center Panel (Content Layer) */
 .center-panel {
     background-color: var(--surface-canvas);
@@ -1064,6 +1128,7 @@ class SettingsApp:
         self.gtk = gtk
         self._on_quit = on_quit
         self._config = load_config()
+        self._device = select_device(self._config.asr.device)
         self._selected_model_name = self._config.asr.model
         self._hotkey_keys = tuple(self._config.hotkey.keys)
         self._dictionary_entries_list = list(self._config.dictionary)
@@ -1156,6 +1221,20 @@ class SettingsApp:
         # Navigation state
         self._main_stack = None
         self._sidebar_nav_rows: dict[str, object] = {}
+
+        # Engine status card state
+        self._engine_state = "ready"
+        self._engine_title = "Loading Engine..."
+        self._engine_sub = "Compiling GPU shaders"
+        self._engine_ready_sub = f"{self._device.name} • {self._config.asr.model}"
+        self._engine_stack = None
+        self._status_dot = None
+        self._loading_pbar = None
+        self._loading_pct_label = None
+        self._loading_title_label = None
+        self._loading_sub_label = None
+        self._ready_title_label = None
+        self._ready_sub_label = None
 
     def _make_svg(self, name: str):
         from gi.repository import Gdk, GLib
@@ -1510,7 +1589,162 @@ class SettingsApp:
 
         vbox.append(gtk.Box(vexpand=True))
 
+        # Bottom Engine Status Card
+        vbox.append(self._build_engine_status_card())
+
         return vbox
+
+    def _build_engine_status_card(self):
+        gtk = self.gtk
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL)
+        card.add_css_class("engine-status-card")
+        card.set_hexpand(True)
+        card.set_valign(gtk.Align.END)
+
+        self._engine_stack = gtk.Stack()
+        self._engine_stack.set_transition_type(gtk.StackTransitionType.CROSSFADE)
+        self._engine_stack.set_transition_duration(200)
+
+        # 1. Startup Loading View (Progress Bar + Percentage numbers)
+        loading_box = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=5)
+
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6)
+        self._loading_title_label = gtk.Label(xalign=0)
+        self._loading_title_label.set_hexpand(True)
+        self._loading_title_label.set_markup(
+            f"<span font_weight='600' font_size='8.5pt' color='#ffffff'>{pango_esc(self._engine_title)}</span>"
+        )
+        top_row.append(self._loading_title_label)
+
+        self._loading_pct_label = gtk.Label(xalign=1)
+        self._loading_pct_label.set_markup(
+            "<span font_weight='700' font_size='8.5pt' color='#8b75ff'>0%</span>"
+        )
+        top_row.append(self._loading_pct_label)
+        loading_box.append(top_row)
+
+        self._loading_pbar = gtk.ProgressBar()
+        self._loading_pbar.add_css_class("sidebar-loading-bar")
+        self._loading_pbar.set_fraction(0.0)
+        loading_box.append(self._loading_pbar)
+
+        self._loading_sub_label = gtk.Label(xalign=0)
+        self._loading_sub_label.set_markup(
+            f"<span font_size='7.5pt' alpha='55%'>{pango_esc(self._engine_sub)}</span>"
+        )
+        loading_box.append(self._loading_sub_label)
+
+        # 2. Ready View (Clean static dot + Engine Ready, exact match to screenshot)
+        ready_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=11)
+        ready_box.set_valign(gtk.Align.CENTER)
+
+        dot_box = gtk.Box(valign=gtk.Align.CENTER, halign=gtk.Align.CENTER)
+        dot_box.set_size_request(16, 16)
+        dot_box.set_hexpand(False)
+        dot_box.set_vexpand(False)
+
+        self._status_dot = gtk.Box()
+        self._status_dot.add_css_class("status-dot")
+        self._status_dot.add_css_class("status-dot-ready")
+        self._status_dot.set_valign(gtk.Align.CENTER)
+        self._status_dot.set_halign(gtk.Align.CENTER)
+        dot_box.append(self._status_dot)
+        ready_box.append(dot_box)
+
+        text_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2)
+        text_col.set_hexpand(True)
+        text_col.set_valign(gtk.Align.CENTER)
+
+        self._ready_title_label = gtk.Label(xalign=0)
+        self._ready_title_label.set_markup(
+            "<span font_weight='600' font_size='9.5pt' color='#ffffff'>Engine Ready</span>"
+        )
+        text_col.append(self._ready_title_label)
+
+        self._ready_sub_label = gtk.Label(xalign=0)
+        ready_sub_text = self._engine_ready_sub or f"{self._device.name} • {self._config.asr.model}"
+        self._ready_sub_label.set_markup(
+            f"<span font_size='8pt' color='#9ca3af'>{pango_esc(ready_sub_text)}</span>"
+        )
+        text_col.append(self._ready_sub_label)
+
+        ready_box.append(text_col)
+
+        self._engine_stack.add_named(loading_box, "loading")
+        self._engine_stack.add_named(ready_box, "ready")
+
+        initial_view = "ready" if self._engine_state == "ready" else "loading"
+        self._engine_stack.set_visible_child_name(initial_view)
+
+        card.append(self._engine_stack)
+        return card
+
+    def set_loading_progress(self, percent: int, title: str = "Loading Engine...", subtitle: str = "") -> None:
+        """Update the startup loading progress bar and percentage numbers in a thread-safe manner."""
+        from gi.repository import GLib
+
+        pct = max(0, min(100, int(percent)))
+        self._engine_state = "initializing"
+        self._engine_title = title
+        self._engine_sub = subtitle
+
+        def _update():
+            if not hasattr(self, "_engine_stack") or self._engine_stack is None:
+                return False
+
+            if self._engine_stack.get_visible_child_name() != "loading":
+                self._engine_stack.set_visible_child_name("loading")
+
+            if hasattr(self, "_loading_pbar") and self._loading_pbar is not None:
+                self._loading_pbar.set_fraction(pct / 100.0)
+
+            if hasattr(self, "_loading_pct_label") and self._loading_pct_label is not None:
+                self._loading_pct_label.set_markup(
+                    f"<span font_weight='700' font_size='8.5pt' color='#8b75ff'>{pct}%</span>"
+                )
+
+            if hasattr(self, "_loading_title_label") and self._loading_title_label is not None:
+                self._loading_title_label.set_markup(
+                    f"<span font_weight='600' font_size='8.5pt' color='#ffffff'>{pango_esc(title)}</span>"
+                )
+
+            if hasattr(self, "_loading_sub_label") and self._loading_sub_label is not None:
+                self._loading_sub_label.set_markup(
+                    f"<span font_size='7.5pt' alpha='55%'>{pango_esc(subtitle)}</span>"
+                )
+            return False
+
+        GLib.idle_add(_update)
+
+    def set_model_loaded(self, info: str = "") -> None:
+        """Switch to the static 'Engine Ready' card once warmup is complete. Decouples UI."""
+        from gi.repository import GLib
+
+        self._engine_state = "ready"
+        if info:
+            self._engine_ready_sub = info
+
+        def _update():
+            if not hasattr(self, "_engine_stack") or self._engine_stack is None:
+                return False
+
+            if hasattr(self, "_ready_sub_label") and self._ready_sub_label is not None and info:
+                self._ready_sub_label.set_markup(
+                    f"<span font_size='8pt' color='#9ca3af'>{pango_esc(info)}</span>"
+                )
+
+            if self._engine_stack.get_visible_child_name() != "ready":
+                self._engine_stack.set_visible_child_name("ready")
+            return False
+
+        GLib.idle_add(_update)
+
+    def set_engine_status(self, state: str, title: str, subtitle: str = "") -> None:
+        """Backward compatibility helper for engine status. Dictation states are ignored."""
+        if state == "ready":
+            self.set_model_loaded(subtitle)
+        elif state == "initializing":
+            self.set_loading_progress(10, title, subtitle)
 
     # -------------------------------------------------------------------------
     # Navigation & Section Switching

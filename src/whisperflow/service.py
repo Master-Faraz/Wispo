@@ -107,7 +107,7 @@ def _run() -> int:
     application.connect("activate", on_activate)
     worker = threading.Thread(
         target=_listen,
-        args=(stop_event, status, hud),
+        args=(stop_event, status, hud, settings),
         name="whisperflow-listen",
     )
     worker.start()
@@ -123,7 +123,7 @@ def _run() -> int:
     return 0
 
 
-def _listen(stop_event: threading.Event, status, hud=None) -> None:
+def _listen(stop_event: threading.Event, status, hud=None, settings=None) -> None:
     from gi.repository import GLib
 
     from whisperflow.application import TranscriptionApp
@@ -157,7 +157,46 @@ def _listen(stop_event: threading.Event, status, hud=None) -> None:
         if status is not None:
             status.set_state("processing")
         logging.info("loading and warming up the model")
-        app.load_model(warmup=True)
+
+        stop_ticker = threading.Event()
+
+        def _progress_ticker():
+            stages = [
+                (25, 1.2, "Loading Model...", "Reading weights into memory"),
+                (45, 2.0, "Compiling GPU Shaders...", "Initializing Level Zero backend"),
+                (65, 2.5, "Compiling GPU Shaders...", "JIT-compiling SYCL kernels"),
+                (82, 2.0, "Warming Up Pipeline...", "Running dummy inference pass"),
+                (94, 1.5, "Priming Audio Pipeline...", "Testing microphone capture"),
+            ]
+            pct = 10
+            if settings is not None:
+                settings.set_loading_progress(pct, "Starting Engine...", "Initializing runtime")
+            for target_pct, duration, title, subtitle in stages:
+                steps = 10
+                step_sleep = duration / steps
+                increment = (target_pct - pct) / steps
+                for _ in range(steps):
+                    if stop_ticker.is_set():
+                        return
+                    pct += increment
+                    if settings is not None:
+                        settings.set_loading_progress(int(pct), title, subtitle)
+                    time.sleep(step_sleep)
+
+        ticker_thread = threading.Thread(target=_progress_ticker, daemon=True, name="startup-progress")
+        ticker_thread.start()
+
+        try:
+            app.load_model(warmup=True)
+        finally:
+            stop_ticker.set()
+            ticker_thread.join(timeout=0.5)
+
+        if settings is not None:
+            settings.set_loading_progress(100, "Engine Ready", f"{app.device.name} • {config.asr.model}")
+            time.sleep(0.15)
+            settings.set_model_loaded(f"{app.device.name} • {config.asr.model}")
+
         logging.info(
             "model %s on %s (%s)",
             config.asr.model,
