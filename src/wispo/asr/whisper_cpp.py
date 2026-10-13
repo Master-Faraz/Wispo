@@ -83,9 +83,7 @@ class WhisperCppEngine:
         self.threads = threads
         self.language = language or "en"
         def _default_lib() -> Path:
-            wispo_lib = project_root() / "native" / "build" / "libwispo_asr.so"
-            whisperflow_lib = project_root() / "native" / "build" / "libwhisperflow_asr.so"
-            return wispo_lib if wispo_lib.is_file() else whisperflow_lib
+            return project_root() / "native" / "build" / "libwispo_asr.so"
 
         self.lib_path = lib_path or _default_lib()
         self.backend_dir = backend_dir
@@ -119,7 +117,7 @@ class WhisperCppEngine:
             )
         if not self.lib_path.is_file():
             raise FileNotFoundError(
-                "libwhisperflow_asr.so is not built yet.\n"
+                "libwispo_asr.so is not built yet.\n"
                 "whisper.cpp's Intel SYCL backend also needs oneMKL:\n"
                 "  sudo apt install intel-oneapi-mkl-devel-2026.1 libze-dev\n"
                 "then:\n"

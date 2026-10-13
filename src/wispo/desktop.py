@@ -102,31 +102,13 @@ def install_desktop_entry(python: str, root: str, directory: Path | None = None)
     entry_text = desktop_entry_text(python, root)
     path.write_text(entry_text, encoding="utf-8")
 
-    # Update legacy desktop file so old pinned dock shortcuts don't break
-    legacy_path = folder / "com.whisperflow.WhisperFlow.desktop"
-    if legacy_path.is_file():
-        legacy_path.write_text(entry_text, encoding="utf-8")
-
+    # Clean up old desktop entry if named differently
     previous = folder / "wispo.desktop"
     if previous != path and previous.is_file():
-        previous.unlink()
-
-    # Migrate GNOME shell favorite-apps dock pin if present
-    try:
-        import subprocess
-
-        res = subprocess.run(
-            ["gsettings", "get", "org.gnome.shell", "favorite-apps"],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=2,
-        )
-        if "com.whisperflow.WhisperFlow.desktop" in res.stdout:
-            new_favs = res.stdout.strip().replace("com.whisperflow.WhisperFlow.desktop", DESKTOP_ID)
-            subprocess.run(["gsettings", "set", "org.gnome.shell", "favorite-apps", new_favs], check=False, timeout=2)
-    except Exception:
-        pass
+        try:
+            previous.unlink()
+        except OSError:
+            pass
 
     return path
 

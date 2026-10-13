@@ -116,11 +116,8 @@ def _section(data: dict, name: str, cls):
 def load_config(path: Path | None = None) -> Config:
     if path is None:
         wispo_default = project_root() / "wispo.yaml"
-        whisperflow_default = project_root() / "whisperflow.yaml"
         if wispo_default.is_file():
             path = wispo_default
-        elif whisperflow_default.is_file():
-            path = whisperflow_default
         else:
             path = None
     if path is None:

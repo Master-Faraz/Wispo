@@ -17,7 +17,6 @@ dependencies = [
 
 [project.scripts]
 wispo = "wispo.cli:main"
-whisperflow = "wispo.cli:main"
 
 [dependency-groups]
 dev = ["pytest"]
