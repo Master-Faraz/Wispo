@@ -1459,17 +1459,8 @@ class SettingsApp:
             self.window.remove_css_class("window-maximized")
 
     def _on_red_clicked(self, *_args) -> None:
-        """Quit the application."""
-        for ev in list(self._download_cancel_events.values()):
-            ev.set()
-        self._stop_mic_test()
-        self._stop_capture()
-        if self._on_quit:
-            self._on_quit()
-        if self.window:
-            self.window.close()
-        if self._gtk_app:
-            self._gtk_app.quit()
+        """Hide the application window to the background; keep Wispo running in the dock."""
+        self._on_window_close_request()
 
     def _on_yellow_clicked(self, *_args) -> None:
         """Minimize the application window."""
@@ -1489,13 +1480,25 @@ class SettingsApp:
             self._update_maximized_state(True)
 
     def _on_window_close_request(self, *_args) -> bool:
+        """Hide window to background instead of quitting."""
+        self._stop_mic_test()
+        self._stop_capture()
+        if self.window:
+            self.window.set_visible(False)
+        return True
+
+    def _on_quit_clicked(self, *_args) -> None:
+        """Completely quit the application and background service."""
         for ev in list(self._download_cancel_events.values()):
             ev.set()
         self._stop_mic_test()
         self._stop_capture()
         if self._on_quit:
             self._on_quit()
-        return False
+        if self.window:
+            self.window.set_visible(False)
+        if self._gtk_app:
+            self._gtk_app.quit()
 
     # -------------------------------------------------------------------------
     # Column 1: Left Sidebar (Full Height)
@@ -1519,6 +1522,7 @@ class SettingsApp:
         r.set_valign(gtk.Align.CENTER)
         r.set_child(self._make_svg("traffic_close"))
         r.set_cursor_from_name("pointer")
+        r.set_tooltip_text("Hide to background (Wispo remains active in dock)")
         r.connect("clicked", self._on_red_clicked)
 
         # Yellow = Minimize (Minus icon on hover)
@@ -1529,6 +1533,7 @@ class SettingsApp:
         y.set_valign(gtk.Align.CENTER)
         y.set_child(self._make_svg("traffic_min"))
         y.set_cursor_from_name("pointer")
+        y.set_tooltip_text("Minimize window")
         y.connect("clicked", self._on_yellow_clicked)
 
         # Green = Maximize / Full Screen (Windows/macOS square icon on hover)
@@ -1539,6 +1544,7 @@ class SettingsApp:
         g.set_valign(gtk.Align.CENTER)
         g.set_child(self._make_svg("traffic_max"))
         g.set_cursor_from_name("pointer")
+        g.set_tooltip_text("Maximize / Restore window")
         g.connect("clicked", self._on_green_clicked)
 
         traffic_box.append(r)
@@ -3770,13 +3776,16 @@ class SettingsApp:
         footer.append(info_img)
 
         self._status_label.set_hexpand(True)
-        self._status_label.set_markup("<span font_size='8.5pt' alpha='65%'>Closing this window leaves Wispo in the dock.</span>")
+        self._status_label.set_markup(
+            "<span font_size='8.5pt' alpha='65%'>Closing this window leaves Wispo running in the dock. To quit completely, click <b>Quit</b>.</span>"
+        )
         footer.append(self._status_label)
 
         # Right Actions: Quit & Save
         quit_btn = gtk.Button(label="Quit")
         quit_btn.add_css_class("btn-quit")
-        quit_btn.connect("clicked", self._on_red_clicked)
+        quit_btn.set_tooltip_text("Quit Wispo completely and stop background listening")
+        quit_btn.connect("clicked", self._on_quit_clicked)
         footer.append(quit_btn)
 
         save_btn = gtk.Button(label="Save")

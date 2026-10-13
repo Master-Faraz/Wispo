@@ -63,13 +63,15 @@ def _run() -> int:
 
     def request_quit() -> None:
         stop_event.set()
+        GLib.idle_add(application.quit)
 
     def open_settings() -> None:
         def present() -> bool:
             window = ui.get("window")
             if window is not None:
-                window.present()
+                window.set_visible(True)
                 window.unminimize()
+                window.present()
             return False
 
         GLib.idle_add(present)
@@ -93,13 +95,18 @@ def _run() -> int:
     hud = FloatingPillHUD(gtk)
 
     def on_activate(app) -> None:
+        window = ui.get("window")
+        if window is not None:
+            window.set_visible(True)
+            window.unminimize()
+            window.present()
+            return
+
         window = settings.build(app)
         ui["window"] = window
 
         def keep_running(*_args) -> bool:
-            # The top bar is hidden on this machine, so the dock icon is the
-            # only visible control. Closing the window must not exit.
-            window.minimize()
+            window.set_visible(False)
             return True
 
         window.connect("close-request", keep_running)
