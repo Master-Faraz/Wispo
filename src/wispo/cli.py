@@ -78,13 +78,15 @@ def transcribe_main(argv: list[str] | None = None) -> int:
         print("Input session ready. The finished sentence is typed into the focused window.")
         print()
         hotkey_keys = {k.lower() for k in config.hotkey.keys}
-        if "super" in hotkey_keys or "copilot" in hotkey_keys:
+        if hotkey_keys == {"super"}:
             overview = OverviewKey()
             try:
                 overview.start()
             except (OSError, subprocess.CalledProcessError) as exc:
                 print(f"Could not move the overview key aside: {exc}", file=sys.stderr)
                 overview = None
+        else:
+            overview = None
     hold = None
     recording = False
     try:

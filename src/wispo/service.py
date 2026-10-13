@@ -161,7 +161,10 @@ def _listen(
         logging.info("opening the input session")
         keyboard.open()
         hotkey_keys = {k.lower() for k in config.hotkey.keys}
-        if "super" in hotkey_keys or "copilot" in hotkey_keys:
+        # Only suppress GNOME's overlay key if the user specifically chose the bare Super key alone.
+        # Copilot key and combo chords do not trigger GNOME's overview, so touching system settings
+        # is unnecessary and disables the user's Super key in Ubuntu.
+        if hotkey_keys == {"super"}:
             try:
                 overview.start()
             except (OSError, subprocess.CalledProcessError):
@@ -267,8 +270,8 @@ def _listen(
                                     hold.stop()
                                 new_hotkey_keys = set(new_chord)
                                 old_hotkey_keys = set(old_chord)
-                                needs_overview = "super" in new_hotkey_keys or "copilot" in new_hotkey_keys
-                                had_overview = "super" in old_hotkey_keys or "copilot" in old_hotkey_keys
+                                needs_overview = new_hotkey_keys == {"super"}
+                                had_overview = old_hotkey_keys == {"super"}
                                 if needs_overview and not had_overview:
                                     if overview is None:
                                         overview = OverviewKey()
