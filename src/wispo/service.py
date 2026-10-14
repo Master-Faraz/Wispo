@@ -1,16 +1,15 @@
-"""Background Wispo.
+"""Background Wispo service.
 
     uv run python -m wispo.service
 
-Hold Ctrl+Super, speak, and release. The finished sentence is typed into
-the focused window. The app icon stays in the dock. This machine hides the
-top bar, so there is no system tray to put an icon in.
+Hold the configured shortcut, speak, and release. The finished sentence is
+typed into the focused window via the XDG RemoteDesktop portal.
 
-Closing the window leaves Wispo running. Click the dock icon to open
-it again. Quit stops it.
+Closing the settings window hides it; the service continues running in the
+background. Choose Quit in the UI or pass --quit to stop it.
 
-Starting this again while it is already running opens the window instead of
-a second listener.
+Starting a second instance while the service is already running opens the
+settings window instead of starting another listener.
 """
 
 from __future__ import annotations
