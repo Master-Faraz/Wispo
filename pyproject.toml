@@ -1,7 +1,7 @@
 [project]
-name = "whisperflow"
+name = "wispo"
 version = "0.1.0"
-description = "Local offline speech transcription"
+description = "Wispo - Local offline speech transcription"
 readme = "README.md"
 authors = [
     { name = "Faraz Ali", email = "farazali9028@gmail.com" }
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-whisperflow = "whisperflow.cli:main"
+wispo = "wispo.cli:main"
 
 [dependency-groups]
 dev = ["pytest"]

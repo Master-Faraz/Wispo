@@ -6,10 +6,20 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-.venv
+# Virtual environments & test caches
+.venv/
+.pytest_cache/
 
 # whisper.cpp build and downloaded weights
 third_party/whisper.cpp/build-sycl/
 native/build/
 models/*.bin
+*.so
+
+# IDE & temporary files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+*.log
+my terminal history .txt

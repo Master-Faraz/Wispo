@@ -1,6 +1,6 @@
 import numpy as np
 
-from whisperflow.asr.chunker import SlidingChunker
+from wispo.asr.chunker import SlidingChunker
 
 
 def test_window_is_emitted_once_a_chunk_has_arrived():

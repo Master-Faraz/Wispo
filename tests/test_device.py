@@ -1,4 +1,4 @@
-from whisperflow.asr.device import parse_sycl_ls
+from wispo.asr.device import parse_sycl_ls
 
 
 def test_parse_sycl_ls_reads_the_arc_gpu_name():

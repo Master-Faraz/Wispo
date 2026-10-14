@@ -1,7 +1,7 @@
 import numpy as np
 
-from whisperflow.audio.buffer import AudioRing
-from whisperflow.audio.vad import EnergyVad
+from wispo.audio.buffer import AudioRing
+from wispo.audio.vad import EnergyVad
 
 
 def test_ring_keeps_the_newest_samples():

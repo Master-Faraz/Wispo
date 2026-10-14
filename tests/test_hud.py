@@ -1,5 +1,5 @@
-from whisperflow.hud import FloatingPillHUD
-from whisperflow.settings import _load_gtk
+from wispo.hud import FloatingPillHUD
+from wispo.settings import _load_gtk
 
 
 def test_hud_initializes_and_transitions_states():

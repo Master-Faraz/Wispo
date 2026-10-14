@@ -58,7 +58,7 @@ cmake -S "$SRC" -B "$BUILD" \
 
 cmake --build "$BUILD" --config Release -j "$(nproc)" --target whisper-cli
 
-# The Python process loads libwhisperflow_asr.so. That library calls
+# The Python process loads libwispo_asr.so. That library calls
 # whisper_full(), and ggml loads libggml-sycl.so from a directory we pass at
 # runtime. RPATH lets the loader find the just-built shared libraries without
 # a global ldconfig change.
@@ -86,11 +86,11 @@ mkdir -p "$WRAPPER_OUT"
 icpx -fsycl -fPIC -shared \
   -I "$SRC/include" \
   -I "$SRC/ggml/include" \
-  "$ROOT/native/whisperflow_asr.cpp" \
-  -o "$WRAPPER_OUT/libwhisperflow_asr.so" \
+  "$ROOT/native/wispo_asr.cpp" \
+  -o "$WRAPPER_OUT/libwispo_asr.so" \
   "${LINK_DIRS[@]}" \
   -lwhisper \
   -Wl,-rpath,"$RPATH"
 
 echo "SYCL whisper-cli: $BUILD/bin/whisper-cli"
-echo "Python wrapper:   $WRAPPER_OUT/libwhisperflow_asr.so"
+echo "Python wrapper:   $WRAPPER_OUT/libwispo_asr.so"

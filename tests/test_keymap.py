@@ -1,4 +1,4 @@
-from whisperflow.injection.keymap import KEY_ENTER, KEY_LEFTSHIFT, KEY_SPACE, UnsupportedCharacter, key_events
+from wispo.injection.keymap import KEY_ENTER, KEY_LEFTSHIFT, KEY_SPACE, UnsupportedCharacter, key_events
 
 
 def _presses(events):
