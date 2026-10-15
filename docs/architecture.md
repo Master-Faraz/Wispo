@@ -32,7 +32,7 @@ flowchart LR
 - A second service invocation asks the running service to present its settings window instead of starting another listener.
 - Closing settings hides the window. The explicit **Quit** action requests shutdown, stops the listener, closes status integration, and closes the HUD.
 - `wispo.settings` runs the settings UI alone. `wispo transcribe` and `wispo benchmark` are the terminal audio and latency evaluation entry points. `wispo update` checks GitHub Releases for new binary distributions.
-- The system package installs `/usr/bin/wispo`, which dispatches commands to the isolated runtime in `/opt/wispo`.
+- The offline Ubuntu tarball creates `/opt/wispo/venv` from its checked, bundled wheelhouse. `/usr/bin/wispo` uses that venv when it exists; Debian packages use distribution-provided Python dependencies. Both expose bundled `whisper.cpp`/GGML libraries and set `WISPO_DATA_DIR` to the user's XDG data directory.
 
 The service creates files outside the checkout:
 
@@ -86,7 +86,7 @@ There is no `/dev/uinput` fallback in the current implementation. Text insertion
 
 ### UI and desktop integration
 
-- `settings.py` is a GTK4 configuration window. Saving writes `wispo.yaml` and queues an update for the service listener while it is idle.
+- `settings.py` is a GTK4 configuration window. Saving writes `wispo.yaml` (or the packaged user's data copy) and queues an update for the service listener while it is idle.
 - `hud.py` uses GTK4 and Cairo for a click-through overlay. The main loop performs visual updates through GLib callbacks; it must run with a graphical display.
 - `status.py` exports a `org.kde.StatusNotifierItem` and a D-Bus menu. Whether it is visible depends on the desktop shell and any installed indicator support.
 

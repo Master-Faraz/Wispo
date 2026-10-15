@@ -15,6 +15,7 @@ settings window instead of starting another listener.
 from __future__ import annotations
 
 import logging
+import os
 import queue
 import subprocess
 import sys
@@ -43,7 +44,11 @@ def main(argv: list[str] | None = None) -> int:
     if _already_running():
         _call("OpenSettings")
         return 0
-    install_desktop_entry(sys.executable, str(project_root()))
+    install_desktop_entry(
+        sys.executable,
+        str(project_root()),
+        command=os.environ.get("WISPO_DESKTOP_LAUNCHER"),
+    )
     return _run()
 
 

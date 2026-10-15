@@ -3,7 +3,7 @@ Version: 0.1.0
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: python3 (>= 3.12), python3-pip, python3-venv, libgtk-4-1, libadwaita-1-0, libasound2t64 | libasound2, libpulse0
+Depends: python3 (>= 3.12), python3-gi, gir1.2-gtk-4.0, python3-jeepney, python3-numpy, python3-pil, python3-psutil, python3-yaml, libgtk-4-1, libasound2t64 | libasound2
 Recommends: intel-opencl-icd, intel-level-zero-gpu
 Maintainer: Faraz Ali <farazali9028@gmail.com>
 Homepage: https://github.com/Master-Faraz/Wispo

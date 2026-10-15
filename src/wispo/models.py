@@ -12,7 +12,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from wispo.config import project_root
+from wispo.config import project_root, runtime_data_root
 
 _WHISPER_CPP = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
 
@@ -79,12 +79,13 @@ def _spec(name: str) -> ModelSpec:
 def model_path(name: str, root: Path | None = None) -> Path:
     if name not in model_names():
         raise ValueError(f"unknown model {name!r}")
-    return (root or project_root()) / "models" / f"ggml-{name}.bin"
+    storage_root = root or runtime_data_root() or project_root()
+    return storage_root / "models" / f"ggml-{name}.bin"
 
 
 def installed_models(root: Path | None = None) -> list[tuple[str, int]]:
     """Catalog models that already have a file, with the size in bytes."""
-    root = root or project_root()
+    root = root or runtime_data_root() or project_root()
     found: list[tuple[str, int]] = []
     for name in model_names():
         path = model_path(name, root)

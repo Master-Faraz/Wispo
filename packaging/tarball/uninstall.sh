@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# Wispo Universal Linux Uninstaller
+# Wispo Offline Tarball Uninstaller
 # ==============================================================================
 
 if [ "$EUID" -ne 0 ]; then
@@ -20,19 +20,21 @@ pkill -f "wispo.cli" 2>/dev/null || true
 # 2. Remove launcher wrapper
 rm -f /usr/bin/wispo
 
-# 3. Remove desktop entry
-rm -f /usr/share/applications/com.wispo.Wispo.desktop
-
-# 4. Remove udev rules
-rm -f /etc/udev/rules.d/99-wispo-uinput.rules
-if command -v udevadm >/dev/null 2>&1; then
-    udevadm control --reload-rules || true
+# 3. Remove the uinput rule left by pre-0.1.0 tarball releases.
+if [ -f /etc/udev/rules.d/99-wispo-uinput.rules ]; then
+    rm -f /etc/udev/rules.d/99-wispo-uinput.rules
+    if command -v udevadm >/dev/null 2>&1; then
+        udevadm control --reload-rules || true
+    fi
 fi
+
+# 4. Remove desktop entry
+rm -f /usr/share/applications/com.wispo.Wispo.desktop
 
 # 5. Remove icons
 for sz in 16 32 48 64 128 256 512; do
-    rm -f "/usr/share/icons/hicolor/${sz}x{sz}/apps/com.wispo.Wispo.png"
-    rm -f "/usr/share/icons/hicolor/${sz}x{sz}/apps/com.wispo.Settings.png"
+    rm -f "/usr/share/icons/hicolor/${sz}x${sz}/apps/com.wispo.Wispo.png"
+    rm -f "/usr/share/icons/hicolor/${sz}x${sz}/apps/com.wispo.Settings.png"
 done
 
 # 6. Refresh caches

@@ -1,0 +1,8 @@
+# Runtime dependencies bundled in the Ubuntu 26.04 x86_64 tarball.
+# Keep these versions aligned with uv.lock. They are installed only from the
+# archive's wheelhouse; the end-user installer never contacts PyPI.
+jeepney==0.9.0
+numpy==2.5.3
+pillow==12.3.0
+psutil==7.2.2
+pyyaml==6.0.3

@@ -1,6 +1,6 @@
 # Configuration reference
 
-Wispo loads `wispo.yaml` from the project root. It rejects unknown keys in `audio`, `asr`, `streaming`, `vad`, `hotkey`, and each `dictionary` item, so configuration mistakes fail early rather than being silently ignored.
+In a source checkout, Wispo loads `wispo.yaml` from the project root. The packaged launcher sets `WISPO_DATA_DIR` and uses `~/.local/share/wispo/wispo.yaml` by default, creating that user-writable copy on the first Settings save. Until then, it reads the packaged `/opt/wispo/wispo.yaml` template. It rejects unknown keys in `audio`, `asr`, `streaming`, `vad`, `hotkey`, and each `dictionary` item, so configuration mistakes fail early rather than being silently ignored.
 
 The settings window writes this file with PyYAML. That means comments and original formatting are not preserved after a save. Keep a copy if hand-written comments matter to you.
 
@@ -61,7 +61,7 @@ The app requests S16_LE from ALSA and converts frames to floating point internal
 | --- | --- | --- |
 | `backend` | Backend label. | Stored in configuration, but current application code always constructs the `whisper_cpp` backend. Keep `whisper_cpp`. |
 | `model` | User-facing model name. | Used by the settings UI and when it updates `model_path`. It should match a downloaded model. |
-| `model_path` | Model file path, relative to the project root or absolute. | Must point to an existing GGML `.bin` model file at service/model startup. |
+| `model_path` | Model file path, relative to the project root or absolute. | Must point to an existing GGML `.bin` model file at service/model startup. Under the packaged launcher, relative paths resolve beneath `~/.local/share/wispo/`. |
 | `device` | Inference selection. | `auto` picks SYCL when `sycl-ls` reports a Level Zero GPU, otherwise CPU. `sycl` requires that GPU; `cpu` forces CPU selection. |
 | `quantization` | Display label for the selected model. | Currently displayed by terminal tools but not passed as an inference option. The model file itself determines its quantization. |
 | `threads` | Whisper inference worker count. | Passed to the native bridge. Start with the default and benchmark before raising it. |

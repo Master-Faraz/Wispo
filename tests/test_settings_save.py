@@ -42,6 +42,15 @@ def test_installed_models_are_the_files_on_disk():
     assert "distil-large-v3.5" in model_names()
 
 
+def test_installed_models_use_packaged_data_directory(monkeypatch, tmp_path):
+    monkeypatch.setenv("WISPO_DATA_DIR", str(tmp_path))
+    model = tmp_path / "models" / "ggml-base.en.bin"
+    model.parent.mkdir()
+    model.write_bytes(b"model")
+
+    assert installed_models() == [("base.en", 5)]
+
+
 def test_save_hardware_and_streaming_settings(tmp_path):
     path = tmp_path / "wispo.yaml"
     path.write_text("asr:\n  model: base.en\n  model_path: models/ggml-base.en.bin\n", encoding="utf-8")
