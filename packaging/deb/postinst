@@ -1,0 +1,47 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # 1. Setup isolated python runtime in /opt/wispo
+        if [ -d /opt/wispo ] && [ ! -d /opt/wispo/venv ]; then
+            python3 -m venv /opt/wispo/venv
+            /opt/wispo/venv/bin/pip install --upgrade pip --quiet || true
+            /opt/wispo/venv/bin/pip install /opt/wispo --quiet || true
+        fi
+
+        # 2. Generate multi-resolution icons
+        if [ -x /opt/wispo/venv/bin/python ]; then
+            /opt/wispo/venv/bin/python -c "
+from pathlib import Path
+from PIL import Image
+
+logo = Path('/opt/wispo/src/wispo/assets/logo.png')
+if logo.is_file():
+    with Image.open(logo) as im:
+        for sz in (16, 32, 48, 64, 128, 256, 512):
+            out_dir = Path(f'/usr/share/icons/hicolor/{sz}x{sz}/apps')
+            out_dir.mkdir(parents=True, exist_ok=True)
+            resized = im.resize((sz, sz), Image.Resampling.LANCZOS)
+            resized.save(out_dir / 'com.wispo.Wispo.png')
+            resized.save(out_dir / 'com.wispo.Settings.png')
+" 2>/dev/null || true
+        fi
+
+        # 3. Reload udev rules for /dev/uinput
+        if [ -x /usr/bin/udevadm ]; then
+            udevadm control --reload-rules || true
+            udevadm trigger /dev/uinput || true
+        fi
+
+        # 4. Refresh desktop and icon database
+        if [ -x /usr/bin/update-desktop-database ]; then
+            update-desktop-database -q /usr/share/applications || true
+        fi
+        if [ -x /usr/bin/gtk-update-icon-cache ]; then
+            gtk-update-icon-cache -q -t /usr/share/icons/hicolor || true
+        fi
+        ;;
+esac
+
+exit 0

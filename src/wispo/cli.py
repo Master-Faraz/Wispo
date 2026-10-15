@@ -292,15 +292,117 @@ def _with_device(config, device: str):
     return replace(config, asr=replace(config.asr, device=device))
 
 
+def update_main(argv: list[str] | None = None) -> int:
+    """Check for latest releases from the GitHub repository."""
+    import json
+    import urllib.request
+    from importlib.metadata import version as get_pkg_version
+
+    current_version = "0.1.0"
+    try:
+        current_version = get_pkg_version("wispo")
+    except Exception:
+        pass
+
+    repo = "Master-Faraz/Wispo"
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+
+    print(f"Wispo current version: v{current_version}")
+    print(f"Checking for updates from https://github.com/{repo}...")
+
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": f"Wispo-Updater/{current_version}",
+            "Accept": "application/vnd.github.v3+json",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                tag_name = data.get("tag_name", "").lstrip("v")
+                html_url = data.get("html_url", "")
+                assets = data.get("assets", [])
+
+                if tag_name and tag_name != current_version:
+                    print(f"\n🎉 A new version of Wispo is available: v{tag_name} (current: v{current_version})")
+                    print(f"Release notes: {html_url}\n")
+
+                    tar_url = None
+                    deb_url = None
+                    for asset in assets:
+                        name = asset.get("name", "")
+                        if name.endswith(".tar.gz"):
+                            tar_url = asset.get("browser_download_url")
+                        elif name.endswith(".deb"):
+                            deb_url = asset.get("browser_download_url")
+
+                    if deb_url:
+                        print(f"Debian/Ubuntu package: {deb_url}")
+                    if tar_url:
+                        print(f"Universal tarball:     {tar_url}")
+                    print("\nTo update, download the package for your system or re-run install.sh.")
+                else:
+                    print(f"✅ Wispo is up to date (v{current_version}).")
+                return 0
+    except Exception as exc:
+        print(f"Could not check for updates: {exc}")
+        print(f"Visit https://github.com/{repo}/releases to check manually.")
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="wispo")
-    parser.add_argument("command", choices=("transcribe", "benchmark"))
+    args_list = list(sys.argv[1:] if argv is None else argv)
+
+    # Bare `wispo` command launches the desktop background service
+    if not args_list:
+        from wispo.service import main as service_main
+
+        return service_main([])
+
+    if args_list[0] in ("-v", "--version", "version"):
+        from importlib.metadata import version as get_pkg_version
+
+        ver = "0.1.0"
+        try:
+            ver = get_pkg_version("wispo")
+        except Exception:
+            pass
+        print(f"Wispo v{ver}")
+        return 0
+
+    parser = argparse.ArgumentParser(
+        prog="wispo",
+        description="Wispo - Local offline speech transcription service for Linux",
+    )
+    parser.add_argument(
+        "command",
+        choices=("service", "settings", "transcribe", "benchmark", "update"),
+        help="Command to run (default: service)",
+    )
     parser.add_argument("rest", nargs=argparse.REMAINDER)
-    args = parser.parse_args(argv)
-    if args.command == "transcribe":
+    args = parser.parse_args(args_list)
+
+    if args.command == "service":
+        from wispo.service import main as service_main
+
+        return service_main(args.rest)
+    elif args.command == "settings":
+        from wispo.settings import main as settings_main
+
+        return settings_main(args.rest)
+    elif args.command == "update":
+        return update_main(args.rest)
+    elif args.command == "transcribe":
         return transcribe_main(args.rest)
-    return benchmark_main(args.rest)
+    elif args.command == "benchmark":
+        return benchmark_main(args.rest)
+    return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

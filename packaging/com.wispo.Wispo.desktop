@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Wispo
+GenericName=Speech Transcription
+Comment=Hold hotkey to transcribe speech offline into any focused window
+Exec=/usr/bin/wispo
+Icon=com.wispo.Wispo
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Accessibility;
+StartupNotify=false
+StartupWMClass=com.wispo.Wispo
+Keywords=speech;voice;transcription;whisper;dictation;sycl;offline;

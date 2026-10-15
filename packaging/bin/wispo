@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -e
+
+# System wrapper script for Wispo
+# Checks for isolated venv in /opt/wispo, local python package, or system fallback
+
+if [ -x "/opt/wispo/venv/bin/python" ]; then
+    exec /opt/wispo/venv/bin/python -m wispo.cli "$@"
+elif [ -x "/opt/wispo/bin/wispo" ]; then
+    exec /opt/wispo/bin/wispo "$@"
+elif command -v uv >/dev/null 2>&1 && [ -d "/opt/wispo" ]; then
+    exec uv run --directory /opt/wispo wispo "$@"
+elif command -v python3 >/dev/null 2>&1; then
+    exec python3 -m wispo.cli "$@"
+else
+    echo "Error: Unable to locate a valid Python runtime for Wispo in /opt/wispo" >&2
+    exit 1
+fi

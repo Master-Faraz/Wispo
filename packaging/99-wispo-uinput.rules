@@ -1,0 +1,3 @@
+# Allow desktop users access to /dev/uinput for text injection in Wispo
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+KERNEL=="uinput", GROUP="input", MODE="0660"
