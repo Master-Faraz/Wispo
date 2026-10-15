@@ -31,7 +31,8 @@ flowchart LR
 - `wispo.service` is the desktop-service entry point. It installs a local desktop-entry file, claims `org.wispo.Service` on the session bus, opens the settings UI, and starts the listener worker.
 - A second service invocation asks the running service to present its settings window instead of starting another listener.
 - Closing settings hides the window. The explicit **Quit** action requests shutdown, stops the listener, closes status integration, and closes the HUD.
-- `wispo.settings` runs the settings UI alone. `wispo transcribe` and `wispo benchmark` are the terminal entry points.
+- `wispo.settings` runs the settings UI alone. `wispo transcribe` and `wispo benchmark` are the terminal audio and latency evaluation entry points. `wispo update` checks GitHub Releases for new binary distributions.
+- The system package installs `/usr/bin/wispo`, which dispatches commands to the isolated runtime in `/opt/wispo`.
 
 The service creates files outside the checkout:
 

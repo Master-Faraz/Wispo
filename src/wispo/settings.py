@@ -227,7 +227,25 @@ SVG_ICONS = {
     "trash": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>""",
     "sparkles": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>""",
     "flask": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31L4.69 18.5A2 2 0 0 0 6.4 21.5h11.2a2 2 0 0 0 1.71-3L14 9.31V2"/><path d="M8.5 2h7"/><path d="M6.5 16h11"/></svg>""",
+    "github": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>""",
+    "copy": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>""",
+    "external_link": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>""",
+    "check_circle": """<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>""",
+    "terminal": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>""",
+    "heart": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#f43f5e" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>""",
+    "bug": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>""",
+    "mail": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>""",
+    "linkedin": """<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>""",
+    "chevron_down": """<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>""",
 }
+
+GITHUB_REPO_URL = "https://github.com/Master-Faraz/Wispo"
+GITHUB_BUG_REPORT_URL = "https://github.com/Master-Faraz/Wispo/issues/new"
+GITHUB_FEATURE_REQUEST_URL = "https://github.com/Master-Faraz/Wispo/discussions/categories/ideas-feature-requests"
+GITHUB_DISCUSSIONS_URL = "https://github.com/Master-Faraz/Wispo/discussions/categories/general"
+GITHUB_RELEASES_URL = "https://github.com/Master-Faraz/Wispo/releases"
+LINKEDIN_PROFILE_URL = "https://www.linkedin.com/in/master-faraz"
+
 
 def _load_settings_css() -> str:
     css_path = Path(__file__).resolve().parent / "assets" / "settings.css"
@@ -367,6 +385,13 @@ class SettingsApp:
         self._hw_lang_drop_down = None
         self._language_options: list[tuple[str, str]] = []
 
+        # About state
+        self._about_update_btn = None
+        self._about_update_status_lbl = None
+        self._about_view_release_btn = None
+        self._is_checking_updates = False
+        self._latest_release_url = GITHUB_RELEASES_URL
+
         # Navigation state
         self._main_stack = None
         self._sidebar_nav_rows: dict[str, object] = {}
@@ -412,7 +437,7 @@ class SettingsApp:
         badge.append(ic)
         return badge
 
-    def _make_brand_icon(self, badge=None):
+    def _make_brand_icon(self, badge=None, pixel_size: int = 32):
         from wispo.desktop import find_logo_path
 
         logo_path = find_logo_path()
@@ -420,14 +445,15 @@ class SettingsApp:
             try:
                 from gi.repository import GdkPixbuf, Gdk, GLib
 
-                # Render at 64x64 for crisp 2x retina display and strictly lock widget to 32px
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(logo_path), 64, 64, True)
+                # Render at 2x scale for crisp retina display
+                render_scale = pixel_size * 2
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(logo_path), render_scale, render_scale, True)
                 success, buffer = pixbuf.save_to_bufferv("png", [], [])
                 if success:
                     bytes_data = GLib.Bytes.new(buffer)
                     texture = Gdk.Texture.new_from_bytes(bytes_data)
                     img = self.gtk.Image.new_from_paintable(texture)
-                    img.set_pixel_size(32)
+                    img.set_pixel_size(pixel_size)
                     img.set_hexpand(False)
                     img.set_vexpand(False)
                     return img
@@ -534,12 +560,9 @@ class SettingsApp:
         hardware_panel = self._build_hardware_panel()
         self._main_stack.add_named(hardware_panel, "hardware")
 
-        # 6. Placeholders for other sidebar sections
-        placeholders = [
-            ("about", "About Wispo", "System diagnostics, version info, and credits."),
-        ]
-        for p_name, p_title, p_sub in placeholders:
-            self._main_stack.add_named(self._build_placeholder_panel(p_title, p_sub), p_name)
+        # 6. About Section (Full width studio)
+        about_panel = self._build_about_panel()
+        self._main_stack.add_named(about_panel, "about")
 
         # Wrap stack in a window handle so the user can drag window anywhere
         handle = gtk.WindowHandle()
@@ -2497,6 +2520,330 @@ class SettingsApp:
             code, name = self._language_options[idx]
             self._hardware_language = code
             self._status_label.set_markup(f"<span font_size='8.5pt' color='#34d399'>● Language set to {pango_esc(name)}. Click Save to apply.</span>")
+
+    # -------------------------------------------------------------------------
+    # About Section: Identity, Community & Support, Updates
+    # -------------------------------------------------------------------------
+    def _build_about_panel(self):
+        gtk = self.gtk
+
+        scroller = gtk.ScrolledWindow()
+        scroller.set_policy(gtk.PolicyType.NEVER, gtk.PolicyType.AUTOMATIC)
+        scroller.set_hexpand(True)
+        scroller.set_vexpand(True)
+
+        vbox = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=14)
+        vbox.add_css_class("about-panel")
+        vbox.set_hexpand(True)
+
+        # 1. Header Title Row
+        top_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        head_text = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        title = gtk.Label(label="About Wispo", xalign=0)
+        title.set_markup("<span font_weight='800' font_size='18pt' color='#ffffff'>About Wispo</span>")
+        sub = gtk.Label(label="App identity, community support, and software updates.", xalign=0)
+        sub.set_markup("<span font_size='9pt' alpha='55%'>App identity, community support, and software updates.</span>")
+        head_text.append(title)
+        head_text.append(sub)
+        top_row.append(head_text)
+        vbox.append(top_row)
+
+        # 2. Section 1: App Identity (Compact)
+        vbox.append(self._build_about_identity_card())
+
+        # 3. Section 2: Dedicated Community & Support
+        vbox.append(self._build_about_community_card())
+
+        # 4. Section 3: Dedicated Software Updates
+        vbox.append(self._build_about_updates_card())
+
+        scroller.set_child(vbox)
+        return scroller
+
+    def _build_about_identity_card(self):
+        gtk = self.gtk
+        import wispo
+
+        card = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=16)
+        card.add_css_class("about-hero-card")
+
+        # Wispo app icon directly without purple frame
+        app_icon = self._make_brand_icon(pixel_size=42)
+        app_icon.set_valign(gtk.Align.CENTER)
+        card.append(app_icon)
+
+        # Middle Column: Brand Title + Version Pill, and Tagline
+        text_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4, hexpand=True, valign=gtk.Align.CENTER)
+
+        name_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+        name_lbl = gtk.Label(label="Wispo", xalign=0)
+        name_lbl.set_markup("<span font_weight='800' font_size='15pt' color='#ffffff'>Wispo</span>")
+        name_row.append(name_lbl)
+
+        ver_pill = gtk.Label(label=f"v{wispo.__version__} Alpha")
+        ver_pill.add_css_class("about-version-pill")
+        ver_pill.set_valign(gtk.Align.CENTER)
+        name_row.append(ver_pill)
+        text_col.append(name_row)
+
+        tagline = gtk.Label(xalign=0)
+        tagline.set_markup("<span font_size='9pt' alpha='65%'>Fast, free, private, local voice dictation for Linux.</span>")
+        text_col.append(tagline)
+        card.append(text_col)
+
+        # Right: GitHub Repository Button
+        gh_btn = gtk.Button()
+        gh_btn.add_css_class("btn-learn")
+        gh_btn.set_cursor_from_name("pointer")
+        gh_btn.set_valign(gtk.Align.CENTER)
+        gh_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6, valign=gtk.Align.CENTER)
+        gh_box.append(self._make_svg("github"))
+        gh_box.append(gtk.Label(label="GitHub Repository"))
+        gh_btn.set_child(gh_box)
+        gh_btn.connect("clicked", lambda *_: self._open_url(GITHUB_REPO_URL))
+        card.append(gh_btn)
+
+        return card
+
+    def _build_about_community_card(self):
+        gtk = self.gtk
+
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        # Header Row
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("sparkles", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Community & Support", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Community &amp; Support</span>")
+        s = gtk.Label(label="Report issues, request features, join discussions, or connect with the developer.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Report issues, request features, join discussions, or connect with the developer.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        # Action Buttons row: uses standard btn-learn matching the rest of the application
+        btn_row = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8)
+
+        def _make_community_btn(label: str, icon_name: str, url: str):
+            btn = gtk.Button()
+            btn.add_css_class("btn-learn")
+            btn.set_cursor_from_name("pointer")
+            btn.set_hexpand(True)
+
+            box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6, halign=gtk.Align.CENTER, valign=gtk.Align.CENTER)
+            box.append(self._make_svg(icon_name))
+            box.append(gtk.Label(label=label))
+            btn.set_child(box)
+            btn.connect("clicked", lambda *_: self._open_url(url))
+            return btn
+
+        btn_row.append(_make_community_btn("Report a Bug", "bug", GITHUB_BUG_REPORT_URL))
+        btn_row.append(_make_community_btn("Request a Feature", "sparkles", GITHUB_FEATURE_REQUEST_URL))
+        btn_row.append(_make_community_btn("Community Discussions", "terminal", GITHUB_DISCUSSIONS_URL))
+        btn_row.append(_make_community_btn("Contact Developer", "linkedin", LINKEDIN_PROFILE_URL))
+
+        card.append(btn_row)
+        return card
+
+    def _build_about_updates_card(self):
+        gtk = self.gtk
+        import wispo
+
+        card = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=12)
+        card.add_css_class("audio-card")
+
+        # Header Row
+        hdr = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=10)
+        badge = self._make_badge("refresh", "audio-badge", 28)
+        hdr.append(badge)
+
+        t_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=2, hexpand=True)
+        t = gtk.Label(label="Updates", xalign=0)
+        t.set_markup("<span font_weight='700' font_size='11pt' color='#ffffff'>Updates</span>")
+        s = gtk.Label(label="Query official GitHub releases to check for new versions.", xalign=0)
+        s.set_markup("<span font_size='8.5pt' alpha='55%'>Query official GitHub releases to check for new versions.</span>")
+        t_col.append(t)
+        t_col.append(s)
+        hdr.append(t_col)
+        card.append(hdr)
+
+        # Status & Action Row
+        content_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=12, valign=gtk.Align.CENTER)
+
+        # Left Info column: Installed version + live status
+        info_col = gtk.Box(orientation=gtk.Orientation.VERTICAL, spacing=4, hexpand=True)
+
+        ver_lbl = gtk.Label(xalign=0)
+        ver_lbl.set_markup(
+            f"<span font_size='9pt' color='#e2e8f0'>Installed version: <b>v{pango_esc(wispo.__version__)} Alpha</b></span>"
+        )
+        info_col.append(ver_lbl)
+
+        self._about_update_status_lbl = gtk.Label(xalign=0)
+        self._about_update_status_lbl.set_wrap(True)
+        self._about_update_status_lbl.set_markup(
+            "<span font_size='8.5pt' alpha='60%'>● Not verified yet • Click 'Check for Updates' to query official releases</span>"
+        )
+        info_col.append(self._about_update_status_lbl)
+        content_box.append(info_col)
+
+        # Right Action column: Check for Updates & View Release Notes buttons
+        btn_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=8, valign=gtk.Align.CENTER)
+
+        # Check for Updates button
+        check_btn = gtk.Button()
+        check_btn.add_css_class("btn-save-purple")
+        check_btn.set_cursor_from_name("pointer")
+        b_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6, halign=gtk.Align.CENTER, valign=gtk.Align.CENTER)
+        b_box.append(self._make_svg("refresh"))
+        b_box.append(gtk.Label(label="Check for Updates"))
+        check_btn.set_child(b_box)
+        check_btn.connect("clicked", self._on_check_for_updates_clicked)
+        self._about_update_btn = check_btn
+        btn_box.append(check_btn)
+
+        # View Release Notes button
+        view_rel_btn = gtk.Button()
+        view_rel_btn.add_css_class("btn-learn")
+        view_rel_btn.set_cursor_from_name("pointer")
+        rel_box = gtk.Box(orientation=gtk.Orientation.HORIZONTAL, spacing=6, halign=gtk.Align.CENTER, valign=gtk.Align.CENTER)
+        rel_box.append(self._make_svg("external_link"))
+        rel_box.append(gtk.Label(label="View Release Notes"))
+        view_rel_btn.set_child(rel_box)
+        view_rel_btn.connect("clicked", lambda *_: self._open_url(self._latest_release_url))
+        self._about_view_release_btn = view_rel_btn
+        btn_box.append(view_rel_btn)
+
+        content_box.append(btn_box)
+        card.append(content_box)
+
+        return card
+
+    def _open_url(self, url: str) -> None:
+        import webbrowser
+        try:
+            webbrowser.open(url)
+        except Exception:
+            try:
+                import subprocess
+                subprocess.Popen(["xdg-open", url])
+            except Exception:
+                pass
+
+    def _on_check_for_updates_clicked(self, *_args) -> None:
+        if self._is_checking_updates:
+            return
+        self._is_checking_updates = True
+        if self._about_update_btn:
+            self._about_update_btn.set_sensitive(False)
+        if self._about_update_status_lbl:
+            self._about_update_status_lbl.set_markup(
+                "<span font_size='8.5pt' color='#a5b4fc'>● Checking GitHub for latest release...</span>"
+            )
+
+        thread = threading.Thread(target=self._run_github_update_check, daemon=True)
+        thread.start()
+
+    def _run_github_update_check(self) -> None:
+        import json
+        import urllib.error
+        import urllib.request
+        from gi.repository import GLib
+        import wispo
+
+        current_ver_str = getattr(wispo, "__version__", "0.1.0").lstrip("v")
+        repo = "Master-Faraz/Wispo"
+        api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+        headers = {
+            "User-Agent": f"Wispo-Desktop/{current_ver_str}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+
+        def parse_ver(v_str: str) -> tuple[int, ...]:
+            clean = "".join(c if (c.isdigit() or c == ".") else " " for c in v_str.strip()).strip()
+            parts = clean.split()
+            if parts:
+                nums = [int(p) for p in parts[0].split(".") if p.isdigit()]
+                return tuple(nums)
+            return (0,)
+
+        try:
+            req = urllib.request.Request(api_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                tag = data.get("tag_name", "").strip()
+                html_url = data.get("html_url", GITHUB_RELEASES_URL)
+                remote_ver = parse_ver(tag)
+                curr_ver = parse_ver(current_ver_str)
+                if remote_ver > curr_ver:
+                    GLib.idle_add(self._on_update_check_finished, "update_available", tag, html_url)
+                else:
+                    GLib.idle_add(self._on_update_check_finished, "up_to_date", current_ver_str, html_url)
+                return
+        except urllib.error.HTTPError as err:
+            if err.code == 404:
+                # Check tags as fallback
+                tags_url = f"https://api.github.com/repos/{repo}/tags"
+                try:
+                    req_tags = urllib.request.Request(tags_url, headers=headers)
+                    with urllib.request.urlopen(req_tags, timeout=6) as t_resp:
+                        tags_data = json.loads(t_resp.read().decode("utf-8"))
+                        if tags_data:
+                            t_name = tags_data[0].get("name", "").strip()
+                            remote_ver = parse_ver(t_name)
+                            curr_ver = parse_ver(current_ver_str)
+                            if remote_ver > curr_ver:
+                                GLib.idle_add(
+                                    self._on_update_check_finished,
+                                    "update_available",
+                                    t_name,
+                                    f"https://github.com/{repo}/releases/tag/{t_name}",
+                                )
+                                return
+                except Exception:
+                    pass
+                GLib.idle_add(self._on_update_check_finished, "up_to_date", current_ver_str, GITHUB_RELEASES_URL)
+                return
+            elif err.code == 403:
+                GLib.idle_add(self._on_update_check_finished, "rate_limited", "GitHub rate limit reached", GITHUB_RELEASES_URL)
+                return
+            else:
+                GLib.idle_add(self._on_update_check_finished, "error", f"HTTP {err.code}", GITHUB_RELEASES_URL)
+                return
+        except Exception as exc:
+            GLib.idle_add(self._on_update_check_finished, "error", str(exc), GITHUB_RELEASES_URL)
+
+    def _on_update_check_finished(self, status: str, info: str, url: str) -> None:
+        self._is_checking_updates = False
+        if self._about_update_btn:
+            self._about_update_btn.set_sensitive(True)
+
+        if status == "update_available":
+            self._latest_release_url = url
+            if self._about_update_status_lbl:
+                self._about_update_status_lbl.set_markup(
+                    f"<span font_size='8.5pt' color='#fbbf24'>● Update available: <b>{pango_esc(info)}</b> (Manual install required)</span>"
+                )
+        elif status == "up_to_date":
+            if self._about_update_status_lbl:
+                self._about_update_status_lbl.set_markup(
+                    f"<span font_size='8.5pt' color='#34d399'>● Wispo is up to date (v{pango_esc(info)}) • Verified just now</span>"
+                )
+        elif status == "rate_limited":
+            if self._about_update_status_lbl:
+                self._about_update_status_lbl.set_markup(
+                    "<span font_size='8.5pt' color='#fbbf24'>● GitHub API rate limit reached. View releases directly via Release Notes.</span>"
+                )
+        else:
+            if self._about_update_status_lbl:
+                self._about_update_status_lbl.set_markup(
+                    "<span font_size='8.5pt' alpha='65%'>● Offline or unable to reach GitHub. Check repository.</span>"
+                )
 
     # -------------------------------------------------------------------------
     # Column 2: Center Model Selection List

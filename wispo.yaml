@@ -29,20 +29,11 @@ dictionary:
 - phrase: javascript
   replacement: JavaScript
   enabled: true
-- phrase: whisper flow
-  replacement: Wispo
-  enabled: true
-- phrase: wispo
-  replacement: Wispo
-  enabled: true
-- phrase: anti-gravity
-  replacement: Antigravity
-  enabled: true
-- phrase: anti gravity
-  replacement: Antigravity
-  enabled: true
 - phrase: tensor flow
   replacement: TensorFlow
+  enabled: true
+- phrase: open a i
+  replacement: OpenAI
   enabled: true
 hotkey:
   keys:

@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|deconfigure|upgrade)
+        # Terminate any running wispo instance
+        pkill -f "wispo.service" 2>/dev/null || true
+        pkill -f "wispo.cli" 2>/dev/null || true
+        ;;
+esac
+
+exit 0

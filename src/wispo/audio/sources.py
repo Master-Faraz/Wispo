@@ -1,8 +1,9 @@
-"""Pick the laptop microphone instead of PipeWire's default device.
+"""Resolve the configured audio device to an ALSA name and PipeWire target.
 
-On this machine the default ALSA capture device follows a Bluetooth sink
-loopback and returns silence. The real microphones are separate PipeWire
-sources. `wpctl status` lists them; we prefer the built-in digital mic.
+When device is 'auto', uses wpctl to select a PipeWire digital microphone
+source. Some desktops route the ALSA default device to a loopback or
+Bluetooth sink that returns silence; auto selection avoids that by
+explicitly targeting the built-in digital microphone when one is detected.
 """
 
 from __future__ import annotations

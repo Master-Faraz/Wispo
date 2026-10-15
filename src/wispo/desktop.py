@@ -1,8 +1,8 @@
-"""Launcher entry for the background process.
+"""Desktop entry and icon installation for the background service.
 
-The path is this machine's project and virtualenv, written into the user's
-local applications directory so Ubuntu's launcher can start Wispo
-without a terminal.
+Installs a .desktop file and application icons under ~/.local/share/ so
+the service can be launched from the system application launcher without
+a terminal.
 """
 
 from __future__ import annotations
