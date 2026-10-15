@@ -12,6 +12,10 @@ If you're on macOS or Windows, Whisper Flow is still an excellent choice. Wispo 
 
 Wispo is completely free, with no word limits and no telemetry. I built it to solve a problem I faced myself, and I decided to open-source it so that others facing the same challenges could benefit from it too. If Wispo makes life a little easier for someone like me, then it's doing exactly what I built it for.
 
+<p align="center">
+  <img src="public/wispo.png" alt="Wispo Settings Dashboard" width="100%" />
+</p>
+
 ---
 
 ## Project Scope
@@ -23,7 +27,7 @@ The current scope is deliberately narrow:
 - local Whisper inference through `whisper.cpp`;
 - Linux input-event hotkeys and the XDG RemoteDesktop portal;
 - GTK4 desktop configuration and feedback;
-- Intel SYCL or CPU runtime selection from the current native build. Working on optimizing it to use the NPU which will be released on next update,
+- Intel SYCL or CPU runtime selection from the current native build. NPU acceleration is planned, but not implemented.
 
 NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
@@ -46,24 +50,37 @@ NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
 ### Installation methods
 
-| Method                               | Compatibility                                            | Status         |
-| ------------------------------------ | -------------------------------------------------------- | -------------- |
-| **Universal Tarball (`.tar.gz`)**    | All Linux Distributions (Fedora, Arch, Ubuntu, openSUSE) | ✅ Recommended |
-| **Debian / Ubuntu Package (`.deb`)** | Debian, Ubuntu, Linux Mint, Pop!\_OS                     | ✅ Available   |
-| **From source (Developer Guide)**    | Any Linux with Intel oneAPI SYCL & Python 3.12+          | ✅ Available   |
+| Method | Compatibility | Status |
+| --- | --- | --- |
+| **Linux x86_64 tarball (`.tar.gz`)** | Linux x86_64 with its matching Python runtime, GTK bindings, and a compatible oneAPI runtime | Preview |
+| **Debian / Ubuntu package (`.deb`)** | Debian-family x86_64 systems with Python 3.12+ and a compatible oneAPI runtime | Preview |
+| **From source** | Linux x86_64 with Intel oneAPI SYCL and Python 3.12+ | Available |
 
-#### Quick Install (Universal Tarball)
+#### Quick install (offline tarball)
 
-If you don't wish to compile from source, download the pre-built release package:
+The release archive is an offline **Linux x86_64** bundle. It includes Wispo, `whisper.cpp`/GGML libraries, and a locked offline wheelhouse for `jeepney`, NumPy, Pillow, psutil, and PyYAML. The installer never contacts PyPI.
 
-1. Download `wispo-*-linux-x86_64.tar.gz` from [GitHub Releases](https://github.com/Master-Faraz/Wispo/releases).
-2. Extract the archive and run the installer:
+Before installing, provide the host components that cannot be safely bundled: the matching Python runtime and venv support, GTK/PyGObject, audio libraries, and Intel oneAPI runtime. On Debian/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-gi gir1.2-gtk-4.0 libasound2
+```
+
+Install Intel oneAPI as described in [Step 4](#step-4--install-the-intel-oneapi-sycl-compiler) and [Step 5](#step-5--install-onemkl-and-level-zero-development-files) below. The current native build dynamically links oneAPI runtime libraries even when `asr.device: cpu` is selected.
+
+1. Download `wispo-*-linux-x86_64.tar.gz` and `SHA256SUMS` from [GitHub Releases](https://github.com/Master-Faraz/Wispo/releases).
+2. Verify the archive checksum:
+   ```bash
+   sha256sum -c SHA256SUMS
+   ```
+3. Extract the archive and run the installer:
    ```bash
    tar -xzf wispo-*-linux-x86_64.tar.gz
    cd wispo
    sudo ./install.sh
    ```
-3. Launch **Wispo** from your Application Menu or run `wispo` in any terminal.
+4. Launch **Wispo** from your Application Menu or run `wispo` in any terminal.
 
 To uninstall at any time:
 
@@ -75,14 +92,18 @@ sudo /opt/wispo/uninstall.sh
 
 ## What It Does
 
+<p align="center">
+  <img src="public/transcription.png" alt="Wispo Live Dictation HUD" width="100%" />
+</p>
+
 - **Local inference**: Audio capture, voice activity detection, and speech transcription run on your machine. Wispo does not send microphone audio or transcripts to a remote transcription service.
-- **Local logs and model downloads**: The desktop service writes diagnostic logs, including final transcripts, to `~/.local/state/wispo/service.log`. Model downloads make network requests to the configured Hugging Face / ggml repositories through `download_model.sh` or the GUI model manager.
+- **Local logs and optional network requests**: The desktop service writes diagnostic logs, including final transcripts, to `~/.local/state/wispo/service.log`. Model downloads contact the configured Hugging Face / ggml repositories; an explicit `wispo update` or Settings update check contacts GitHub Releases. Neither sends microphone audio or transcripts.
 - Reads a configurable hold-to-talk chord from Linux input devices (the Copilot key by default).
 - Captures 16 kHz mono audio through ALSA (including PipeWire's ALSA plugin), runs voice activity detection, and sends speech frames through a sliding window to whisper.cpp.
 - On key release, re-transcribes the full utterance, applies the configured replacement dictionary, and injects the final text into the focused application via the XDG RemoteDesktop portal.
 - Provides a GTK4 settings window, a click-through recording HUD, a desktop launcher entry, and a D-Bus status item.
 
-The desktop portal may display a one-time permission prompt before Wispo can inject keystrokes.
+The desktop portal may prompt for keyboard permission before Wispo can inject keystrokes. It can prompt again after permission is revoked or a portal session cannot be restored.
 
 ---
 
@@ -214,7 +235,7 @@ Once compiled, you can run inference using your Intel Arc GPU (`asr.device: sycl
 bash scripts/download_model.sh small.en
 ```
 
-Model files are stored in `models/` and are ignored by Git. The settings window can also download catalogue models. See the [model guide](#models) below.
+Model files are stored in `models/` and are ignored by Git. Installed packages store downloaded models in `~/.local/share/wispo/models/` by default. The settings window can also download catalogue models. See the [model guide](#models) below.
 
 ---
 
@@ -344,9 +365,8 @@ Equivalent module entry points: `python -m wispo.service`, `python -m wispo.sett
    - If your laptop keyboard does not have a dedicated physical Copilot key, open the GUI **Push-to-talk** tab and choose an ergonomic preset (such as `Right Ctrl`, `Alt + Space`, or `Super + H`) or record a custom chord with **Shortcut Studio**.
 4. **Performance & Latency Profiles (`streaming.*`)**:
    - In the GUI **Hardware** tab:
-     - **Snappy** (500 ms chunk / 3000 ms buffer): Fastest typing feedback, requires modern CPU/GPU headroom.
-     - **Balanced** (1000 ms chunk / 5000 ms buffer): Default, well-balanced for most laptops.
-     - **Power Saver** (2000 ms chunk / 7000 ms buffer): Conserves battery and minimizes processor usage.
+     - **Snappy** (500 ms chunk / 3000 ms buffer), **Balanced** (1000 ms / 5000 ms), and **Power Saver** (2000 ms / 7000 ms) change intermediate-window settings.
+     - These affect terminal partials and inference work; the desktop service injects only the final transcript after key release. Benchmark on your hardware rather than treating them as guaranteed latency or power profiles.
 5. **Microphone & VAD Sensitivity (`audio.device` & `vad.*`)**:
    - In the GUI **Audio** tab, click **▶ Test Microphone** to monitor the live VU meter and test voice trigger response.
    - Use the presets: **Quiet** (sensitive microphones / quiet rooms), **Balanced** (standard), or **Noisy** (cafes or loud laptop fan environments). The high-pass filter slider attenuates low-frequency desk vibrations and HVAC rumble.
@@ -360,7 +380,7 @@ Wispo includes a dedicated, full-featured GTK4 configuration application. Launch
 | Settings Tab                      | Configurable Features & Options                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Model** (`model`)               | • Browse catalogue of supported models (`tiny.en` to `large-v3-turbo`, `distil-*`).<br>• One-click model downloading with real-time progress indicators.<br>• Switch active models without editing configuration files.<br>• View model disk size, parameter count, and quantization details.                                                                                                                                                                                                                                                    |
-| **Audio** (`audio`)               | • **Live VU Meter**: Real-time dB level bar (`-60 dB` to `0 dB`) and speech detection state.<br>• **Microphone Tester**: Live audio check without injecting text.<br>• **Input Device Selector**: Automatically enumerates and switches between ALSA and PipeWire microphone sources.<br>• **VAD Sliders**: RMS energy threshold, trailing silence (hangover ms), and high-pass rumble filter (Hz).<br>• **One-Click Presets**: _Quiet_, _Balanced_, and _Noisy_.                                                                                |
+| **Audio** (`audio`)               | • **Live VU Meter** and microphone test without text injection.<br>• **Input Device Selector**: lists PipeWire sources discovered through `wpctl` and captures through ALSA/PipeWire ALSA.<br>• **VAD Sliders**: RMS energy threshold, trailing silence (hangover ms), and high-pass rumble filter (Hz).<br>• **One-Click Presets**: _Quiet_, _Balanced_, and _Noisy_. |
 | **Push-to-talk** (`push_to_talk`) | • **Shortcut Studio**: Visual keycap chip display and live keyboard chord recorder.<br>• **Hardware Presets**: _Copilot Key_ (single key), _Right Ctrl_ (single key), _Ctrl + Super + Space_ (Raycast/Spotlight style), _Alt + Space_ (thumb chord), _Super + H_ (standard dictation).<br>• Single-click reset to default shortcut.                                                                                                                                                                                                              |
 | **Dictionary** (`dictionary`)     | • **Vocabulary Replacements**: Correct phonetic misrecognitions or format domain jargon (e.g. `github` → `GitHub`, `open a i` → `OpenAI`).<br>• Interactive rule composer with instant add, per-rule toggle switch (enable/disable), and delete buttons.                                                                                                                                                                                                                                                                                         |
 | **Hardware** (`hardware`)         | • **Inference CPU Threads**: Slider with **⚡ Auto Recommend** core calculation.<br>• **Compute Device**: Choose _Auto-Detect_, _GPU Acceleration (Intel SYCL)_, or _CPU Only (Safe Fallback)_.<br>• **GPU Device Index**: Multi-GPU target selector (`0`, `1`, etc.).<br>• **Latency Profiles**: _Snappy_, _Balanced_, or _Power Saver_ presets.<br>• **Spoken Language**: Dropdown supporting English, Spanish, French, German, Hindi, Chinese, Japanese, Italian, Portuguese, Russian, Korean, or Auto-Detect (requires multilingual models). |
@@ -370,7 +390,7 @@ Wispo includes a dedicated, full-featured GTK4 configuration application. Launch
 
 ### Direct YAML Configuration (`wispo.yaml`)
 
-All settings changed in the GUI are automatically saved to [`wispo.yaml`](wispo.yaml) at the repository root. You can also edit this file directly:
+Use the Settings window's **Save** action to write settings. In a source checkout it writes [`wispo.yaml`](wispo.yaml) at the repository root; installed packages write `~/.local/share/wispo/wispo.yaml` by default. You can also edit the active file directly:
 
 ```yaml
 audio:

@@ -75,12 +75,19 @@ def install_icons(root: Path | str | None = None, icons_base: Path | None = None
     return installed
 
 
-def desktop_entry_text(python: str, root: str, icon_name: str = APP_ID, name: str = "Wispo") -> str:
+def desktop_entry_text(
+    python: str,
+    root: str,
+    icon_name: str = APP_ID,
+    name: str = "Wispo",
+    command: str | None = None,
+) -> str:
+    command = command or f"{python} -m wispo.service"
     return (
         "[Desktop Entry]\n"
         f"Name={name}\n"
         "Comment=Hold Ctrl+Super to transcribe into the focused window\n"
-        f"Exec={python} -m wispo.service\n"
+        f"Exec={command}\n"
         f"Path={root}\n"
         f"Icon={icon_name}\n"
         "Terminal=false\n"
@@ -91,7 +98,12 @@ def desktop_entry_text(python: str, root: str, icon_name: str = APP_ID, name: st
     )
 
 
-def install_desktop_entry(python: str, root: str, directory: Path | None = None) -> Path:
+def install_desktop_entry(
+    python: str,
+    root: str,
+    directory: Path | None = None,
+    command: str | None = None,
+) -> Path:
     folder = directory or (Path.home() / ".local" / "share" / "applications")
     folder.mkdir(parents=True, exist_ok=True)
     try:
@@ -99,7 +111,7 @@ def install_desktop_entry(python: str, root: str, directory: Path | None = None)
     except Exception:
         pass
     path = folder / DESKTOP_ID
-    entry_text = desktop_entry_text(python, root)
+    entry_text = desktop_entry_text(python, root, command=command)
     path.write_text(entry_text, encoding="utf-8")
 
     # Clean up old desktop entry if named differently

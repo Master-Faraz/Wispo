@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
 set -e
 
-# System wrapper script for Wispo
-# Checks for isolated venv in /opt/wispo, local python package, or system fallback
+# System wrapper for the packaged application. Tarball installations use the
+# private offline-installed venv; Debian packages use distribution packages.
+# Application code and native whisper.cpp libraries stay under /opt.
 
-if [ -x "/opt/wispo/venv/bin/python" ]; then
-    exec /opt/wispo/venv/bin/python -m wispo.cli "$@"
-elif [ -x "/opt/wispo/bin/wispo" ]; then
-    exec /opt/wispo/bin/wispo "$@"
-elif command -v uv >/dev/null 2>&1 && [ -d "/opt/wispo" ]; then
-    exec uv run --directory /opt/wispo wispo "$@"
-elif command -v python3 >/dev/null 2>&1; then
-    exec python3 -m wispo.cli "$@"
-else
-    echo "Error: Unable to locate a valid Python runtime for Wispo in /opt/wispo" >&2
+WISPO_HOME="/opt/wispo"
+if [ ! -d "${WISPO_HOME}/src" ]; then
+    echo "Error: Wispo is not installed at ${WISPO_HOME}." >&2
     exit 1
 fi
+
+export WISPO_DATA_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/wispo"
+export WISPO_DESKTOP_LAUNCHER="/usr/bin/wispo"
+export PYTHONPATH="${WISPO_HOME}/src${PYTHONPATH:+:${PYTHONPATH}}"
+export LD_LIBRARY_PATH="${WISPO_HOME}/native/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+if [ -x "${WISPO_HOME}/venv/bin/python" ]; then
+    exec "${WISPO_HOME}/venv/bin/python" -m wispo.cli "$@"
+fi
+
+exec python3 -m wispo.cli "$@"

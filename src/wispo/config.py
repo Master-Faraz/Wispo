@@ -7,6 +7,8 @@ the YAML itself, so a test can build a Config without a file.
 
 from __future__ import annotations
 
+import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,6 +21,34 @@ def project_root() -> Path:
         if (parent / "pyproject.toml").is_file():
             return parent
     return Path.cwd()
+
+
+def runtime_data_root() -> Path | None:
+    """Return the per-user data directory selected by a package launcher.
+
+    Source checkouts deliberately keep their configuration and models beside the
+    project. Installed packages set ``WISPO_DATA_DIR`` so a normal desktop user
+    never has to write into the root-owned application directory.
+    """
+    raw = os.environ.get("WISPO_DATA_DIR", "").strip()
+    return Path(raw).expanduser() if raw else None
+
+
+def config_path(create: bool = False) -> Path:
+    """Return the active settings file, optionally creating its user copy."""
+    data_root = runtime_data_root()
+    if data_root is None:
+        return project_root() / "wispo.yaml"
+
+    target = data_root / "wispo.yaml"
+    if create and not target.exists():
+        data_root.mkdir(parents=True, exist_ok=True)
+        template = project_root() / "wispo.yaml"
+        if template.is_file():
+            shutil.copyfile(template, target)
+        else:
+            target.write_text("{}\n", encoding="utf-8")
+    return target
 
 
 @dataclass(frozen=True)
@@ -98,6 +128,9 @@ class Config:
         candidate = Path(path)
         if candidate.is_file():
             return candidate
+        data_root = runtime_data_root()
+        if data_root is not None:
+            return data_root / path
         rooted = project_root() / path
         return rooted
 
@@ -115,7 +148,11 @@ def _section(data: dict, name: str, cls):
 
 def load_config(path: Path | None = None) -> Config:
     if path is None:
-        wispo_default = project_root() / "wispo.yaml"
+        wispo_default = config_path()
+        # A first packaged launch uses the root-owned template until the user
+        # saves settings. Saving creates the writable per-user copy.
+        if not wispo_default.is_file() and runtime_data_root() is not None:
+            wispo_default = project_root() / "wispo.yaml"
         if wispo_default.is_file():
             path = wispo_default
         else:

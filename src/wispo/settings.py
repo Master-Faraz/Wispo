@@ -23,7 +23,7 @@ import numpy as np
 from wispo.asr.device import select_device
 from wispo.audio.capture import AudioCapture
 from wispo.audio.sources import _node_name, parse_wpctl_sources, resolve_mic
-from wispo.config import DictionaryEntry, load_config, project_root, save_user_settings
+from wispo.config import DictionaryEntry, config_path, load_config, save_user_settings
 from wispo.hotkey.linux import capture_chord, format_chord
 from wispo.models import CATALOG, DEFAULT_MODEL, download_model, installed_models, model_path
 from wispo.processing.dictionary import DictionaryProcessor
@@ -73,7 +73,7 @@ MODEL_METADATA: dict[str, dict] = {
         "speed_label": "Fast",
         "acc_pct": 0.72,
         "acc_label": "Balanced",
-        "tag": "Recommended",
+        "tag": "",
     },
     "small.en": {
         "title": "small.en",
@@ -88,7 +88,7 @@ MODEL_METADATA: dict[str, dict] = {
         "speed_label": "Moderate",
         "acc_pct": 0.86,
         "acc_label": "High",
-        "tag": "",
+        "tag": "Recommended",
     },
     "medium.en": {
         "title": "medium.en",
@@ -3725,7 +3725,7 @@ class SettingsApp:
         if not model_path(model).is_file():
             self._status_label.set_markup(f"<span font_size='8.5pt' color='#f87171'>Please download {pango_esc(model)} before saving.</span>")
             return
-        path = project_root() / "wispo.yaml"
+        path = config_path(create=True)
         vad_data = {
             "rms_threshold": round(float(self._vad_rms_threshold), 4),
             "noise_multiplier": round(float(self._vad_noise_mult), 2),
