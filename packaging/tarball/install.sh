@@ -14,6 +14,15 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="/opt/wispo"
 
+# Support running directly from archive root or packaging/tarball/
+if [ -d "${SCRIPT_DIR}/src" ]; then
+    PAYLOAD_DIR="${SCRIPT_DIR}"
+elif [ -d "${SCRIPT_DIR}/../../src" ]; then
+    PAYLOAD_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+else
+    PAYLOAD_DIR="${SCRIPT_DIR}"
+fi
+
 echo "==> Installing Wispo to ${TARGET_DIR}..."
 
 # 1. Create directory structure
@@ -26,17 +35,17 @@ mkdir -p /etc/udev/rules.d
 
 # 2. Copy application source and assets
 echo "==> Copying application payload..."
-cp -r "${SCRIPT_DIR}/src" "${TARGET_DIR}/"
-cp "${SCRIPT_DIR}/wispo.yaml" "${TARGET_DIR}/" 2>/dev/null || true
-cp "${SCRIPT_DIR}/pyproject.toml" "${TARGET_DIR}/"
-cp "${SCRIPT_DIR}/README.md" "${TARGET_DIR}/" 2>/dev/null || true
-cp "${SCRIPT_DIR}/LICENSE" "${TARGET_DIR}/" 2>/dev/null || true
+cp -r "${PAYLOAD_DIR}/src" "${TARGET_DIR}/"
+cp "${PAYLOAD_DIR}/wispo.yaml" "${TARGET_DIR}/" 2>/dev/null || true
+cp "${PAYLOAD_DIR}/pyproject.toml" "${TARGET_DIR}/"
+cp "${PAYLOAD_DIR}/README.md" "${TARGET_DIR}/" 2>/dev/null || true
+cp "${PAYLOAD_DIR}/LICENSE" "${TARGET_DIR}/" 2>/dev/null || true
 
 # Copy native SYCL / C++ library if built
-if [ -f "${SCRIPT_DIR}/native/build/libwispo_asr.so" ]; then
-    cp "${SCRIPT_DIR}/native/build/libwispo_asr.so" "${TARGET_DIR}/native/build/"
-elif [ -f "${SCRIPT_DIR}/libwispo_asr.so" ]; then
-    cp "${SCRIPT_DIR}/libwispo_asr.so" "${TARGET_DIR}/native/build/"
+if [ -f "${PAYLOAD_DIR}/native/build/libwispo_asr.so" ]; then
+    cp "${PAYLOAD_DIR}/native/build/libwispo_asr.so" "${TARGET_DIR}/native/build/"
+elif [ -f "${PAYLOAD_DIR}/libwispo_asr.so" ]; then
+    cp "${PAYLOAD_DIR}/libwispo_asr.so" "${TARGET_DIR}/native/build/"
 fi
 
 # 3. Setup Python virtual environment
@@ -55,10 +64,10 @@ chmod 755 /usr/bin/wispo
 
 # 5. Install udev rules for /dev/uinput text injection
 echo "==> Configuring uinput permissions..."
-if [ -f "${SCRIPT_DIR}/packaging/99-wispo-uinput.rules" ]; then
-    cp "${SCRIPT_DIR}/packaging/99-wispo-uinput.rules" /etc/udev/rules.d/99-wispo-uinput.rules
-elif [ -f "${SCRIPT_DIR}/99-wispo-uinput.rules" ]; then
-    cp "${SCRIPT_DIR}/99-wispo-uinput.rules" /etc/udev/rules.d/99-wispo-uinput.rules
+if [ -f "${PAYLOAD_DIR}/packaging/99-wispo-uinput.rules" ]; then
+    cp "${PAYLOAD_DIR}/packaging/99-wispo-uinput.rules" /etc/udev/rules.d/99-wispo-uinput.rules
+elif [ -f "${PAYLOAD_DIR}/99-wispo-uinput.rules" ]; then
+    cp "${PAYLOAD_DIR}/99-wispo-uinput.rules" /etc/udev/rules.d/99-wispo-uinput.rules
 fi
 
 if command -v udevadm >/dev/null 2>&1; then
@@ -86,10 +95,10 @@ if logo.is_file():
 # 7. Install Desktop Entry
 echo "==> Registering desktop application..."
 DESKTOP_SRC=""
-if [ -f "${SCRIPT_DIR}/packaging/com.wispo.Wispo.desktop" ]; then
-    DESKTOP_SRC="${SCRIPT_DIR}/packaging/com.wispo.Wispo.desktop"
-elif [ -f "${SCRIPT_DIR}/com.wispo.Wispo.desktop" ]; then
-    DESKTOP_SRC="${SCRIPT_DIR}/com.wispo.Wispo.desktop"
+if [ -f "${PAYLOAD_DIR}/packaging/com.wispo.Wispo.desktop" ]; then
+    DESKTOP_SRC="${PAYLOAD_DIR}/packaging/com.wispo.Wispo.desktop"
+elif [ -f "${PAYLOAD_DIR}/com.wispo.Wispo.desktop" ]; then
+    DESKTOP_SRC="${PAYLOAD_DIR}/com.wispo.Wispo.desktop"
 fi
 
 if [ -n "${DESKTOP_SRC}" ]; then
@@ -106,8 +115,11 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
 fi
 
 # 9. Install uninstaller
-if [ -f "${SCRIPT_DIR}/packaging/tarball/uninstall.sh" ]; then
-    cp "${SCRIPT_DIR}/packaging/tarball/uninstall.sh" "${TARGET_DIR}/uninstall.sh"
+if [ -f "${PAYLOAD_DIR}/packaging/tarball/uninstall.sh" ]; then
+    cp "${PAYLOAD_DIR}/packaging/tarball/uninstall.sh" "${TARGET_DIR}/uninstall.sh"
+    chmod 755 "${TARGET_DIR}/uninstall.sh"
+elif [ -f "${PAYLOAD_DIR}/uninstall.sh" ]; then
+    cp "${PAYLOAD_DIR}/uninstall.sh" "${TARGET_DIR}/uninstall.sh"
     chmod 755 "${TARGET_DIR}/uninstall.sh"
 fi
 

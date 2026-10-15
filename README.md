@@ -1,8 +1,16 @@
 # Wispo
 
-> **Alpha — actively developed.** Core dictation works and is used daily. Many planned features are not yet implemented. Expect rough edges.
+> **Alpha — actively developed.** Core dictation works and is used daily. Many planned features are not yet implemented.
 
 Local, push-to-talk speech dictation for Linux. Hold a key, speak, release — Wispo records from your microphone, transcribes speech with a local `whisper.cpp` model, and types the finished text into whatever application you are focused on through the XDG RemoteDesktop portal.
+
+I built Wispo for my own use case because Whisper Flow isn't officially available on Linux, and the open-source alternatives I tried didn't perform as well as I wanted on my Intel integrated GPU.
+
+So, I decided to build my own local transcription software, optimized around my hardware and workflow.
+
+If you're on macOS or Windows, Whisper Flow is still an excellent choice. Wispo exists to bring a similar kind of experience to Linux users, particularly those using Intel processors.
+
+Wispo is completely free, with no word limits and no telemetry. I built it to solve a problem I faced myself, and I decided to open-source it so that others facing the same challenges could benefit from it too. If Wispo makes life a little easier for someone like me, then it's doing exactly what I built it for.
 
 ---
 
@@ -15,7 +23,7 @@ The current scope is deliberately narrow:
 - local Whisper inference through `whisper.cpp`;
 - Linux input-event hotkeys and the XDG RemoteDesktop portal;
 - GTK4 desktop configuration and feedback;
-- Intel SYCL or CPU runtime selection from the current native build.
+- Intel SYCL or CPU runtime selection from the current native build. Working on optimizing it to use the NPU which will be released on next update,
 
 NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
@@ -38,10 +46,30 @@ NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
 ### Installation methods
 
-| Method                   | Status           |
-| ------------------------ | ---------------- |
-| From source (this guide) | ✅ Available now |
-| `.deb` package           | 🚧 In progress   |
+| Method                               | Compatibility                                            | Status         |
+| ------------------------------------ | -------------------------------------------------------- | -------------- |
+| **Universal Tarball (`.tar.gz`)**    | All Linux Distributions (Fedora, Arch, Ubuntu, openSUSE) | ✅ Recommended |
+| **Debian / Ubuntu Package (`.deb`)** | Debian, Ubuntu, Linux Mint, Pop!\_OS                     | ✅ Available   |
+| **From source (Developer Guide)**    | Any Linux with Intel oneAPI SYCL & Python 3.12+          | ✅ Available   |
+
+#### Quick Install (Universal Tarball)
+
+If you don't wish to compile from source, download the pre-built release package:
+
+1. Download `wispo-*-linux-x86_64.tar.gz` from [GitHub Releases](https://github.com/Master-Faraz/Wispo/releases).
+2. Extract the archive and run the installer:
+   ```bash
+   tar -xzf wispo-*-linux-x86_64.tar.gz
+   cd wispo
+   sudo ./install.sh
+   ```
+3. Launch **Wispo** from your Application Menu or run `wispo` in any terminal.
+
+To uninstall at any time:
+
+```bash
+sudo /opt/wispo/uninstall.sh
+```
 
 ---
 
@@ -86,12 +114,12 @@ Wispo is a Linux desktop application.
 
 ---
 
-## Installation
+## Installation from Source
 
 ### Step 1 — Clone the repository
 
 ```bash
-git clone https://github.com/Master-Faraz/my-wisper.git wispo
+git clone https://github.com/Master-Faraz/Wispo.git wispo
 cd wispo
 ```
 
@@ -263,18 +291,32 @@ install_desktop_entry(sys.executable, '$(pwd)')
 
 ### Command-line tools
 
+Once installed (or via `uv run wispo <command>` in developer checkout):
+
 ```bash
-# Print partial and final transcripts in the terminal.
-uv run wispo transcribe
+# Launch background desktop service (default)
+wispo
 
-# Inject the final phrase through the desktop portal.
-uv run wispo transcribe --inject
+# Open the GTK4 settings configuration window
+wispo settings
 
-# Measure one 16 kHz, 16-bit PCM WAV file.
-uv run wispo benchmark --wav /path/to/sample.wav
+# Check for new releases and updates from GitHub
+wispo update
+
+# Print current installed version
+wispo --version
+
+# Print partial and final transcripts in the terminal
+wispo transcribe
+
+# Inject the final phrase through the desktop portal
+wispo transcribe --inject
+
+# Measure one 16 kHz, 16-bit PCM WAV file
+wispo benchmark --wav /path/to/sample.wav
 ```
 
-Equivalent module entry points: `python -m wispo.transcribe` and `python -m wispo.benchmark`.
+Equivalent module entry points: `python -m wispo.service`, `python -m wispo.settings`, `python -m wispo.transcribe`, and `python -m wispo.benchmark`.
 
 ---
 
