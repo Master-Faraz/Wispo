@@ -32,7 +32,7 @@ flowchart LR
 - A second service invocation asks the running service to present its settings window instead of starting another listener.
 - Closing settings hides the window. The explicit **Quit** action requests shutdown, stops the listener, closes status integration, and closes the HUD.
 - `wispo.settings` runs the settings UI alone. `wispo transcribe` and `wispo benchmark` are the terminal audio and latency evaluation entry points. `wispo update` checks GitHub Releases for new binary distributions.
-- The offline Ubuntu tarball creates `/opt/wispo/venv` from its checked, bundled wheelhouse. `/usr/bin/wispo` uses that venv when it exists; Debian packages use distribution-provided Python dependencies. Both expose bundled `whisper.cpp`/GGML libraries and set `WISPO_DATA_DIR` to the user's XDG data directory.
+- The offline Linux tarball creates `/opt/wispo/venv` from its checked, bundled wheelhouse. `/usr/bin/wispo` uses that venv when it exists; Debian packages use distribution-provided Python dependencies. Both expose bundled `whisper.cpp`/GGML libraries and set `WISPO_DATA_DIR` to the user's XDG data directory.
 
 The service creates files outside the checkout:
 

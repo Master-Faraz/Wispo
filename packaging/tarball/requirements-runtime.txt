@@ -1,4 +1,4 @@
-# Runtime dependencies bundled in the Ubuntu 26.04 x86_64 tarball.
+# Runtime dependencies bundled in the Linux x86_64 tarball.
 # Keep these versions aligned with uv.lock. They are installed only from the
 # archive's wheelhouse; the end-user installer never contacts PyPI.
 jeepney==0.9.0

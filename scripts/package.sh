@@ -4,7 +4,7 @@ set -euo pipefail
 # ==============================================================================
 # Wispo Automated Multi-Format Packaging Pipeline
 # Builds:
-#   1. wispo-{VERSION}-ubuntu-26.04-x86_64.tar.gz (offline x86_64 bundle)
+#   1. wispo-{VERSION}-linux-x86_64.tar.gz (offline x86_64 Linux bundle)
 #   2. wispo_{VERSION}_amd64.deb (Debian / Ubuntu native package)
 #   3. SHA256SUMS (Cryptographic verification checksums)
 # ==============================================================================
@@ -99,10 +99,10 @@ mkdir -p "${STAGING_BASE}"
 trap 'rm -rf "${STAGING_BASE}"' EXIT
 
 # ==============================================================================
-# BUILD 1: Ubuntu 26.04 x86_64 Tarball (.tar.gz)
+# BUILD 1: x86_64 Linux Tarball (.tar.gz)
 # ==============================================================================
 echo ""
-echo "==> [1/2] Assembling Ubuntu 26.04 Tarball (wispo-${VERSION}-ubuntu-26.04-x86_64.tar.gz)..."
+echo "==> [1/2] Assembling Linux Tarball (wispo-${VERSION}-linux-x86_64.tar.gz)..."
 
 TAR_STAGE="${STAGING_BASE}/wispo"
 mkdir -p "${TAR_STAGE}"
@@ -139,7 +139,7 @@ find "${TAR_STAGE}" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null ||
 find "${TAR_STAGE}" -name "*.pyc" -delete 2>/dev/null || true
 
 # Compress tarball
-TAR_FILE="${DIST_DIR}/wispo-${VERSION}-ubuntu-26.04-x86_64.tar.gz"
+TAR_FILE="${DIST_DIR}/wispo-${VERSION}-linux-x86_64.tar.gz"
 tar -czvf "${TAR_FILE}" -C "${STAGING_BASE}" wispo > /dev/null
 
 echo "    -> Created: ${TAR_FILE} ($(du -sh "${TAR_FILE}" | cut -f1))"

@@ -52,15 +52,15 @@ NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
 | Method | Compatibility | Status |
 | --- | --- | --- |
-| **Ubuntu 26.04 x86_64 tarball (`.tar.gz`)** | Ubuntu 26.04 with its matching Python runtime, GTK bindings, and a compatible oneAPI runtime | Preview |
+| **Linux x86_64 tarball (`.tar.gz`)** | Linux x86_64 with its matching Python runtime, GTK bindings, and a compatible oneAPI runtime | Preview |
 | **Debian / Ubuntu package (`.deb`)** | Debian-family x86_64 systems with Python 3.12+ and a compatible oneAPI runtime | Preview |
 | **From source** | Linux x86_64 with Intel oneAPI SYCL and Python 3.12+ | Available |
 
 #### Quick install (offline tarball)
 
-The release archive is an **Ubuntu 26.04 x86_64** bundle, not a universal-Linux archive. It includes Wispo, `whisper.cpp`/GGML libraries, and a locked offline wheelhouse for `jeepney`, NumPy, Pillow, psutil, and PyYAML. The installer never contacts PyPI.
+The release archive is an offline **Linux x86_64** bundle. It includes Wispo, `whisper.cpp`/GGML libraries, and a locked offline wheelhouse for `jeepney`, NumPy, Pillow, psutil, and PyYAML. The installer never contacts PyPI.
 
-Before installing, provide the host components that cannot be safely bundled: the matching Python runtime and venv support, GTK/PyGObject, audio libraries, and Intel oneAPI runtime. On the tested Ubuntu target:
+Before installing, provide the host components that cannot be safely bundled: the matching Python runtime and venv support, GTK/PyGObject, audio libraries, and Intel oneAPI runtime. On Debian/Ubuntu:
 
 ```bash
 sudo apt update
@@ -69,14 +69,14 @@ sudo apt install -y python3 python3-venv python3-gi gir1.2-gtk-4.0 libasound2
 
 Install Intel oneAPI as described in [Step 4](#step-4--install-the-intel-oneapi-sycl-compiler) and [Step 5](#step-5--install-onemkl-and-level-zero-development-files) below. The current native build dynamically links oneAPI runtime libraries even when `asr.device: cpu` is selected.
 
-1. Download `wispo-*-ubuntu-26.04-x86_64.tar.gz` and `SHA256SUMS` from [GitHub Releases](https://github.com/Master-Faraz/Wispo/releases).
+1. Download `wispo-*-linux-x86_64.tar.gz` and `SHA256SUMS` from [GitHub Releases](https://github.com/Master-Faraz/Wispo/releases).
 2. Verify the archive checksum:
    ```bash
    sha256sum -c SHA256SUMS
    ```
 3. Extract the archive and run the installer:
    ```bash
-   tar -xzf wispo-*-ubuntu-26.04-x86_64.tar.gz
+   tar -xzf wispo-*-linux-x86_64.tar.gz
    cd wispo
    sudo ./install.sh
    ```
