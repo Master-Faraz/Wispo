@@ -22,4 +22,5 @@ models/*.bin
 *.swp
 .DS_Store
 *.log
-my terminal history .txt
+temptask.md
+implementation_plan.md

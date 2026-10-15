@@ -27,14 +27,14 @@ NPU, CUDA, and Vulkan backends are not implemented in this repository.
 
 ### Platform support
 
-| Platform                                | Status                                                                              |
-| --------------------------------------- | ----------------------------------------------------------------------------------- |
-| Intel Arc GPU (SYCL) on Linux           | Implemented; primary development target                                            |
-| CPU backend on Linux                    | Implemented runtime selection; validate on target hardware                         |
-| NPU Acceleration (Intel NPU / OpenVINO) | Not implemented                                                                    |
-| NVIDIA GPU (CUDA)                       | Not implemented                                                                    |
-| Vulkan                                  | Not implemented                                                                    |
-| macOS / Windows                         | Not supported by the current implementation                                        |
+| Platform                                | Status                                                     |
+| --------------------------------------- | ---------------------------------------------------------- |
+| Intel Arc GPU (SYCL) on Linux           | Implemented; primary development target                    |
+| CPU backend on Linux                    | Implemented runtime selection; validate on target hardware |
+| NPU Acceleration (Intel NPU / OpenVINO) | Not implemented                                            |
+| NVIDIA GPU (CUDA)                       | Not implemented                                            |
+| Vulkan                                  | Not implemented                                            |
+| macOS / Windows                         | Not supported by the current implementation                |
 
 ### Installation methods
 
@@ -194,18 +194,18 @@ Model files are stored in `models/` and are ignored by Git. The settings window 
 
 > **Model-selection note:** Real-world transcription speed, latency, and accuracy vary with the model file, CPU/GPU, driver, thread count, audio, and language. The table identifies the models exposed by the application; measure them with `uv run wispo benchmark --wav /path/to/sample.wav` before drawing performance conclusions for a target machine.
 
-| Model                 | Size    | Recommended use                                              |
-| --------------------- | ------- | ------------------------------------------------------------ |
-| `tiny.en`             | 75 MB   | Small English model                                          |
-| `base.en`             | 142 MB  | Compact English model                                        |
-| `small.en`            | 466 MB  | Checked-in configuration default                             |
-| `medium.en`           | 1.5 GB  | Larger English model                                         |
-| `large-v3-turbo-q5_0` | 548 MB  | Quantized Turbo model                                        |
-| `large-v3-turbo`      | 1.5 GB  | Turbo model                                                  |
-| `distil-small.en`     | 321 MB  | Distilled small model                                        |
-| `distil-medium.en`    | 758 MB  | Distilled medium model                                       |
-| `distil-large-v3`     | 1.5 GB  | Distilled large model                                        |
-| `distil-large-v3.5`   | 1.45 GB | Distilled large v3.5 model                                   |
+| Model                 | Size    | Recommended use                  |
+| --------------------- | ------- | -------------------------------- |
+| `tiny.en`             | 75 MB   | Small English model              |
+| `base.en`             | 142 MB  | Compact English model            |
+| `small.en`            | 466 MB  | Checked-in configuration default |
+| `medium.en`           | 1.5 GB  | Larger English model             |
+| `large-v3-turbo-q5_0` | 548 MB  | Quantized Turbo model            |
+| `large-v3-turbo`      | 1.5 GB  | Turbo model                      |
+| `distil-small.en`     | 321 MB  | Distilled small model            |
+| `distil-medium.en`    | 758 MB  | Distilled medium model           |
+| `distil-large-v3`     | 1.5 GB  | Distilled large model            |
+| `distil-large-v3.5`   | 1.45 GB | Distilled large v3.5 model       |
 
 The settings window lists these models and can download them. `small.en` is the checked-in default; choose a model after validating accuracy and latency on your own hardware.
 
@@ -315,14 +315,14 @@ Equivalent module entry points: `python -m wispo.transcribe` and `python -m wisp
 
 Wispo includes a dedicated, full-featured GTK4 configuration application. Launch it with `uv run python -m wispo.settings` or by clicking **Wispo** in your desktop application grid.
 
-| Settings Tab | Configurable Features & Options |
-| --- | --- |
-| **Model** (`model`) | • Browse catalogue of supported models (`tiny.en` to `large-v3-turbo`, `distil-*`).<br>• One-click model downloading with real-time progress indicators.<br>• Switch active models without editing configuration files.<br>• View model disk size, parameter count, and quantization details. |
-| **Audio** (`audio`) | • **Live VU Meter**: Real-time dB level bar (`-60 dB` to `0 dB`) and speech detection state.<br>• **Microphone Tester**: Live audio check without injecting text.<br>• **Input Device Selector**: Automatically enumerates and switches between ALSA and PipeWire microphone sources.<br>• **VAD Sliders**: RMS energy threshold, trailing silence (hangover ms), and high-pass rumble filter (Hz).<br>• **One-Click Presets**: *Quiet*, *Balanced*, and *Noisy*. |
-| **Push-to-talk** (`push_to_talk`) | • **Shortcut Studio**: Visual keycap chip display and live keyboard chord recorder.<br>• **Hardware Presets**: *Copilot Key* (single key), *Right Ctrl* (single key), *Ctrl + Super + Space* (Raycast/Spotlight style), *Alt + Space* (thumb chord), *Super + H* (standard dictation).<br>• Single-click reset to default shortcut. |
-| **Dictionary** (`dictionary`) | • **Vocabulary Replacements**: Correct phonetic misrecognitions or format domain jargon (e.g. `github` → `GitHub`, `open a i` → `OpenAI`).<br>• Interactive rule composer with instant add, per-rule toggle switch (enable/disable), and delete buttons. |
-| **Hardware** (`hardware`) | • **Inference CPU Threads**: Slider with **⚡ Auto Recommend** core calculation.<br>• **Compute Device**: Choose *Auto-Detect*, *GPU Acceleration (Intel SYCL)*, or *CPU Only (Safe Fallback)*.<br>• **GPU Device Index**: Multi-GPU target selector (`0`, `1`, etc.).<br>• **Latency Profiles**: *Snappy*, *Balanced*, or *Power Saver* presets.<br>• **Spoken Language**: Dropdown supporting English, Spanish, French, German, Hindi, Chinese, Japanese, Italian, Portuguese, Russian, Korean, or Auto-Detect (requires multilingual models). |
-| **Engine Inspector** | • Persistent bottom-left status card showing real-time Engine Status (*Ready*, *Recording*, *Transcribing*), active model, compute backend, and memory profile. |
+| Settings Tab                      | Configurable Features & Options                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Model** (`model`)               | • Browse catalogue of supported models (`tiny.en` to `large-v3-turbo`, `distil-*`).<br>• One-click model downloading with real-time progress indicators.<br>• Switch active models without editing configuration files.<br>• View model disk size, parameter count, and quantization details.                                                                                                                                                                                                                                                    |
+| **Audio** (`audio`)               | • **Live VU Meter**: Real-time dB level bar (`-60 dB` to `0 dB`) and speech detection state.<br>• **Microphone Tester**: Live audio check without injecting text.<br>• **Input Device Selector**: Automatically enumerates and switches between ALSA and PipeWire microphone sources.<br>• **VAD Sliders**: RMS energy threshold, trailing silence (hangover ms), and high-pass rumble filter (Hz).<br>• **One-Click Presets**: _Quiet_, _Balanced_, and _Noisy_.                                                                                |
+| **Push-to-talk** (`push_to_talk`) | • **Shortcut Studio**: Visual keycap chip display and live keyboard chord recorder.<br>• **Hardware Presets**: _Copilot Key_ (single key), _Right Ctrl_ (single key), _Ctrl + Super + Space_ (Raycast/Spotlight style), _Alt + Space_ (thumb chord), _Super + H_ (standard dictation).<br>• Single-click reset to default shortcut.                                                                                                                                                                                                              |
+| **Dictionary** (`dictionary`)     | • **Vocabulary Replacements**: Correct phonetic misrecognitions or format domain jargon (e.g. `github` → `GitHub`, `open a i` → `OpenAI`).<br>• Interactive rule composer with instant add, per-rule toggle switch (enable/disable), and delete buttons.                                                                                                                                                                                                                                                                                         |
+| **Hardware** (`hardware`)         | • **Inference CPU Threads**: Slider with **⚡ Auto Recommend** core calculation.<br>• **Compute Device**: Choose _Auto-Detect_, _GPU Acceleration (Intel SYCL)_, or _CPU Only (Safe Fallback)_.<br>• **GPU Device Index**: Multi-GPU target selector (`0`, `1`, etc.).<br>• **Latency Profiles**: _Snappy_, _Balanced_, or _Power Saver_ presets.<br>• **Spoken Language**: Dropdown supporting English, Spanish, French, German, Hindi, Chinese, Japanese, Italian, Portuguese, Russian, Korean, or Auto-Detect (requires multilingual models). |
+| **Engine Inspector**              | • Persistent bottom-left status card showing real-time Engine Status (_Ready_, _Recording_, _Transcribing_), active model, compute backend, and memory profile.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 
