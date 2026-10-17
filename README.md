@@ -18,6 +18,20 @@ Wispo is completely free, with no word limits and no telemetry. I built it to so
 
 ---
 
+## Demo
+
+<p align="center">
+  <a href="https://youtu.be/XzQvmAtpDNM">
+    <img src="https://img.youtube.com/vi/XzQvmAtpDNM/maxresdefault.jpg" alt="Wispo Demo Video" width="100%" />
+  </a>
+</p>
+
+<p align="center">
+  ▶️ <a href="https://youtu.be/XzQvmAtpDNM"><strong>Watch the Wispo Demo on YouTube</strong></a>
+</p>
+
+---
+
 ## Project Scope
 
 Wispo is built for local, hold-to-talk dictation on a Linux desktop, with Intel Arc/SYCL as its primary development target. It is an alpha project: the core pipeline is implemented, but hardware, driver, desktop-shell, and portal behavior still need validation on each target machine.
