@@ -126,6 +126,10 @@ class AudioCapture:
                     remaining,
                 )
                 if got < 0:
+                    # If the stop event is set, the PCM handle may already be
+                    # dropped by stop(). Do not call snd_pcm_recover on it.
+                    if self._stop_event.is_set():
+                        break
                     recovered = _alsa.snd_pcm_recover(self._pcm, int(got), 1)
                     if recovered < 0:
                         self._error = _alsa_error(recovered, "reading microphone")
@@ -174,11 +178,19 @@ class AudioCapture:
         if not self._open:
             return
         self._stop_event.set()
-        if self._thread is not None and self._thread.is_alive():
-            self._thread.join(timeout=0.5)
-        self._thread = None
+        # Drop the stream BEFORE joining the thread. snd_pcm_readi() is a
+        # blocking kernel call; the capture thread may be blocked inside it
+        # for up to the configured 1.5s hardware latency. snd_pcm_drop()
+        # interrupts it immediately so the thread exits cleanly. Without this
+        # the join times out while the thread is still alive, and the
+        # subsequent snd_pcm_close() frees the handle while the thread is
+        # still using it — a use-after-free that corrupts ALSA state.
         if self._pcm.value is not None:
             _alsa.snd_pcm_drop(self._pcm)
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=1.0)
+        self._thread = None
+        if self._pcm.value is not None:
             _alsa.snd_pcm_close(self._pcm)
         self._pcm = c_void_p()
         self._open = False
