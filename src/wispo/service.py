@@ -338,7 +338,7 @@ def _listen(
                             status.set_state("recording")
                         if hud is not None:
                             hud.start_listening()
-                    app.read_once(force_speech=True, transcribe=False)
+                    app.read_once(force_speech=True, transcribe=True)
                     if hud is not None:
                         hud.set_audio_level(app.last_audio_level)
                 elif recording:
