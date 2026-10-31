@@ -54,7 +54,7 @@ def _vardict(results) -> dict:
 
 
 class PortalKeyboard(TextInjector):
-    def __init__(self, token_path: Path | None = None, key_gap_s: float = 0.005) -> None:
+    def __init__(self, token_path: Path | None = None, key_gap_s: float = 0.002) -> None:
         self.token_path = token_path or (_state_dir() / "portal-restore-token")
         # A press and its release in the same instant is dropped by some text
         # fields. The gap is between keys, not a new process per utterance.
@@ -144,7 +144,7 @@ class PortalKeyboard(TextInjector):
             self._do_insert(text)
 
     def _do_insert(self, text: str) -> None:
-        events = key_events(text)
+        events = key_events(text, ignore_unsupported=True)
         try:
             for code, state in events:
                 self._notify(code, state)

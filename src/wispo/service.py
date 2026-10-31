@@ -58,12 +58,40 @@ def _run() -> int:
     from wispo.status import StatusIcon
 
     gtk = _load_gtk()
-    from gi.repository import GLib
+    from gi.repository import Gio, GLib
 
     GLib.set_prgname(APP_ID)
     stop_event = threading.Event()
+    sleep_event = threading.Event()
     reload_queue: queue.Queue = queue.Queue()
     ui: dict = {}
+
+    system_bus = None
+    sleep_sub_id = None
+    try:
+        system_bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+
+        def _on_prepare_for_sleep(_conn, _sender, _path, _iface, _sig, params, _user_data):
+            about_to_sleep = bool(params.unpack()[0])
+            if about_to_sleep:
+                logging.info("system is preparing to suspend; pausing listener")
+                sleep_event.set()
+            else:
+                logging.info("system resumed from suspend; re-arming listener")
+                sleep_event.clear()
+
+        sleep_sub_id = system_bus.signal_subscribe(
+            "org.freedesktop.login1",
+            "org.freedesktop.login1.Manager",
+            "PrepareForSleep",
+            "/org/freedesktop/login1",
+            None,
+            Gio.DBusSignalFlags.NONE,
+            _on_prepare_for_sleep,
+            None,
+        )
+    except Exception:
+        logging.warning("could not subscribe to system logind PrepareForSleep signal")
 
     def request_quit() -> None:
         stop_event.set()
@@ -120,7 +148,7 @@ def _run() -> int:
     application.connect("activate", on_activate)
     worker = threading.Thread(
         target=_listen,
-        args=(stop_event, status, hud, settings, reload_queue),
+        args=(stop_event, status, hud, settings, reload_queue, sleep_event),
         name="wispo-listen",
     )
     worker.start()
@@ -128,6 +156,11 @@ def _run() -> int:
         application.run(None)
     finally:
         stop_event.set()
+        if system_bus is not None and sleep_sub_id is not None:
+            try:
+                system_bus.signal_unsubscribe(sleep_sub_id)
+            except Exception:
+                pass
         worker.join(timeout=5)
         if status is not None:
             status.stop()
@@ -142,6 +175,7 @@ def _listen(
     hud=None,
     settings=None,
     reload_queue: queue.Queue | None = None,
+    sleep_event: threading.Event | None = None,
 ) -> None:
     from gi.repository import GLib
 
@@ -232,6 +266,30 @@ def _listen(
         logging.info("ready")
         while not stop_event.is_set():
             try:
+                if sleep_event is not None and sleep_event.is_set():
+                    if recording:
+                        try:
+                            app.stop_recording()
+                        except Exception:
+                            pass
+                        recording = False
+                        if status is not None:
+                            status.set_state("idle")
+                        if hud is not None:
+                            hud.finish()
+                    try:
+                        app.capture.stop()
+                    except Exception:
+                        pass
+                    if hold is not None:
+                        hold.reset()
+                    while sleep_event.is_set() and not stop_event.is_set():
+                        time.sleep(0.1)
+                    if hold is not None:
+                        hold.reset()
+                    logging.info("resumed from system suspend; listener ready")
+                    continue
+
                 if reload_queue is not None and not recording and not reload_queue.empty():
                     pending_cfg = None
                     while not reload_queue.empty():

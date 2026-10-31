@@ -66,7 +66,7 @@ class AudioCapture:
         self.frame_samples = max(1, int(sample_rate * frame_ms / 1000))
         self._pcm = c_void_p()
         self._open = False
-        self._queue: queue.Queue[np.ndarray] = queue.Queue(maxsize=3000)
+        self._queue: queue.Queue[np.ndarray] = queue.Queue(maxsize=150)
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._error: Exception | None = None
@@ -133,6 +133,7 @@ class AudioCapture:
                     recovered = _alsa.snd_pcm_recover(self._pcm, int(got), 1)
                     if recovered < 0:
                         self._error = _alsa_error(recovered, "reading microphone")
+                        self._open = False
                         read_failed = True
                         break
                     continue
@@ -142,21 +143,25 @@ class AudioCapture:
                 break
             frame = (raw.astype(np.float32) / 32768.0).copy()
             try:
-                self._queue.put(frame, timeout=0.1)
+                self._queue.put_nowait(frame)
             except queue.Full:
                 try:
                     self._queue.get_nowait()
+                except queue.Empty:
+                    pass
+                try:
                     self._queue.put_nowait(frame)
-                except (queue.Empty, queue.Full):
+                except queue.Full:
                     pass
 
     def read(self, timeout: float = 0.5) -> np.ndarray:
-        if not self._open:
-            raise RuntimeError("microphone is not started")
         if self._error is not None:
             err = self._error
             self._error = None
+            self.stop()
             raise err
+        if not self._open:
+            raise RuntimeError("microphone is not started")
         try:
             return self._queue.get(timeout=timeout)
         except queue.Empty:
@@ -175,23 +180,24 @@ class AudioCapture:
         return frames
 
     def stop(self) -> None:
-        if not self._open:
-            return
         self._stop_event.set()
         # Drop the stream BEFORE joining the thread. snd_pcm_readi() is a
         # blocking kernel call; the capture thread may be blocked inside it
         # for up to the configured 1.5s hardware latency. snd_pcm_drop()
-        # interrupts it immediately so the thread exits cleanly. Without this
-        # the join times out while the thread is still alive, and the
-        # subsequent snd_pcm_close() frees the handle while the thread is
-        # still using it — a use-after-free that corrupts ALSA state.
+        # interrupts it immediately so the thread exits cleanly.
         if self._pcm.value is not None:
-            _alsa.snd_pcm_drop(self._pcm)
+            try:
+                _alsa.snd_pcm_drop(self._pcm)
+            except Exception:
+                pass
         if self._thread is not None and self._thread.is_alive():
             self._thread.join(timeout=1.0)
         self._thread = None
         if self._pcm.value is not None:
-            _alsa.snd_pcm_close(self._pcm)
+            try:
+                _alsa.snd_pcm_close(self._pcm)
+            except Exception:
+                pass
         self._pcm = c_void_p()
         self._open = False
 

@@ -87,12 +87,24 @@ def _layout() -> dict[str, tuple[int, bool]]:
 
 _US = _layout()
 
+_CHAR_REPLACEMENTS = {
+    "’": "'",
+    "‘": "'",
+    "“": '"',
+    "”": '"',
+    "–": "-",
+    "—": "-",
+    "…": "...",
+    " ": " ",
+}
 
-def key_events(text: str) -> list[tuple[int, int]]:
+
+def key_events(text: str, ignore_unsupported: bool = False) -> list[tuple[int, int]]:
     """Press and release events as (evdev code, 1 press or 0 release)."""
+    normalized = "".join(_CHAR_REPLACEMENTS.get(c, c) for c in text)
     events: list[tuple[int, int]] = []
     shift_down = False
-    for char in text:
+    for char in normalized:
         if char == "\n":
             code, needs_shift = KEY_ENTER, False
         elif char == " ":
@@ -100,6 +112,8 @@ def key_events(text: str) -> list[tuple[int, int]]:
         else:
             found = _US.get(char)
             if found is None:
+                if ignore_unsupported:
+                    continue
                 raise UnsupportedCharacter(char)
             code, needs_shift = found
         if needs_shift and not shift_down:

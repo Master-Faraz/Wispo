@@ -139,11 +139,22 @@ class HoldKey:
             os.close(fd)
         self._fds = []
 
+    def reset(self) -> None:
+        """Reset held state and close keyboard FDs to force rediscovery."""
+        self.held.clear()
+        for fd in list(self._fds):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        self._fds = []
+
     def _loop(self) -> None:
         import time
 
         while not self._stop.is_set():
             if not self._fds:
+                self.held.clear()
                 self._fds = _open_keyboards(self.code)
                 if not self._fds:
                     time.sleep(1.0)
@@ -158,6 +169,8 @@ class HoldKey:
                         os.close(fd)
                     except OSError:
                         pass
+                if not self._fds:
+                    self.held.clear()
                 continue
 
             dead_fds = []
@@ -185,6 +198,8 @@ class HoldKey:
                     os.close(fd)
                 except OSError:
                     pass
+            if not self._fds:
+                self.held.clear()
 
 
 class HoldChord:
@@ -223,6 +238,17 @@ class HoldChord:
             os.close(fd)
         self._fds = []
 
+    def reset(self) -> None:
+        """Reset pressed state and close keyboard FDs to force rediscovery (e.g. on resume)."""
+        self.held.clear()
+        self._down.clear()
+        for fd in list(self._fds):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        self._fds = []
+
     def _loop(self) -> None:
         import time
 
@@ -231,6 +257,8 @@ class HoldChord:
             watched.update(group)
         while not self._stop.is_set():
             if not self._fds:
+                self._down.clear()
+                self.held.clear()
                 codes: set[int] = set()
                 for group in self.groups:
                     codes.update(group)
@@ -248,6 +276,9 @@ class HoldChord:
                         os.close(fd)
                     except OSError:
                         pass
+                if not self._fds:
+                    self._down.clear()
+                    self.held.clear()
                 continue
 
             dead_fds = []
@@ -279,6 +310,9 @@ class HoldChord:
                     os.close(fd)
                 except OSError:
                     pass
+            if not self._fds:
+                self._down.clear()
+                self.held.clear()
 
 
 class OverviewKey:

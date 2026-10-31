@@ -8,9 +8,15 @@ on that device.
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
+from pathlib import Path
+
+_CACHE_FILE = Path.home() / ".local" / "state" / "wispo" / "device_cache.json"
+_CACHE_TTL_S = 86400 * 7  # 7 days
 
 
 @dataclass(frozen=True)
@@ -65,6 +71,23 @@ def _run_sycl_ls() -> str:
     return completed.stdout + completed.stderr
 
 
+def _cached_gpu_name() -> str | None:
+    try:
+        if _CACHE_FILE.exists():
+            data = json.loads(_CACHE_FILE.read_text())
+            if time.time() - data.get("ts", 0) < _CACHE_TTL_S:
+                return data.get("gpu_name")
+    except Exception:
+        pass
+    gpu_name = parse_sycl_ls(_run_sycl_ls())
+    try:
+        _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_FILE.write_text(json.dumps({"gpu_name": gpu_name, "ts": time.time()}))
+    except Exception:
+        pass
+    return gpu_name
+
+
 def select_device(preference: str) -> DeviceInfo:
     preference = preference.lower()
     if preference not in {"auto", "sycl", "cpu"}:
@@ -72,7 +95,7 @@ def select_device(preference: str) -> DeviceInfo:
 
     gpu_name = None
     if preference != "cpu":
-        gpu_name = parse_sycl_ls(_run_sycl_ls())
+        gpu_name = _cached_gpu_name()
 
     if preference == "cpu" or gpu_name is None:
         if preference == "sycl":

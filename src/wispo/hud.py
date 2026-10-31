@@ -245,8 +245,12 @@ class FloatingPillHUD:
 
     def _stop_timer(self) -> None:
         if self._anim_timer_id is not None:
-            GLib.source_remove(self._anim_timer_id)
+            timer_id = self._anim_timer_id
             self._anim_timer_id = None
+            try:
+                GLib.source_remove(timer_id)
+            except Exception:
+                pass
 
     def _on_tick(self) -> bool:
         dt = 0.016
