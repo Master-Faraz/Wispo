@@ -62,7 +62,7 @@ The app requests S16_LE from ALSA and converts frames to floating point internal
 | `backend` | Backend label. | Stored in configuration, but current application code always constructs the `whisper_cpp` backend. Keep `whisper_cpp`. |
 | `model` | User-facing model name. | Used by the settings UI and when it updates `model_path`. It should match a downloaded model. |
 | `model_path` | Model file path, relative to the project root or absolute. | Must point to an existing GGML `.bin` model file at service/model startup. Under the packaged launcher, relative paths resolve beneath `~/.local/share/wispo/`. |
-| `device` | Inference selection. | `auto` picks SYCL when `sycl-ls` reports a Level Zero GPU, otherwise CPU. `sycl` requires that GPU; `cpu` forces CPU selection. |
+| `device` | Inference selection. | `auto` picks SYCL when `sycl-ls` reports a Level Zero GPU, otherwise CPU (result is cached in `~/.local/state/wispo/device_cache.json` for 7 days to eliminate startup latency). `sycl` requires that GPU; `cpu` forces CPU selection, bypassing GPU memory bus contention entirely. |
 | `quantization` | Display label for the selected model. | Currently displayed by terminal tools but not passed as an inference option. The model file itself determines its quantization. |
 | `threads` | Whisper inference worker count. | Passed to the native bridge. Start with the default and benchmark before raising it. |
 | `language` | Whisper language code. | Passed to the native bridge; `en` is the checked-in value. |
