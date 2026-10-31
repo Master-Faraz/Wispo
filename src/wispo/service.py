@@ -281,12 +281,29 @@ def _listen(
                         app.capture.stop()
                     except Exception:
                         pass
+                    try:
+                        app.engine.close()
+                    except Exception:
+                        pass
                     if hold is not None:
                         hold.reset()
                     while sleep_event.is_set() and not stop_event.is_set():
                         time.sleep(0.1)
                     if hold is not None:
                         hold.reset()
+                    if stop_event.is_set():
+                        break
+                    logging.info("system resumed from suspend; reinitializing ASR engine")
+                    try:
+                        app.reload_model(
+                            model_name=config.asr.model,
+                            model_path=config.resolve(config.asr.model_path),
+                        )
+                        if settings is not None:
+                            settings.set_model_loaded(f"{app.device.name} • {config.asr.model}")
+                        logging.info("ASR engine reinitialized successfully")
+                    except Exception:
+                        logging.exception("failed to reinitialize ASR engine after resume")
                     logging.info("resumed from system suspend; listener ready")
                     continue
 
@@ -396,7 +413,7 @@ def _listen(
                             status.set_state("recording")
                         if hud is not None:
                             hud.start_listening()
-                    app.read_once(force_speech=True, transcribe=True)
+                    app.read_once(force_speech=True, transcribe=False)
                     if hud is not None:
                         hud.set_audio_level(app.last_audio_level)
                 elif recording:

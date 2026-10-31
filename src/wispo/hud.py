@@ -117,15 +117,22 @@ class FloatingPillHUD:
         self._window.set_focus_on_click(False)
         self._window.set_title("Wispo HUD")
 
-        # Get screen geometry for centering
-        monitor_w, monitor_h = 1440, 900
+        # Get screen height for vertical positioning above the dock
+        monitor_h = 900
         if display:
             monitors = display.get_monitors()
             if monitors and monitors.get_n_items() > 0:
                 geom = monitors.get_item(0).get_geometry()
-                monitor_w, monitor_h = geom.width, geom.height
+                monitor_h = geom.height
 
-        self._window.set_default_size(monitor_w, monitor_h)
+        # Set window size to CANVAS_W x monitor_h:
+        # 1. CANVAS_W (340px) is drastically narrower than the full monitor width (1440/1920px),
+        #    which completely eliminates Mutter's Direct Scanout (direct scanout strictly requires
+        #    100% monitor resolution coverage).
+        # 2. Setting height to monitor_h allows GNOME Mutter to place the window anchored to the
+        #    monitor, so our bottom-aligned box positions the pill centered directly above the dock.
+        self._window.set_default_size(self.CANVAS_W, monitor_h)
+        self._window.set_resizable(False)
 
         # Container box aligned at the bottom center directly above the dock
         self._box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -142,14 +149,16 @@ class FloatingPillHUD:
         self._box.append(self._drawing_area)
         self._window.set_child(self._box)
 
-        # Make entire window click-through via empty input region
+        # Make window click-through via empty input region on realize and map
         self._window.connect("realize", self._on_realize)
+        self._window.connect("map", self._on_map)
         self._window.realize()
 
     def _on_realize(self, win: Gtk.Window) -> None:
-        surface = win.get_surface()
-        if surface is not None:
-            surface.set_input_region(cairo.Region())
+        self._ensure_input_region()
+
+    def _on_map(self, win: Gtk.Window) -> None:
+        self._ensure_input_region()
 
     def _ensure_input_region(self) -> None:
         if self._window is not None:

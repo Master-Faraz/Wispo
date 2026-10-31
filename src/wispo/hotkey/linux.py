@@ -120,14 +120,17 @@ class HoldKey:
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="wispo-hotkey", daemon=True)
         self._fds: list[int] = []
+        self._lock = threading.Lock()
+        self._reset_requested = False
 
     def start(self) -> None:
-        self._fds = _open_keyboards(self.code)
-        if not self._fds:
-            raise RuntimeError(
-                f"no keyboard exposing {self.key} was readable. "
-                "The account needs to be in the input group."
-            )
+        with self._lock:
+            self._fds = _open_keyboards(self.code)
+            if not self._fds:
+                raise RuntimeError(
+                    f"no keyboard exposing {self.key} was readable. "
+                    "The account needs to be in the input group."
+                )
         self._thread.start()
 
     def stop(self) -> None:
@@ -135,70 +138,102 @@ class HoldKey:
         self.held.clear()
         if self._thread.is_alive():
             self._thread.join(timeout=1.0)
-        for fd in self._fds:
-            os.close(fd)
-        self._fds = []
-
-    def reset(self) -> None:
-        """Reset held state and close keyboard FDs to force rediscovery."""
-        self.held.clear()
-        for fd in list(self._fds):
-            try:
-                os.close(fd)
-            except OSError:
-                pass
-        self._fds = []
-
-    def _loop(self) -> None:
-        import time
-
-        while not self._stop.is_set():
-            if not self._fds:
-                self.held.clear()
-                self._fds = _open_keyboards(self.code)
-                if not self._fds:
-                    time.sleep(1.0)
-                    continue
-            try:
-                readable, _, _ = select.select(self._fds, [], [], 0.05)
-            except (ValueError, OSError):
-                dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
-                for fd in dead:
-                    self._fds.remove(fd)
-                    try:
-                        os.close(fd)
-                    except OSError:
-                        pass
-                if not self._fds:
-                    self.held.clear()
-                continue
-
-            dead_fds = []
-            for fd in readable:
-                try:
-                    data = os.read(fd, _EVENT.size * 64)
-                    if not data:
-                        dead_fds.append(fd)
-                        continue
-                except OSError:
-                    dead_fds.append(fd)
-                    continue
-                for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
-                    _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
-                    if event_type != _EV_KEY or code != self.code:
-                        continue
-                    if value == 1:
-                        self.held.set()
-                    elif value == 0:
-                        self.held.clear()
-            for fd in dead_fds:
-                if fd in self._fds:
-                    self._fds.remove(fd)
+        with self._lock:
+            for fd in self._fds:
                 try:
                     os.close(fd)
                 except OSError:
                     pass
-            if not self._fds:
+            self._fds = []
+
+    def reset(self) -> None:
+        """Reset held state and request thread-safe rediscovery of keyboard FDs."""
+        self.held.clear()
+        with self._lock:
+            self._reset_requested = True
+
+    def _loop(self) -> None:
+        import time
+
+        try:
+            while not self._stop.is_set():
+                with self._lock:
+                    if self._reset_requested:
+                        self._reset_requested = False
+                        for fd in self._fds:
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        self._fds = []
+                        self.held.clear()
+
+                if not self._fds:
+                    self.held.clear()
+                    new_fds = _open_keyboards(self.code)
+                    with self._lock:
+                        self._fds = new_fds
+                    if not self._fds:
+                        time.sleep(1.0)
+                        continue
+
+                try:
+                    with self._lock:
+                        fds_to_poll = list(self._fds)
+                    if not fds_to_poll:
+                        continue
+                    readable, _, _ = select.select(fds_to_poll, [], [], 0.05)
+                except (ValueError, OSError):
+                    with self._lock:
+                        dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
+                        for fd in dead:
+                            self._fds.remove(fd)
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        if not self._fds:
+                            self.held.clear()
+                    continue
+
+                dead_fds = []
+                for fd in readable:
+                    try:
+                        data = os.read(fd, _EVENT.size * 64)
+                        if not data:
+                            dead_fds.append(fd)
+                            continue
+                    except OSError:
+                        dead_fds.append(fd)
+                        continue
+                    for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
+                        _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
+                        if event_type != _EV_KEY or code != self.code:
+                            continue
+                        if value == 1:
+                            self.held.set()
+                        elif value == 0:
+                            self.held.clear()
+
+                if dead_fds:
+                    with self._lock:
+                        for fd in dead_fds:
+                            if fd in self._fds:
+                                self._fds.remove(fd)
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        if not self._fds:
+                            self.held.clear()
+        finally:
+            with self._lock:
+                for fd in self._fds:
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                self._fds = []
                 self.held.clear()
 
 
@@ -216,17 +251,20 @@ class HoldChord:
         self._thread = threading.Thread(target=self._loop, name="wispo-chord", daemon=True)
         self._fds: list[int] = []
         self._down: set[int] = set()
+        self._lock = threading.Lock()
+        self._reset_requested = False
 
     def start(self) -> None:
         codes: set[int] = set()
         for group in self.groups:
             codes.update(group)
-        self._fds = _open_keyboards(codes)
-        if not self._fds:
-            raise RuntimeError(
-                "no keyboard exposing Ctrl and Super was readable. "
-                "The account needs to be in the input group."
-            )
+        with self._lock:
+            self._fds = _open_keyboards(codes)
+            if not self._fds:
+                raise RuntimeError(
+                    "no keyboard exposing Ctrl and Super was readable. "
+                    "The account needs to be in the input group."
+                )
         self._thread.start()
 
     def stop(self) -> None:
@@ -234,20 +272,20 @@ class HoldChord:
         self.held.clear()
         if self._thread.is_alive():
             self._thread.join(timeout=1.0)
-        for fd in self._fds:
-            os.close(fd)
-        self._fds = []
+        with self._lock:
+            for fd in self._fds:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+            self._fds = []
 
     def reset(self) -> None:
-        """Reset pressed state and close keyboard FDs to force rediscovery (e.g. on resume)."""
+        """Reset pressed state and request thread-safe rediscovery of keyboard FDs."""
         self.held.clear()
-        self._down.clear()
-        for fd in list(self._fds):
-            try:
-                os.close(fd)
-            except OSError:
-                pass
-        self._fds = []
+        with self._lock:
+            self._down.clear()
+            self._reset_requested = True
 
     def _loop(self) -> None:
         import time
@@ -255,62 +293,98 @@ class HoldChord:
         watched: set[int] = set()
         for group in self.groups:
             watched.update(group)
-        while not self._stop.is_set():
-            if not self._fds:
-                self._down.clear()
-                self.held.clear()
-                codes: set[int] = set()
-                for group in self.groups:
-                    codes.update(group)
-                self._fds = _open_keyboards(codes)
+        try:
+            while not self._stop.is_set():
+                with self._lock:
+                    if self._reset_requested:
+                        self._reset_requested = False
+                        for fd in self._fds:
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        self._fds = []
+                        self._down.clear()
+                        self.held.clear()
+
                 if not self._fds:
-                    time.sleep(1.0)
+                    with self._lock:
+                        self._down.clear()
+                        self.held.clear()
+                    codes: set[int] = set()
+                    for group in self.groups:
+                        codes.update(group)
+                    new_fds = _open_keyboards(codes)
+                    with self._lock:
+                        self._fds = new_fds
+                    if not self._fds:
+                        time.sleep(1.0)
+                        continue
+
+                try:
+                    with self._lock:
+                        fds_to_poll = list(self._fds)
+                    if not fds_to_poll:
+                        continue
+                    readable, _, _ = select.select(fds_to_poll, [], [], 0.05)
+                except (ValueError, OSError):
+                    with self._lock:
+                        dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
+                        for fd in dead:
+                            self._fds.remove(fd)
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        if not self._fds:
+                            self._down.clear()
+                            self.held.clear()
                     continue
-            try:
-                readable, _, _ = select.select(self._fds, [], [], 0.05)
-            except (ValueError, OSError):
-                dead = [fd for fd in self._fds if not _is_fd_valid(fd)]
-                for fd in dead:
-                    self._fds.remove(fd)
+
+                dead_fds = []
+                for fd in readable:
+                    try:
+                        data = os.read(fd, _EVENT.size * 64)
+                        if not data:
+                            dead_fds.append(fd)
+                            continue
+                    except OSError:
+                        dead_fds.append(fd)
+                        continue
+                    for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
+                        _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
+                        if event_type != _EV_KEY or code not in watched or value == 2:
+                            continue
+                        with self._lock:
+                            if value == 1:
+                                self._down.add(code)
+                            elif value == 0:
+                                self._down.discard(code)
+                            if chord_satisfied(self._down, self.groups):
+                                self.held.set()
+                            else:
+                                self.held.clear()
+
+                if dead_fds:
+                    with self._lock:
+                        for fd in dead_fds:
+                            if fd in self._fds:
+                                self._fds.remove(fd)
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                        if not self._fds:
+                            self._down.clear()
+                            self.held.clear()
+        finally:
+            with self._lock:
+                for fd in self._fds:
                     try:
                         os.close(fd)
                     except OSError:
                         pass
-                if not self._fds:
-                    self._down.clear()
-                    self.held.clear()
-                continue
-
-            dead_fds = []
-            for fd in readable:
-                try:
-                    data = os.read(fd, _EVENT.size * 64)
-                    if not data:
-                        dead_fds.append(fd)
-                        continue
-                except OSError:
-                    dead_fds.append(fd)
-                    continue
-                for offset in range(0, len(data) - _EVENT.size + 1, _EVENT.size):
-                    _sec, _usec, event_type, code, value = _EVENT.unpack_from(data, offset)
-                    if event_type != _EV_KEY or code not in watched or value == 2:
-                        continue
-                    if value == 1:
-                        self._down.add(code)
-                    elif value == 0:
-                        self._down.discard(code)
-                    if chord_satisfied(self._down, self.groups):
-                        self.held.set()
-                    else:
-                        self.held.clear()
-            for fd in dead_fds:
-                if fd in self._fds:
-                    self._fds.remove(fd)
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
-            if not self._fds:
+                self._fds = []
                 self._down.clear()
                 self.held.clear()
 
